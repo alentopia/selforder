@@ -1,0 +1,157 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<meta name="design_doc_mode" content="canvas" />
+<title>Rincian Item · Eksplorasi</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Hanken+Grotesk:ital,wght@0,600;0,700;0,800;1,800&family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
+<style>
+  :root {
+    --bg: #EEF2F2; --surface: #FFFFFF; --surface2: #F6F9F9;
+    --ink: #13201F; --muted: #5C6B6A; --faint: #9BAAA9;
+    --line: rgba(19,32,31,0.08); --lineStrong: rgba(19,32,31,0.16);
+    --primary: #1799A5; --primarySoft: rgba(23,153,165,0.10); --onPrimary: #FFFFFF;
+    --shadow: 0 1px 2px rgba(20,40,40,0.04), 0 10px 30px rgba(20,50,50,0.07);
+    --display: "Hanken Grotesk", sans-serif; --body: "Inter", system-ui, sans-serif;
+  }
+  * { box-sizing: border-box; }
+  body { margin: 0; font-family: var(--body); }
+  .frame { position: absolute; width: 430px; }
+  .flabel { font-size: 13px; font-weight: 700; color: #fff; margin-bottom: 4px; display: flex; align-items: baseline; gap: 8px; }
+  .flabel small { font-weight: 500; color: rgba(255,255,255,0.6); font-size: 11.5px; }
+  .fdesc { font-size: 12px; color: rgba(255,255,255,0.55); line-height: 1.55; margin-top: 14px; max-width: 410px; }
+
+  .card { background: var(--surface); border: 1px solid var(--line); border-radius: 18px; box-shadow: var(--shadow); overflow: hidden; }
+  .card-head { display: flex; align-items: center; justify-content: space-between; padding: 13px 16px; border-bottom: 1px solid var(--line); }
+  .card-head .ttl { font-size: 14px; font-weight: 700; color: var(--ink); }
+  .body { padding: 0 16px; }
+  .qty { min-width: 24px; height: 24px; border-radius: 7px; background: var(--surface2); color: var(--muted); display: flex; align-items: center; justify-content: center; font-weight: 800; font-size: 12px; flex-shrink: 0; margin-top: 1px; }
+  .nm { font-size: 13.5px; font-weight: 600; color: var(--ink); line-height: 1.3; }
+  .price { font-size: 13px; font-weight: 700; color: var(--ink); flex-shrink: 0; font-variant-numeric: tabular-nums; }
+  .sub { display: flex; justify-content: space-between; padding: 12px 16px; border-top: 1px solid var(--line); background: var(--surface2); }
+  .sub .l { font-size: 13px; color: var(--muted); }
+  .sub .v { font-size: 13.5px; font-weight: 800; color: var(--ink); font-variant-numeric: tabular-nums; }
+
+  .row { display: flex; gap: 11px; align-items: flex-start; padding: 12px 0; }
+  .row + .row { border-top: 1px solid var(--line); }
+  .rowmain { display: flex; gap: 8px; align-items: baseline; }
+
+  /* opsi gaya lama (label dengan harga di dalam kurung) */
+  .opt-old { font-size: 12px; color: var(--muted); margin-top: 3px; }
+
+  /* modifier gratis — cuma label, tanpa kolom harga */
+  .spec { font-size: 12px; color: var(--muted); margin-top: 4px; }
+  .spec .grp, .bd .grp { color: var(--faint); }
+  /* variasi A — baris modifier: label kiri, +harga kanan (gratis = tanpa harga) */
+  .mod { display: flex; justify-content: space-between; gap: 8px; margin-top: 4px; }
+  .mod .ml { font-size: 12px; color: var(--muted); }
+  .mod .ml .grp { color: var(--faint); }
+  .mod .mv { font-size: 12px; color: var(--muted); font-variant-numeric: tabular-nums; flex-shrink: 0; }
+  /* variasi A — addon sebagai baris rincian rata kanan */
+  .addon { display: flex; justify-content: space-between; gap: 8px; margin-top: 4px; }
+  .addon .al { font-size: 12px; color: var(--muted); display: inline-flex; align-items: center; gap: 5px; }
+  .addon .al::before { content: "+"; color: var(--faint); font-weight: 700; }
+  .addon .av { font-size: 12px; color: var(--muted); font-variant-numeric: tabular-nums; flex-shrink: 0; }
+
+  /* variasi B — breakdown faint satu baris */
+  .bd { font-size: 11.5px; color: var(--faint); margin-top: 3px; line-height: 1.4; }
+  .bd b { color: var(--muted); font-weight: 600; }
+</style>
+</head>
+<body>
+
+<!-- ============ SEKARANG ============ -->
+<div class="frame" style="left: 70px; top: 70px;">
+  <div class="flabel">Sekarang <small>harga gabungan</small></div>
+  <div class="card">
+    <div class="card-head"><span class="ttl">Pesanan (3)</span></div>
+    <div class="body">
+      <div class="row">
+        <span class="qty">1</span>
+        <div style="flex:1; min-width:0;">
+          <div class="rowmain"><span class="nm" style="flex:1;">Iga Bakar Saji</span><span class="price">Rp85.000</span></div>
+          <div class="opt-old">Tingkat Pedas: Sedang &middot; Telur Dadar (+Rp7.000)</div>
+        </div>
+      </div>
+      <div class="row">
+        <span class="qty">2</span>
+        <div style="flex:1; min-width:0;">
+          <div class="rowmain"><span class="nm" style="flex:1;">Nasi Goreng Kampung</span><span class="price">Rp76.000</span></div>
+          <div class="opt-old">Extra Pedas (+Rp3.000)</div>
+        </div>
+      </div>
+    </div>
+    <div class="sub"><span class="l">Subtotal</span><span class="v">Rp161.000</span></div>
+  </div>
+  <div class="fdesc">Hanya total per baris. User tak tahu Rp85.000 itu dari Rp78.000 + Rp7.000 — biaya tambahan cuma muncul sebagai teks "(+Rp7.000)" tanpa harga dasar.</div>
+</div>
+
+<!-- ============ VARIASI A ============ -->
+<div class="frame" style="left: 560px; top: 70px;">
+  <div class="flabel">Variasi A · Struk Rinci <small>dasar + tambahan rata kanan</small></div>
+  <div class="card">
+    <div class="card-head"><span class="ttl">Pesanan (3)</span></div>
+    <div class="body">
+      <div class="row">
+        <span class="qty">1</span>
+        <div style="flex:1; min-width:0;">
+          <div class="rowmain"><span class="nm" style="flex:1;">Iga Bakar Saji</span><span class="price">Rp78.000</span></div>
+          <div class="mod"><span class="ml"><span class="grp">Tingkat Pedas:</span> Sedang</span></div>
+          <div class="mod"><span class="ml">Telur Dadar</span><span class="mv">+Rp7.000</span></div>
+        </div>
+      </div>
+      <div class="row">
+        <span class="qty">2</span>
+        <div style="flex:1; min-width:0;">
+          <div class="rowmain"><span class="nm" style="flex:1;">Nasi Goreng Kampung</span><span class="price">Rp70.000</span></div>
+          <div class="mod"><span class="ml">Extra Pedas</span><span class="mv">+Rp6.000</span></div>
+        </div>
+      </div>
+    </div>
+    <div class="sub"><span class="l">Subtotal</span><span class="v">Rp161.000</span></div>
+  </div>
+  <div class="fdesc">Harga dasar jadi angka utama; tiap tambahan punya barisnya sendiri dengan "+harga" rata kanan. Semua komponen langsung terjumlah ke Subtotal. Paling transparan — gaya struk asli. (qty&gt;1: angka = total per baris, mis. Extra Pedas Rp3.000 ×2 = Rp6.000.)</div>
+</div>
+
+<!-- ============ VARIASI B ============ -->
+<div class="frame" style="left: 1050px; top: 70px;">
+  <div class="flabel">Variasi B · Ringkas <small>total tetap + rincian samar</small></div>
+  <div class="card">
+    <div class="card-head"><span class="ttl">Pesanan (3)</span></div>
+    <div class="body">
+      <div class="row">
+        <span class="qty">1</span>
+        <div style="flex:1; min-width:0;">
+          <div class="rowmain"><span class="nm" style="flex:1;">Iga Bakar Saji</span><span class="price">Rp85.000</span></div>
+          <div class="bd"><b>Dasar Rp78.000</b> · <span class="grp">Tingkat Pedas:</span> Sedang · Telur Dadar +Rp7.000</div>
+        </div>
+      </div>
+      <div class="row">
+        <span class="qty">2</span>
+        <div style="flex:1; min-width:0;">
+          <div class="rowmain"><span class="nm" style="flex:1;">Nasi Goreng Kampung</span><span class="price">Rp76.000</span></div>
+          <div class="bd"><b>Dasar Rp35.000</b> · Extra Pedas +Rp3.000 · ×2</div>
+        </div>
+      </div>
+    </div>
+    <div class="sub"><span class="l">Subtotal</span><span class="v">Rp161.000</span></div>
+  </div>
+  <div class="fdesc">Total gabungan per baris tetap jadi angka utama (cocok buat user yang lihat harga akhir), tapi di bawahnya ada rincian samar "Dasar … + tambahan". Lebih padat, harga akhir tetap menonjol.</div>
+</div>
+
+<template id="__bundler_thumbnail" data-bg-color="#1799A5">
+  <svg viewBox="0 0 1200 800" xmlns="http://www.w3.org/2000/svg">
+    <rect width="1200" height="800" fill="#1799A5"/>
+    <rect x="360" y="280" width="480" height="240" rx="20" fill="#fff"/>
+    <rect x="392" y="320" width="240" height="20" rx="6" fill="#13201F"/>
+    <rect x="700" y="320" width="108" height="20" rx="6" fill="#13201F"/>
+    <rect x="412" y="362" width="180" height="14" rx="5" fill="#9BAAA9"/>
+    <rect x="712" y="362" width="96" height="14" rx="5" fill="#1799A5"/>
+  </svg>
+</template>
+
+</body>
+</html>

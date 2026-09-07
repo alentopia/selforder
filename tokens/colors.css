@@ -1,0 +1,85 @@
+/* Self Order — color tokens. Default theme is "Porcelain" (cool, airy).
+   Alternate themes selectable via [data-theme="noir"] / [data-theme="linen"]. */
+
+:root {
+  /* brand */
+  --color-primary: #1799A5;
+  --color-primary-soft: rgba(23, 153, 165, 0.10);
+  --color-on-primary: #FFFFFF;
+  --color-accent: #B8893B;
+  --color-accent-soft: rgba(184, 137, 59, 0.12);
+
+  /* semantic */
+  --color-danger: #BE4137;
+  --color-danger-soft: rgba(190, 60, 55, 0.10);
+  --color-danger-line: rgba(190, 60, 55, 0.28);
+  --color-price: #B8781F;
+  --color-price-soft: rgba(184, 120, 31, 0.12);
+
+  /* surfaces — Porcelain */
+  --color-bg: #EEF2F2;
+  --color-bg-tint: #E5EBEB;
+  --color-surface: #FFFFFF;
+  --color-surface-2: #F6F9F9;
+
+  /* ink */
+  --color-ink: #13201F;
+  --color-muted: #5C6B6A;
+  --color-faint: #9BAAA9;
+
+  /* lines */
+  --color-line: rgba(19, 32, 31, 0.08);
+  --color-line-strong: rgba(19, 32, 31, 0.15);
+
+  /* image placeholder */
+  --color-placeholder: #DDE6E6;
+  --color-placeholder-ink: #9DB0AF;
+
+  /* shadow (see spacing.css for full box-shadow tokens) */
+  --shadow-color: 20, 50, 50;
+}
+
+/* Noir — dark, for late-night / kiosk-standby moments */
+[data-theme="noir"] {
+  --color-primary-soft: rgba(23, 153, 165, 0.16);
+  --color-on-primary: #06201F;
+  --color-accent: #D8B26B;
+  --color-accent-soft: rgba(216, 178, 107, 0.14);
+
+  --color-bg: #121514;
+  --color-bg-tint: #0C0F0E;
+  --color-surface: #1B201F;
+  --color-surface-2: #232927;
+
+  --color-ink: #F3F0EA;
+  --color-muted: #9AA29F;
+  --color-faint: #6A726F;
+
+  --color-line: rgba(255, 255, 255, 0.10);
+  --color-line-strong: rgba(255, 255, 255, 0.18);
+
+  --color-placeholder: #262D2B;
+  --color-placeholder-ink: #5C6663;
+
+  --shadow-color: 0, 0, 0;
+}
+
+/* Linen — warm neutral alternative */
+[data-theme="linen"] {
+  --color-bg: #F4EFE7;
+  --color-bg-tint: #EDE6DA;
+  --color-surface: #FFFFFF;
+  --color-surface-2: #FAF6F0;
+
+  --color-ink: #1E1B16;
+  --color-muted: #6F685D;
+  --color-faint: #A79E90;
+
+  --color-line: rgba(30, 27, 22, 0.09);
+  --color-line-strong: rgba(30, 27, 22, 0.16);
+
+  --color-placeholder: #E7DFD2;
+  --color-placeholder-ink: #B6A98F;
+
+  --shadow-color: 40, 33, 22;
+}

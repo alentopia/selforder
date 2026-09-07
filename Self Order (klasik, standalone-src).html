@@ -1,0 +1,106 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+<title>Accurate POS · Self Order</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Hanken+Grotesk:wght@500;600;700;800&family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
+
+<!-- Menu photos are built from string URLs in data.jsx, so the bundler can't
+     auto-discover them. Declare each here; data.jsx rewires m.photo to the
+     inlined blob via window.__resources['img-<id>'] at runtime. -->
+<meta name="ext-resource-dependency" content="https://images.unsplash.com/photo-1532550907401-a500c9a57435?w=320&h=320&fit=crop&auto=format&q=75" data-resource-id="img-nasi-ayam-bakar" />
+<meta name="ext-resource-dependency" content="https://images.unsplash.com/photo-1512058564366-18510be2db19?w=320&h=320&fit=crop&auto=format&q=75" data-resource-id="img-nasi-bakar" />
+<meta name="ext-resource-dependency" content="https://images.unsplash.com/photo-1544025162-d76694265947?w=320&h=320&fit=crop&auto=format&q=75" data-resource-id="img-iga-bakar" />
+<meta name="ext-resource-dependency" content="https://images.unsplash.com/photo-1432139555190-58524dae6a55?w=320&h=320&fit=crop&auto=format&q=75" data-resource-id="img-paket-berdua" />
+<meta name="ext-resource-dependency" content="https://images.unsplash.com/photo-1562967914-608f82629710?w=320&h=320&fit=crop&auto=format&q=75" data-resource-id="img-ayam-goreng-kremes" />
+<meta name="ext-resource-dependency" content="https://images.unsplash.com/photo-1569058242253-92a9c755a0ec?w=320&h=320&fit=crop&auto=format&q=75" data-resource-id="img-ayam-goreng-lengkuas" />
+<meta name="ext-resource-dependency" content="https://images.unsplash.com/photo-1455619452474-d2be8b1e70cd?w=320&h=320&fit=crop&auto=format&q=75" data-resource-id="img-ayam-penyet" />
+<meta name="ext-resource-dependency" content="https://images.unsplash.com/photo-1603133872878-684f208fb84b?w=320&h=320&fit=crop&auto=format&q=75" data-resource-id="img-nasgor" />
+<meta name="ext-resource-dependency" content="https://images.unsplash.com/photo-1586201375761-83865001e31c?w=320&h=320&fit=crop&auto=format&q=75" data-resource-id="img-nasi-putih" />
+<meta name="ext-resource-dependency" content="https://images.unsplash.com/photo-1546069901-ba9599a7e63c?w=320&h=320&fit=crop&auto=format&q=75" data-resource-id="img-tahu-tempe" />
+<meta name="ext-resource-dependency" content="https://images.unsplash.com/photo-1547592166-23ac45744acd?w=320&h=320&fit=crop&auto=format&q=75" data-resource-id="img-sup-buntut" />
+<meta name="ext-resource-dependency" content="https://images.unsplash.com/photo-1556679343-c7306c1976bc?w=320&h=320&fit=crop&auto=format&q=75" data-resource-id="img-es-teh" />
+<meta name="ext-resource-dependency" content="https://images.unsplash.com/photo-1600271886742-f049cd451bba?w=320&h=320&fit=crop&auto=format&q=75" data-resource-id="img-es-jeruk" />
+<meta name="ext-resource-dependency" content="https://images.unsplash.com/photo-1564890369478-c89ca6d9cde9?w=320&h=320&fit=crop&auto=format&q=75" data-resource-id="img-teh-talua" />
+<meta name="ext-resource-dependency" content="https://images.unsplash.com/photo-1461023058943-07fcbe16d735?w=320&h=320&fit=crop&auto=format&q=75" data-resource-id="img-kopi-susu" />
+<meta name="ext-resource-dependency" content="https://images.unsplash.com/photo-1551024506-0bccd828d307?w=320&h=320&fit=crop&auto=format&q=75" data-resource-id="img-cendol" />
+<meta name="ext-resource-dependency" content="https://images.unsplash.com/photo-1567620905732-2d1ec7ab7445?w=320&h=320&fit=crop&auto=format&q=75" data-resource-id="img-pisang-goreng" />
+
+<style>
+  * { box-sizing: border-box; }
+  html, body { margin: 0; padding: 0; height: 100%; }
+  body {
+    font-family: "Inter", system-ui, sans-serif;
+    background: radial-gradient(120% 90% at 50% -10%, #1E2E2D 0%, #162020 45%, #0E1717 100%);
+    -webkit-font-smoothing: antialiased;
+    text-rendering: optimizeLegibility;
+    overflow: hidden;
+  }
+  #root { height: 100%; }
+  ::-webkit-scrollbar { width: 0; height: 0; }
+  input, textarea, button { font-family: inherit; }
+  input:focus, textarea:focus { outline: none; }
+
+  @keyframes om-screen { from { opacity: 0; transform: translateX(14px); } to { opacity: 1; transform: translateX(0); } }
+  @keyframes om-sheet  { from { transform: translateY(100%); } to { transform: translateY(0); } }
+  @keyframes om-fade   { from { opacity: 0; } to { opacity: 1; } }
+  @keyframes om-spin   { to { transform: rotate(360deg); } }
+  @keyframes om-blink  { 50% { opacity: 0; } }
+  @keyframes om-pulse  { 0%,100% { opacity: 1; transform: scale(1); } 50% { opacity: .4; transform: scale(.7); } }
+  @keyframes om-pop    { 0% { transform: scale(0); } 60% { transform: scale(1.12); } 100% { transform: scale(1); } }
+  @media (prefers-reduced-motion: reduce) { * { animation-duration: .001ms !important; } }
+
+  /* tactile press — shrink while held/clicked */
+  .om-press { transition: transform .12s cubic-bezier(.3,.7,.4,1); }
+  .om-press:active { transform: scale(.82); }
+
+  /* brand logo slot — monogram shows behind; slot stays transparent when empty */
+  image-slot#brand-logo::part(frame) { background: transparent; border: none; }
+  image-slot#brand-logo::part(empty) { opacity: 0; }
+  image-slot#brand-logo::part(ring) { display: none; }
+</style>
+</head>
+<body>
+<div id="root"></div>
+
+<!-- Exported build: always surface the floating Tweaks button so viewers can switch styles/layouts. -->
+<script>window.__OM_FORCE_TWEAKS_FAB = true;
+// Klasik build: default the menu shell to "klasik".
+window.__TWEAK_OVERRIDES = { menuShell: 'klasik' };</script>
+
+<template id="__bundler_thumbnail" data-bg-color="#162020">
+  <svg viewBox="0 0 1200 800" xmlns="http://www.w3.org/2000/svg">
+    <rect width="1200" height="800" fill="#162020" />
+    <circle cx="600" cy="380" r="150" fill="none" stroke="#E8F0EC" stroke-width="14" />
+    <circle cx="600" cy="380" r="96" fill="none" stroke="#7FB39B" stroke-width="10" />
+    <rect x="392" y="300" width="14" height="170" rx="7" fill="#E8F0EC" />
+    <rect x="378" y="300" width="6" height="70" rx="3" fill="#E8F0EC" />
+    <rect x="414" y="300" width="6" height="70" rx="3" fill="#E8F0EC" />
+    <path d="M794 300c26 0 38 26 38 64s-12 56-26 58v48c0 6-24 6-24 0V300z" fill="#E8F0EC" />
+    <text x="600" y="600" font-family="Hanken Grotesk, sans-serif" font-size="68" font-weight="800" font-style="italic" fill="#E8F0EC" text-anchor="middle">POS</text>
+    <text x="600" y="660" font-family="Inter, sans-serif" font-size="30" font-weight="600" fill="#7FB39B" text-anchor="middle" letter-spacing="6">SELF ORDER</text>
+  </svg>
+</template>
+
+<script src="image-slot.js"></script>
+<script src="https://unpkg.com/react@18.3.1/umd/react.development.js" integrity="sha384-hD6/rw4ppMLGNu3tX5cjIb+uRZ7UkRJ6BPkLpg4hAu/6onKUg4lLsHAs9EBPT82L" crossorigin="anonymous"></script>
+<script src="https://unpkg.com/react-dom@18.3.1/umd/react-dom.development.js" integrity="sha384-u6aeetuaXnQ38mYT8rp6sbXaQe3NL9t+IBXmnYxwkUI2Hw4bsp2Wvmx4yRQF1uAm" crossorigin="anonymous"></script>
+<script src="https://unpkg.com/@babel/standalone@7.29.0/babel.min.js" integrity="sha384-m08KidiNqLdpJqLq95G/LEi8Qvjl/xUYll3QILypMoQ65QorJ9Lvtp2RXYGBFj1y" crossorigin="anonymous"></script>
+
+<script type="text/babel" src="tweaks-panel.jsx"></script>
+<script type="text/babel" src="ios-frame.jsx"></script>
+<script type="text/babel" src="data.jsx"></script>
+<script type="text/babel" src="ui.jsx"></script>
+<script type="text/babel" src="screens-auth.jsx"></script>
+<script type="text/babel" src="screens-menu.jsx"></script>
+<script type="text/babel" src="menu-sidebar.jsx"></script>
+<script type="text/babel" src="screens-cart.jsx"></script>
+<script type="text/babel" src="screens-picker.jsx"></script>
+<script type="text/babel" src="screens-checkout.jsx"></script>
+<script type="text/babel" src="screens-cashstatus.jsx"></script>
+<script type="text/babel" src="app.jsx"></script>
+</body>
+</html>

@@ -1,0 +1,19 @@
+# Artifact mesin & dump aset — tidak diberi versi.
+# Prinsipnya sama dengan vault POS: yang ditulis manusia = sumber, diberi versi.
+
+# Dump gambar hasil paste/screenshot dari sesi prototyping (14 MB, tidak dirujuk
+# satu pun file sumber).
+uploads/
+screenshots/
+thumb/
+
+# Bundle self-contained hasil export: seluruh aset di-inline, 1,7-2,3 MB per file.
+# Bisa dibuat ulang dari file *-standalone-src*.html + sumber .jsx di repo ini.
+*(offline).html
+*(standalone).html
+"Self Order - Figma Thumbnail.png"
+
+# State editor & metadata deploy.
+.image-slots.state.json
+.thumbnail
+.vercel/

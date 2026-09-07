@@ -1,0 +1,149 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Batas Panjang Teks · Alur Konfirmasi Pesanan</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
+<style>doc-page:not(:defined){visibility:hidden}</style>
+<style>
+  * { box-sizing: border-box; }
+  body { margin: 0; font-family: "Inter", system-ui, sans-serif; color: #1c2523; }
+  h1 { font-size: 26px; font-weight: 800; margin: 0 0 6px; letter-spacing: -0.01em; }
+  .lead { font-size: 14px; color: #55625f; margin: 0 0 28px; line-height: 1.6; max-width: 620px; }
+  h2 { font-size: 17px; font-weight: 800; margin: 34px 0 4px; color: #13201f; }
+  .h2-sub { font-size: 13px; color: #6b7873; margin: 0 0 12px; }
+  table { width: 100%; border-collapse: collapse; font-size: 13px; margin-bottom: 6px; }
+  th { text-align: left; font-size: 11px; text-transform: uppercase; letter-spacing: 0.4px; color: #6b7873; font-weight: 700; padding: 7px 10px; border-bottom: 1.5px solid #d7dedb; }
+  td { padding: 9px 10px; border-bottom: 1px solid #e8ece9; vertical-align: top; line-height: 1.45; }
+  tr:last-child td { border-bottom: none; }
+  td.mono, .mono { font-family: "SF Mono", "Menlo", monospace; font-size: 12px; color: #13201f; }
+  .max { font-weight: 700; color: #1799A5; white-space: nowrap; }
+  .example { color: #55625f; }
+  .example em { font-style: normal; color: #13201f; }
+  .warn { color: #BE4137; font-weight: 700; }
+  .tag { display: inline-block; font-size: 10.5px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.4px; padding: 2px 8px; border-radius: 999px; background: #eef2f1; color: #55625f; margin-bottom: 10px; }
+  .note { background: #f4f7f6; border: 1px solid #dde4e1; border-radius: 10px; padding: 12px 14px; font-size: 12.5px; color: #45524e; line-height: 1.55; margin: 10px 0 0; }
+  .note strong { color: #13201f; }
+  code { background: #eef2f1; border-radius: 4px; padding: 1px 5px; font-size: 12px; }
+  ul.tight { margin: 6px 0 0; padding-left: 18px; font-size: 13px; line-height: 1.6; }
+</style>
+</head>
+<body>
+
+<doc-page size="letter" margin="0.75in">
+
+<h1>Batas Panjang Teks — Alur Konfirmasi Pesanan</h1>
+<p class="lead">Referensi untuk siapa pun yang menulis atau mengubah copy di layar keranjang &amp; popup "barang bermasalah" (stok habis / harga naik / promo gugur). Angka di bawah dihitung dari lebar kolom aktual di frame 402px (iPhone-width) — bukan aturan mutlak, tapi ancang-ancang aman sebelum layout mulai pecah (wrap 3 baris, tombol jadi 2 baris, badge melebar aneh, dsb).</p>
+
+<h2>Layar Keranjang</h2>
+<table>
+<tr><th style="width:22%">Elemen</th><th style="width:30%">Contoh saat ini</th><th style="width:14%">Maks disarankan</th><th>Kalau kepanjangan</th></tr>
+<tr>
+  <td>Nama item</td>
+  <td class="example"><em>Nasi Ayam Bakar Madu</em></td>
+  <td class="max">~32 kar/baris</td>
+  <td>Boleh wrap ke 2 baris (total ≤60 kar) — tidak ada potongan "...". Lebih dari itu, baris item jadi lebih tinggi dari thumbnail-nya.</td>
+</tr>
+<tr>
+  <td>Label opsi/varian <span class="mono">(Pedas · + Nasi Putih)</span></td>
+  <td class="example"><em>Pedas · + Nasi Putih</em></td>
+  <td class="max">~40 kar</td>
+  <td>Wrap ke baris baru, mendorong harga turun sedikit. Aman sampai ~2 baris.</td>
+</tr>
+<tr>
+  <td>Banner peringatan stok (kotak merah di atas list)</td>
+  <td class="example"><em>Ada barang habis di pesananmu. Hapus dulu sebelum konfirmasi.</em></td>
+  <td class="max">~90 kar</td>
+  <td>Auto-wrap sampai 2 baris masih rapi; baris ke-3 membuat kartu banner terlalu tinggi dibanding isi lain.</td>
+</tr>
+<tr>
+  <td>Badge <span class="mono">"Stok Habis"</span></td>
+  <td class="example"><em>Stok Habis</em></td>
+  <td class="max">~14 kar</td>
+  <td class="warn">Pill tidak diset <code>white-space: nowrap</code> — teks panjang akan patah dan pill jadi 2 baris. Jaga singkat.</td>
+</tr>
+</table>
+
+<h2>Popup / Overlay Masalah</h2>
+<p class="h2-sub">Berlaku untuk kedua bentuk: modal di tengah (1 isu) dan bottom sheet (≥2 isu).</p>
+<table>
+<tr><th style="width:22%">Elemen</th><th style="width:30%">Contoh saat ini</th><th style="width:14%">Maks disarankan</th><th>Kalau kepanjangan</th></tr>
+<tr>
+  <td>Judul — kasus 1 isu <span class="mono">(nama item + status)</span></td>
+  <td class="example"><em>Ayam Goreng Lengkuas habis</em></td>
+  <td class="max">~48 kar</td>
+  <td>Font besar (21px bold); nyaman di 2 baris. Baris ke-3 mendorong tombol di bawah keluar dari area nyaman-jempol.</td>
+</tr>
+<tr>
+  <td>Judul — kasus campuran <span class="mono">(generik)</span></td>
+  <td class="example"><em>Yuk, sesuaikan pesananmu</em></td>
+  <td class="max">~48 kar</td>
+  <td>Sama seperti di atas — judul generik biasanya jauh lebih pendek dari batas ini.</td>
+</tr>
+<tr>
+  <td>Subjudul / deskripsi</td>
+  <td class="example"><em>Barang ini kosong. Hapus dari keranjang sebelum lanjut bayar.</em></td>
+  <td class="max">~80 kar</td>
+  <td>Bisa sampai ~110 kar (3 baris) sebelum sheet terasa penuh teks. Usahakan 1–2 kalimat pendek.</td>
+</tr>
+<tr>
+  <td>Label pemisah grup <span class="mono">(PERLU DIHAPUS / DIPERBARUI OTOMATIS)</span></td>
+  <td class="example"><em>DIPERBARUI OTOMATIS</em></td>
+  <td class="max">~20 kar</td>
+  <td>Uppercase + letter-spacing, harus 1 baris. Lebih panjang akan terasa berat dibanding baris item di bawahnya.</td>
+</tr>
+<tr>
+  <td>Nama item di baris isu <span class="mono">(dengan thumbnail)</span></td>
+  <td class="example"><em>Nasi Ayam Bakar Madu</em></td>
+  <td class="max">~22 kar/baris</td>
+  <td>Ruang paling sempit di seluruh flow — thumbnail di kiri, badge/harga tetap di kanan. Nama panjang wrap ke 2 baris dan bikin baris jadi tidak center secara vertikal.</td>
+</tr>
+<tr>
+  <td>Tombol utama <span class="mono">(Perbarui &amp; lanjut, Konfirmasi Pesanan)</span></td>
+  <td class="example"><em>Perbarui &amp; lanjut</em></td>
+  <td class="max">~24 kar</td>
+  <td class="warn">Tombol tidak nowrap — label panjang patah ke 2 baris dan tinggi tombol berubah. Jaga selalu jadi 1 baris.</td>
+</tr>
+<tr>
+  <td>Tombol sekunder <span class="mono">(teks, tanpa latar)</span></td>
+  <td class="example"><em>Kembali ke keranjang</em></td>
+  <td class="max">~30 kar</td>
+  <td>Sedikit lebih lega karena ukuran font lebih kecil (13.5px) dan tidak ada padding tombol.</td>
+</tr>
+</table>
+
+<h2>Layar Sukses</h2>
+<table>
+<tr><th style="width:22%">Elemen</th><th style="width:30%">Contoh saat ini</th><th style="width:14%">Maks disarankan</th><th>Kalau kepanjangan</th></tr>
+<tr>
+  <td>Judul</td>
+  <td class="example"><em>Pesanan dikonfirmasi</em></td>
+  <td class="max">~40 kar</td>
+  <td>1 baris nyaman; wrap ke 2 baris masih oke karena konten di bawahnya lega.</td>
+</tr>
+<tr>
+  <td>Deskripsi</td>
+  <td class="example"><em>Lanjut ke pembayaran sebesar Rp254.000.</em></td>
+  <td class="max">~70 kar</td>
+  <td>Dibatasi <code>max-width: 260px</code> — di atas ini mulai jadi 3 baris.</td>
+</tr>
+</table>
+
+<div class="note"><strong>Catatan implementasi:</strong> dua elemen di atas (badge status &amp; tombol utama) belum diberi <code>white-space: nowrap</code> di kode saat ini, jadi kalau ada yang menulis label lebih panjang dari batas yang disarankan, elemen itu akan patah baris tanpa peringatan visual apa pun. Kalau mau lebih aman, tambahkan aturan itu supaya elemen tetap 1 baris dan justru terlihat "kepotong" saat teks kepanjangan — tanda yang lebih jelas untuk penulis untuk memperpendek copy.</div>
+
+<div class="note" style="margin-top:14px"><strong>Cara pakai:</strong>
+<ul class="tight">
+  <li>Ini bukan hard-limit di kode — murni panduan menulis copy baru.</li>
+  <li>Bahasa Indonesia cenderung lebih panjang dari Inggris untuk makna yang sama; kalau menerjemahkan dari referensi Inggris, cek ulang jumlah karakter.</li>
+  <li>Kalau ragu, lebih baik lebih pendek dari batas ini — batas di atas sudah mendekati titik pecah, bukan titik ideal.</li>
+</ul>
+</div>
+
+</doc-page>
+
+<script src="doc-page.js"></script>
+</body>
+</html>

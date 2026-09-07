@@ -1,0 +1,35 @@
+/* Self Order — type tokens.
+   Fonts are loaded from Google Fonts — no binaries in this repo, so
+   consumers must include the stylesheet link (see readme.md "Fonts"):
+   https://fonts.googleapis.com/css2?family=Hanken+Grotesk:wght@500;600;700;800&family=Inter:wght@400;500;600;700;800&display=swap
+*/
+
+:root {
+  --font-display: "Hanken Grotesk", system-ui, sans-serif;
+  --font-body: "Inter", system-ui, sans-serif;
+  --font-mono: ui-monospace, "SF Mono", Menlo, monospace;
+
+  /* display weight varies by "voice" — pick one per product surface */
+  --font-weight-display-elegan: 600;   /* default — calm, confident */
+  --font-weight-display-modern: 700;   /* punchier */
+  --font-weight-display-kontras: 800;  /* maximum contrast, promo-heavy */
+
+  /* type scale (px, used as inline font-size — no fluid clamp needed at fixed mobile widths) */
+  --text-display-xl: 26px;   /* screen big-titles (TopBar big, greeting) */
+  --text-display-lg: 24px;   /* sheet titles */
+  --text-display-md: 21px;   /* popup / alert titles */
+  --text-display-sm: 20px;   /* dialog titles */
+
+  --text-body-lg: 16.5px;    /* button label */
+  --text-body-md: 15.5px;    /* item name, nav title */
+  --text-body-base: 14px;    /* default body */
+  --text-body-sm: 13.5px;    /* descriptions, secondary buttons */
+  --text-body-xs: 12.5px;    /* meta, sub-labels */
+  --text-caption: 11px;      /* badges, eyebrow labels */
+  --text-micro: 9.5px;       /* placeholder captions */
+
+  --line-height-tight: 1.15;
+  --line-height-snug: 1.25;
+  --line-height-normal: 1.5;
+  --line-height-loose: 1.6;
+}

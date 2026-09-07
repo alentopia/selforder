@@ -1,0 +1,133 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<meta name="design_doc_mode" content="canvas" />
+<title>Voucher · Eksplorasi v2</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Hanken+Grotesk:ital,wght@0,600;0,700;0,800;1,700;1,800&family=Inter:wght@400;500;600;700;800&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet" />
+<style>
+  :root {
+    --bg: #EEF2F2; --surface: #FFFFFF; --surface2: #F6F9F9;
+    --ink: #13201F; --muted: #5C6B6A; --faint: #9BAAA9;
+    --line: rgba(19,32,31,0.08); --lineStrong: rgba(19,32,31,0.18);
+    --primary: #1799A5; --primarySoft: rgba(23,153,165,0.10); --onPrimary: #FFFFFF;
+    --shadow: 0 1px 2px rgba(20,40,40,0.04), 0 10px 30px rgba(20,50,50,0.07);
+    --display: "Hanken Grotesk", sans-serif; --body: "Inter", system-ui, sans-serif; --mono: "Space Mono", monospace;
+  }
+  * { box-sizing: border-box; }
+  body { margin: 0; font-family: var(--body); }
+  .frame { position: absolute; width: 560px; }
+  .flabel { font-size: 13px; font-weight: 700; color: #fff; margin-bottom: 4px; display: flex; align-items: baseline; gap: 8px; }
+  .flabel small { font-weight: 500; color: rgba(255,255,255,0.6); font-size: 11.5px; }
+  .fdesc { font-size: 12px; color: rgba(255,255,255,0.55); line-height: 1.55; margin-top: 14px; max-width: 540px; }
+
+  .screen { background: var(--bg); border-radius: 26px; padding: 20px 0 22px; box-shadow: 0 24px 60px rgba(0,0,0,0.28); overflow: hidden; }
+  .sec-head { display: flex; align-items: baseline; justify-content: space-between; padding: 0 18px 12px; }
+  .sec-title { font-family: var(--display); font-style: italic; font-weight: 800; font-size: 21px; color: var(--ink); }
+  .sec-all { font-size: 13px; font-weight: 700; color: var(--primary); cursor: pointer; }
+  .rail { display: flex; gap: 12px; overflow-x: auto; padding: 6px 18px 12px; scrollbar-width: none; }
+  .rail::-webkit-scrollbar { display: none; }
+  .tagico { width: 17px; height: 17px; display: block; }
+
+  /* ============ OPSI 1 — Stub ikonik (lebar tetap) ============ */
+  .chip1 {
+    position: relative; flex-shrink: 0; display: flex; align-items: stretch;
+    background: var(--surface); border: 1px solid var(--line); border-radius: 13px; box-shadow: var(--shadow); cursor: pointer;
+  }
+  .chip1 .stub { width: 44px; flex-shrink: 0; background: var(--primary); color: var(--onPrimary); border-radius: 13px 0 0 13px; display: flex; align-items: center; justify-content: center; }
+  .chip1 .detail { display: flex; flex-direction: column; justify-content: center; border-left: 2px dashed var(--lineStrong); padding: 9px 17px 9px 14px; min-width: 0; }
+  .chip1 .t { font-size: 13.5px; font-weight: 800; color: var(--ink); line-height: 1.15; white-space: nowrap; }
+  .chip1 .s { font-size: 10.5px; color: var(--muted); margin-top: 2px; white-space: nowrap; }
+  .chip1 .notch { position: absolute; left: 38px; width: 12px; height: 12px; border-radius: 999px; background: var(--bg); }
+  .chip1 .notch.top { top: -6px; } .chip1 .notch.bottom { bottom: -6px; }
+  .chip1.allcta { background: transparent; border: 1px dashed var(--lineStrong); box-shadow: none; width: 46px; align-items: center; justify-content: center; color: var(--primary); font-size: 20px; }
+
+  /* ============ OPSI 2 — Tanpa stub, notch tepi ============ */
+  .chip2 {
+    position: relative; flex-shrink: 0; display: flex; flex-direction: column; justify-content: center;
+    background: var(--surface); border: 1px solid var(--line); border-radius: 13px; box-shadow: var(--shadow);
+    padding: 11px 20px; cursor: pointer; min-width: 0;
+  }
+  .chip2 .kick { display: inline-flex; align-items: center; gap: 5px; font-size: 9.5px; font-weight: 800; letter-spacing: 1px; text-transform: uppercase; color: var(--primary); margin-bottom: 4px; }
+  .chip2 .t { font-size: 14.5px; font-weight: 800; color: var(--ink); line-height: 1.1; white-space: nowrap; }
+  .chip2 .s { font-size: 10.5px; color: var(--muted); margin-top: 3px; white-space: nowrap; }
+  .chip2 .notch { position: absolute; top: 50%; transform: translateY(-50%); width: 14px; height: 14px; border-radius: 999px; background: var(--bg); }
+  .chip2 .notch.l { left: -7px; } .chip2 .notch.r { right: -7px; }
+  .chip2.allcta { align-items: center; justify-content: center; min-width: 52px; color: var(--primary); }
+  .chip2.allcta .lbl { writing-mode: vertical-rl; font-family: var(--mono); font-size: 10px; font-weight: 700; letter-spacing: 2px; text-transform: uppercase; transform: rotate(180deg); }
+</style>
+</head>
+<body>
+
+<!-- ============ OPSI 1 ============ -->
+<div class="frame" style="left: 80px; top: 80px;">
+  <div class="flabel">Opsi 1 · Stub ikonik <small>lebar stub tetap · teks fleksibel</small></div>
+  <div class="screen">
+    <div class="sec-head"><span class="sec-title">Voucher</span><span class="sec-all">Lihat Semua</span></div>
+    <div class="rail">
+      <div class="chip1">
+        <div class="stub"><svg class="tagico" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 4h7l9 9-7 7-9-9V4z"/><circle cx="8.5" cy="8.5" r="1.4"/></svg></div>
+        <span class="notch top"></span><span class="notch bottom"></span>
+        <div class="detail"><span class="t">Diskon 20%</span><span class="s">Min. belanja Rp100.000</span></div>
+      </div>
+      <div class="chip1">
+        <div class="stub"><svg class="tagico" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 4h7l9 9-7 7-9-9V4z"/><circle cx="8.5" cy="8.5" r="1.4"/></svg></div>
+        <span class="notch top"></span><span class="notch bottom"></span>
+        <div class="detail"><span class="t">Potongan Rp150.000.000</span><span class="s">Min. belanja Rp1.000.000.000</span></div>
+      </div>
+      <div class="chip1">
+        <div class="stub"><svg class="tagico" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="9" width="16" height="11" rx="1.5"/><path d="M12 9V6a2.5 2.5 0 1 1 2.5 2.5"/></svg></div>
+        <span class="notch top"></span><span class="notch bottom"></span>
+        <div class="detail"><span class="t">Gratis Es Teh</span><span class="s">Min. belanja Rp50.000</span></div>
+      </div>
+      <div class="chip1 allcta">›</div>
+    </div>
+  </div>
+  <div class="fdesc">Stub kiri lebarnya <b>selalu tetap</b> (cuma ikon), jadi tak peduli diskon Rp20% atau Rp150.000.000 — nilai & syarat ada di kanan yang menyesuaikan. Chip melebar mengikuti teks; rail tinggal di-scroll. Tidak ada yang jebol.</div>
+</div>
+
+<!-- ============ OPSI 2 ============ -->
+<div class="frame" style="left: 700px; top: 80px;">
+  <div class="flabel">Opsi 2 · Tanpa stub, notch tepi <small>kupon dari potongan tepi</small></div>
+  <div class="screen">
+    <div class="sec-head"><span class="sec-title">Voucher</span><span class="sec-all">Lihat Semua</span></div>
+    <div class="rail">
+      <div class="chip2">
+        <span class="kick"><svg class="tagico" style="width:11px;height:11px;" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 4h7l9 9-7 7-9-9V4z"/><circle cx="8.5" cy="8.5" r="1.4"/></svg> Voucher</span>
+        <span class="t">Diskon 20%</span>
+        <span class="s">Min. belanja Rp100.000</span>
+        <span class="notch l"></span><span class="notch r"></span>
+      </div>
+      <div class="chip2">
+        <span class="kick"><svg class="tagico" style="width:11px;height:11px;" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 4h7l9 9-7 7-9-9V4z"/><circle cx="8.5" cy="8.5" r="1.4"/></svg> Voucher</span>
+        <span class="t">Potongan Rp150.000.000</span>
+        <span class="s">Min. belanja Rp1.000.000.000</span>
+        <span class="notch l"></span><span class="notch r"></span>
+      </div>
+      <div class="chip2">
+        <span class="kick"><svg class="tagico" style="width:11px;height:11px;" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="9" width="16" height="11" rx="1.5"/><path d="M12 9V6a2.5 2.5 0 1 1 2.5 2.5"/></svg> Gratis</span>
+        <span class="t">Gratis Es Teh</span>
+        <span class="s">Min. belanja Rp50.000</span>
+        <span class="notch l"></span><span class="notch r"></span>
+      </div>
+      <div class="chip2 allcta"><span class="lbl">Semua</span></div>
+    </div>
+  </div>
+  <div class="fdesc">Tak ada stub sama sekali — kesan kupon datang dari <b>dua notch di tepi kiri-kanan</b>. Isi (kicker "Voucher" + judul + syarat) 100% mengikuti teks, jadi nominal sebesar apa pun aman. Paling bersih & fleksibel.</div>
+</div>
+
+<template id="__bundler_thumbnail" data-bg-color="#1799A5">
+  <svg viewBox="0 0 1200 800" xmlns="http://www.w3.org/2000/svg">
+    <rect width="1200" height="800" fill="#1799A5"/>
+    <rect x="340" y="320" width="520" height="160" rx="24" fill="#fff"/>
+    <circle cx="340" cy="400" r="20" fill="#1799A5"/><circle cx="860" cy="400" r="20" fill="#1799A5"/>
+    <rect x="400" y="370" width="280" height="22" rx="6" fill="#13201F"/>
+    <rect x="400" y="408" width="180" height="14" rx="5" fill="#9BAAA9"/>
+  </svg>
+</template>
+
+</body>
+</html>

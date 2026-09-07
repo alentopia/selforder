@@ -1,0 +1,27 @@
+<!-- @dsCard group="Colors" viewport="700x150" subtitle="Alternate [data-theme] surfaces" name="Theme Variants" -->
+<!DOCTYPE html><html><head><meta charset="UTF-8" />
+<link rel="stylesheet" href="../styles.css" />
+<style>body{margin:0;padding:20px;background:#1a1a1a;font-family:var(--font-body);display:flex;gap:14px}
+.card{width:200px;border-radius:14px;padding:16px}
+.t{font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.4px;margin-bottom:8px}
+.line{height:8px;border-radius:4px;margin-bottom:6px}</style></head>
+<body>
+<div class="card" data-theme="linen" style="background:var(--color-bg)">
+  <div class="t" style="color:var(--color-ink)">Linen</div>
+  <div class="line" style="background:var(--color-surface)"></div>
+  <div class="line" style="background:var(--color-ink);width:60%"></div>
+  <div style="font-size:11px;color:var(--color-muted)">warm neutral · daytime</div>
+</div>
+<div class="card" style="background:var(--color-bg)">
+  <div class="t" style="color:var(--color-ink)">Porcelain (default)</div>
+  <div class="line" style="background:var(--color-surface)"></div>
+  <div class="line" style="background:var(--color-ink);width:60%"></div>
+  <div style="font-size:11px;color:var(--color-muted)">cool, airy · all-day default</div>
+</div>
+<div class="card" data-theme="noir" style="background:var(--color-bg)">
+  <div class="t" style="color:var(--color-ink)">Noir</div>
+  <div class="line" style="background:var(--color-surface)"></div>
+  <div class="line" style="background:var(--color-ink);width:60%"></div>
+  <div style="font-size:11px;color:var(--color-muted)">dark · kiosk standby / evening</div>
+</div>
+</body></html>

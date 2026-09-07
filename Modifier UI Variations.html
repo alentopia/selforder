@@ -1,0 +1,373 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<meta name="design_doc_mode" content="canvas">
+<title>Modifier UI — Variasi</title>
+<style>
+  :root {
+    --primary: #1799A5;
+    --primary-soft: rgba(23,153,165,0.10);
+    --bg: #EEF2F2;
+    --surface: #FFFFFF;
+    --surface2: #F6F9F9;
+    --ink: #13201F;
+    --muted: #5C6B6A;
+    --faint: #9BAAA9;
+    --line: rgba(19,32,31,0.08);
+    --radius: 16px;
+  }
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; }
+
+  .frame-label {
+    position: static;
+    display: block;
+    max-width: 400px;
+    margin-bottom: 40px;
+    font-size: 15px;
+    font-weight: 700;
+    color: #13201F;
+  }
+  .frame-sub {
+    font-size: 12.5px;
+    color: #5C6B6A;
+    font-weight: 500;
+  }
+
+  .phone {
+    width: 380px;
+    background: var(--bg);
+    border-radius: 40px;
+    box-shadow: 0 0 0 10px #0d0d0d, 0 24px 50px rgba(0,0,0,0.25);
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+    position: relative;
+  }
+  .statusbar {
+    height: 40px; flex-shrink: 0; display: flex; align-items: center; justify-content: space-between;
+    padding: 0 22px; font-size: 13px; font-weight: 600; color: var(--ink);
+  }
+  .topbar { display: flex; align-items: center; gap: 10px; padding: 4px 14px 10px; flex-shrink: 0; }
+  .topbar .back { width: 32px; height: 32px; border-radius: 999px; background: #fff; display: flex; align-items: center; justify-content: center; font-size: 16px; }
+  .topbar .title { font-size: 16px; font-weight: 700; color: var(--ink); }
+  .body { flex: 1; padding: 8px 16px 16px; display: flex; flex-direction: column; gap: 12px; overflow: hidden; }
+
+  .item-head { display: flex; justify-content: space-between; align-items: flex-start; gap: 10px; }
+  .item-head h3 { font-size: 19px; font-weight: 800; color: var(--ink); }
+  .item-head .price { font-size: 15px; font-weight: 800; color: var(--ink); }
+
+  .grp-label { font-size: 11.5px; font-weight: 800; letter-spacing: 0.5px; text-transform: uppercase; color: var(--ink); margin-bottom: 6px; }
+  .grp-sub { font-size: 11px; color: var(--faint); font-weight: 600; margin-bottom: 6px; }
+
+  .opt-row {
+    display: flex; align-items: center; gap: 10px; padding: 12px 4px; cursor: pointer;
+    border-top: 1px solid var(--line);
+  }
+  .opt-row:first-child { border-top: none; }
+  .opt-row .lbl { flex: 1; font-size: 14px; font-weight: 600; color: var(--muted); }
+  .opt-row.on .lbl { color: var(--ink); }
+  .opt-row .pr { font-size: 12.5px; font-weight: 600; color: var(--muted); }
+  .box { width: 22px; height: 22px; border-radius: 7px; border: 2px solid var(--faint); flex-shrink: 0; display: flex; align-items: center; justify-content: center; }
+  .opt-row.on .box { background: var(--primary); border: none; color: #fff; font-size: 12px; font-weight: 900; }
+
+  .chip {
+    display: inline-flex; align-items: center; gap: 5px; padding: 8px 13px; border-radius: 999px;
+    border: 1.5px solid var(--line); background: var(--surface); font-size: 12.5px; font-weight: 700; color: var(--muted); cursor: pointer;
+  }
+  .chip.on { border-color: var(--primary); background: var(--primary-soft); color: var(--primary); }
+  .chip-row { display: flex; gap: 7px; flex-wrap: wrap; }
+
+  .cta {
+    margin-top: auto; background: var(--primary); color: #fff; font-size: 14.5px; font-weight: 700;
+    text-align: center; border-radius: 14px; padding: 13px; cursor: pointer;
+  }
+  .cta.disabled { background: var(--faint); cursor: not-allowed; }
+
+  .card { background: var(--surface); border: 1px solid var(--line); border-radius: var(--radius); overflow: hidden; }
+  .card-pad { padding: 12px 14px; }
+</style>
+</head>
+<body>
+
+<!-- ============ 1. NESTED CHIP (existing) ============ -->
+<div style="position:absolute; left:60px; top:40px;">
+  <div class="frame-label">1 · Nested Chip <span class="frame-sub">— modifier muncul di bawah opsi induk, tetap 1 halaman</span></div>
+  <div class="phone">
+    <div class="statusbar"><span>9:41</span><span>📶 🔋</span></div>
+    <div class="topbar"><div class="back">←</div><div class="title">Detail Menu</div></div>
+    <div class="body">
+      <div class="item-head"><h3>Paket Komplit Berdua</h3><div class="price">Rp95.000</div></div>
+      <div>
+        <div class="grp-label">Pilihan Ayam</div>
+        <div class="grp-sub">Wajib dipilih · maks. 1</div>
+        <div id="n1-ayam"></div>
+      </div>
+      <div class="cta" id="n1-cta">Pilih semua modifier dulu</div>
+    </div>
+  </div>
+</div>
+
+<!-- ============ 2. CHAINED SHEET (step by step) ============ -->
+<div style="position:absolute; left:520px; top:40px;">
+  <div class="frame-label">2 · Sheet Berjenjang <span class="frame-sub">— tiap grup modifier layar tersendiri, auto lanjut</span></div>
+  <div class="phone">
+    <div class="statusbar"><span>9:41</span><span>📶 🔋</span></div>
+    <div class="topbar"><div class="back" id="s2-back">←</div><div class="title" id="s2-title">Pilih Ayam</div></div>
+    <div class="body" id="s2-body"></div>
+  </div>
+</div>
+
+<!-- ============ 3. ACCORDION CARD ============ -->
+<div style="position:absolute; left:980px; top:40px;">
+  <div class="frame-label">3 · Accordion Card <span class="frame-sub">— opsi induk jadi kartu, expand isi modifier saat dipilih</span></div>
+  <div class="phone">
+    <div class="statusbar"><span>9:41</span><span>📶 🔋</span></div>
+    <div class="topbar"><div class="back">←</div><div class="title">Detail Menu</div></div>
+    <div class="body">
+      <div class="item-head"><h3>Paket Komplit Berdua</h3><div class="price">Rp95.000</div></div>
+      <div class="grp-label" style="margin-bottom:0;">Pilihan Ayam</div>
+      <div id="n3-ayam" style="display:flex; flex-direction:column; gap:8px;"></div>
+      <div class="cta" id="n3-cta">Pilih semua modifier dulu</div>
+    </div>
+  </div>
+</div>
+
+<!-- ============ 4. RINGKASAN + TOMBOL ATUR (modal) ============ -->
+<div style="position:absolute; left:60px; top:960px;">
+  <div class="frame-label">4 · Ringkasan + "Atur" <span class="frame-sub">— pilih ayam singkat, modifier dibuka lewat modal terpisah</span></div>
+  <div class="phone">
+    <div class="statusbar"><span>9:41</span><span>📶 🔋</span></div>
+    <div class="topbar"><div class="back">←</div><div class="title">Detail Menu</div></div>
+    <div class="body">
+      <div class="item-head"><h3>Paket Komplit Berdua</h3><div class="price">Rp95.000</div></div>
+      <div>
+        <div class="grp-label">Pilihan Ayam</div>
+        <div id="n4-ayam"></div>
+      </div>
+      <div id="n4-summary"></div>
+      <div class="cta" id="n4-cta">Pilih ayam dulu</div>
+    </div>
+  </div>
+  <!-- modal overlay -->
+  <div id="n4-modal" style="display:none; position:absolute; inset:0; background:rgba(19,32,31,0.45); border-radius:40px; align-items:flex-end; justify-content:center;">
+    <div style="background:#fff; width:100%; border-radius:24px 24px 0 0; padding:18px 18px 22px; max-height:80%; overflow:auto;">
+      <div style="width:32px; height:4px; background:var(--line); border-radius:99px; margin:0 auto 14px;"></div>
+      <div style="font-size:16px; font-weight:800; color:var(--ink); margin-bottom:12px;">Atur Modifier</div>
+      <div id="n4-modal-body" style="display:flex; flex-direction:column; gap:14px;"></div>
+      <div class="cta" id="n4-modal-save" style="margin-top:16px;">Simpan</div>
+    </div>
+  </div>
+</div>
+
+<template id="__bundler_thumbnail">
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100">
+    <rect width="100" height="100" fill="#EEF2F2"/>
+    <circle cx="50" cy="42" r="15" fill="#1799A5"/>
+    <text x="50" y="78" font-size="11" fill="#13201F" text-anchor="middle" font-family="sans-serif" font-weight="700">Modifier UI</text>
+  </svg>
+</template>
+
+<script>
+const AYAM = [
+  { id: 'kremes', label: 'Ayam Goreng Kremes', price: 0 },
+  { id: 'lengkuas', label: 'Ayam Goreng Lengkuas', price: 0 },
+  { id: 'penyet', label: 'Ayam Penyet Sambal Ijo', price: 3000 },
+];
+const PORSI = [{ id: 'dada', label: 'Dada' }, { id: 'paha', label: 'Paha' }, { id: 'sayap', label: 'Sayap' }];
+const PEDAS = [{ id: 'tidak', label: 'Tidak Pedas' }, { id: 'sedang', label: 'Sedang' }, { id: 'pedas', label: 'Pedas' }];
+const SAMBAL = [{ id: 'terasi', label: 'Sambal Terasi' }, { id: 'ijo', label: 'Sambal Ijo' }, { id: 'matah', label: 'Sambal Matah', price: 2000 }];
+const rp = (n) => 'Rp' + n.toLocaleString('id-ID');
+
+// ---------- 1. Nested chip ----------
+(function () {
+  let ayam = null, porsi = null, pedas = null, sambal = [];
+  function render() {
+    const el = document.getElementById('n1-ayam');
+    el.innerHTML = AYAM.map((o, i) => {
+      const on = ayam === o.id;
+      let sub = '';
+      if (on) {
+        sub = `
+          <div style="margin:2px 0 12px; padding-left:14px; border-left:2px solid var(--primary-soft);">
+            <div class="grp-label" style="font-size:10.5px;">Potongan</div>
+            <div class="chip-row" style="margin-bottom:10px;">${PORSI.map((p) => `<div class="chip ${porsi === p.id ? 'on' : ''}" data-act="porsi" data-id="${p.id}">${p.label}</div>`).join('')}</div>
+            <div class="grp-label" style="font-size:10.5px;">Tingkat Kepedasan</div>
+            <div class="chip-row" style="margin-bottom:10px;">${PEDAS.map((p) => `<div class="chip ${pedas === p.id ? 'on' : ''}" data-act="pedas" data-id="${p.id}">${p.label}</div>`).join('')}</div>
+            <div class="grp-label" style="font-size:10.5px;">Sambal</div>
+            <div class="chip-row">${SAMBAL.map((p) => `<div class="chip ${sambal.includes(p.id) ? 'on' : ''}" data-act="sambal" data-id="${p.id}">${p.label}${p.price ? ' +' + rp(p.price) : ''}</div>`).join('')}</div>
+          </div>`;
+      }
+      return `<div class="opt-row ${on ? 'on' : ''}" data-act="ayam" data-id="${o.id}" style="${i ? '' : 'border-top:none;'}"><span class="lbl">${o.label}</span>${o.price ? `<span class="pr">+${rp(o.price)}</span>` : ''}<span class="box">${on ? '✓' : ''}</span></div>${sub}`;
+    }).join('');
+    const ok = ayam && porsi && pedas;
+    const cta = document.getElementById('n1-cta');
+    cta.textContent = ok ? 'Tambah · ' + rp(95000 + (AYAM.find((a) => a.id === ayam)?.price || 0) + sambal.reduce((s, id) => s + (SAMBAL.find((x) => x.id === id)?.price || 0), 0)) : 'Pilih semua modifier dulu';
+    cta.classList.toggle('disabled', !ok);
+  }
+  document.getElementById('n1-ayam').addEventListener('click', (e) => {
+    const t = e.target.closest('[data-act]'); if (!t) return;
+    const { act, id } = t.dataset;
+    if (act === 'ayam') { ayam = ayam === id ? ayam : id; porsi = null; pedas = null; sambal = []; }
+    if (act === 'porsi') porsi = id;
+    if (act === 'pedas') pedas = id;
+    if (act === 'sambal') sambal = sambal.includes(id) ? sambal.filter((x) => x !== id) : [...sambal, id];
+    render();
+  });
+  render();
+})();
+
+// ---------- 2. Chained sheet ----------
+(function () {
+  const steps = ['ayam', 'porsi', 'pedas', 'sambal', 'done'];
+  const titles = { ayam: 'Pilih Ayam', porsi: 'Potongan', pedas: 'Tingkat Kepedasan', sambal: 'Sambal', done: 'Ringkasan' };
+  let step = 0, sel = { ayam: null, porsi: null, pedas: null, sambal: [] };
+  function group(list, key, multi) {
+    return list.map((o) => {
+      const on = multi ? sel[key].includes(o.id) : sel[key] === o.id;
+      return `<div class="opt-row ${on ? 'on' : ''}" data-id="${o.id}"><span class="lbl">${o.label}</span>${o.price ? `<span class="pr">+${rp(o.price)}</span>` : ''}<span class="box">${on ? '✓' : ''}</span></div>`;
+    }).join('');
+  }
+  function render() {
+    const key = steps[step];
+    document.getElementById('s2-title').textContent = titles[key];
+    document.getElementById('s2-back').style.visibility = step === 0 ? 'hidden' : 'visible';
+    const body = document.getElementById('s2-body');
+    if (key === 'done') {
+      const ayamO = AYAM.find((a) => a.id === sel.ayam);
+      const total = 95000 + (ayamO?.price || 0) + sel.sambal.reduce((s, id) => s + (SAMBAL.find((x) => x.id === id)?.price || 0), 0);
+      body.innerHTML = `
+        <div class="card card-pad" style="display:flex; flex-direction:column; gap:6px;">
+          <div style="font-size:13px; font-weight:700; color:var(--ink);">${ayamO.label}</div>
+          <div style="font-size:12.5px; color:var(--muted);">${PORSI.find((p) => p.id === sel.porsi).label} · ${PEDAS.find((p) => p.id === sel.pedas).label}${sel.sambal.length ? ' · ' + sel.sambal.map((id) => SAMBAL.find((s) => s.id === id).label).join(', ') : ''}</div>
+        </div>
+        <div class="cta">Tambah · ${rp(total)}</div>`;
+      return;
+    }
+    const map = { ayam: [AYAM, false], porsi: [PORSI, false], pedas: [PEDAS, false], sambal: [SAMBAL, true] };
+    const [list, multi] = map[key];
+    body.innerHTML = `<div id="s2-opts">${group(list, key, multi)}</div>${multi ? '<div class="cta" id="s2-next">Lanjut</div>' : ''}`;
+  }
+  document.getElementById('s2-back').addEventListener('click', () => { if (step > 0) { step--; render(); } });
+  document.getElementById('s2-body').addEventListener('click', (e) => {
+    const t = e.target.closest('[data-id]');
+    if (t) {
+      const key = steps[step];
+      if (key === 'sambal') { sel.sambal = sel.sambal.includes(t.dataset.id) ? sel.sambal.filter((x) => x !== t.dataset.id) : [...sel.sambal, t.dataset.id]; render(); return; }
+      sel[key] = t.dataset.id;
+      step++; render();
+      return;
+    }
+    if (e.target.id === 's2-next') { step++; render(); }
+  });
+  render();
+})();
+
+// ---------- 3. Accordion ----------
+(function () {
+  let ayam = null, porsi = null, pedas = null, sambal = [];
+  function render() {
+    const el = document.getElementById('n3-ayam');
+    el.innerHTML = AYAM.map((o) => {
+      const on = ayam === o.id;
+      return `
+        <div class="card" data-act="ayam" data-id="${o.id}" style="border-color:${on ? 'var(--primary)' : 'var(--line)'};">
+          <div class="card-pad" style="display:flex; align-items:center; gap:10px; cursor:pointer;">
+            <span style="flex:1; font-size:14px; font-weight:700; color:var(--ink);">${o.label}</span>
+            ${o.price ? `<span class="pr">+${rp(o.price)}</span>` : ''}
+            <span class="box" style="${on ? 'background:var(--primary); border:none; color:#fff;' : ''}">${on ? '✓' : ''}</span>
+          </div>
+          ${on ? `
+          <div style="padding:0 14px 14px; border-top:1px solid var(--line); margin-top:-1px;">
+            <div class="grp-label" style="font-size:10.5px; margin-top:10px;">Potongan</div>
+            <div class="chip-row" style="margin-bottom:10px;">${PORSI.map((p) => `<div class="chip ${porsi === p.id ? 'on' : ''}" data-act="porsi" data-id="${p.id}">${p.label}</div>`).join('')}</div>
+            <div class="grp-label" style="font-size:10.5px;">Tingkat Kepedasan</div>
+            <div class="chip-row" style="margin-bottom:10px;">${PEDAS.map((p) => `<div class="chip ${pedas === p.id ? 'on' : ''}" data-act="pedas" data-id="${p.id}">${p.label}</div>`).join('')}</div>
+            <div class="grp-label" style="font-size:10.5px;">Sambal</div>
+            <div class="chip-row">${SAMBAL.map((p) => `<div class="chip ${sambal.includes(p.id) ? 'on' : ''}" data-act="sambal" data-id="${p.id}">${p.label}${p.price ? ' +' + rp(p.price) : ''}</div>`).join('')}</div>
+          </div>` : ''}
+        </div>`;
+    }).join('');
+    const ok = ayam && porsi && pedas;
+    const cta = document.getElementById('n3-cta');
+    cta.textContent = ok ? 'Tambah · ' + rp(95000 + (AYAM.find((a) => a.id === ayam)?.price || 0) + sambal.reduce((s, id) => s + (SAMBAL.find((x) => x.id === id)?.price || 0), 0)) : 'Pilih semua modifier dulu';
+    cta.classList.toggle('disabled', !ok);
+  }
+  document.getElementById('n3-ayam').addEventListener('click', (e) => {
+    const t = e.target.closest('[data-act]'); if (!t) return;
+    const { act, id } = t.dataset;
+    if (act === 'ayam') { ayam = ayam === id ? ayam : id; porsi = null; pedas = null; sambal = []; }
+    if (act === 'porsi') porsi = id;
+    if (act === 'pedas') pedas = id;
+    if (act === 'sambal') sambal = sambal.includes(id) ? sambal.filter((x) => x !== id) : [...sambal, id];
+    render();
+  });
+  render();
+})();
+
+// ---------- 4. Ringkasan + Atur (modal) ----------
+(function () {
+  let ayam = null, porsi = null, pedas = null, sambal = [];
+  function ayamList() {
+    document.getElementById('n4-ayam').innerHTML = AYAM.map((o, i) => {
+      const on = ayam === o.id;
+      return `<div class="opt-row ${on ? 'on' : ''}" data-id="${o.id}" style="${i ? '' : 'border-top:none;'}"><span class="lbl">${o.label}</span>${o.price ? `<span class="pr">+${rp(o.price)}</span>` : ''}<span class="box">${on ? '✓' : ''}</span></div>`;
+    }).join('');
+  }
+  function summary() {
+    const box = document.getElementById('n4-summary');
+    const filled = porsi && pedas;
+    if (!ayam) { box.innerHTML = ''; return; }
+    box.innerHTML = `
+      <div class="card card-pad" style="display:flex; align-items:center; gap:10px;">
+        <div style="flex:1; min-width:0;">
+          <div style="font-size:11.5px; font-weight:700; color:var(--faint); text-transform:uppercase; letter-spacing:.5px;">Modifier</div>
+          <div style="font-size:12.5px; color:${filled ? 'var(--ink)' : 'var(--faint)'}; font-weight:600; margin-top:2px;">
+            ${filled ? PORSI.find((p) => p.id === porsi).label + ' · ' + PEDAS.find((p) => p.id === pedas).label + (sambal.length ? ' · ' + sambal.map((id) => SAMBAL.find((s) => s.id === id).label).join(', ') : '') : 'Belum diatur'}
+          </div>
+        </div>
+        <div class="chip on" id="n4-open" style="flex-shrink:0;">${filled ? 'Ubah' : 'Atur'}</div>
+      </div>`;
+  }
+  function modalBody() {
+    document.getElementById('n4-modal-body').innerHTML = `
+      <div><div class="grp-label">Potongan</div><div class="chip-row">${PORSI.map((p) => `<div class="chip ${porsi === p.id ? 'on' : ''}" data-act="porsi" data-id="${p.id}">${p.label}</div>`).join('')}</div></div>
+      <div><div class="grp-label">Tingkat Kepedasan</div><div class="chip-row">${PEDAS.map((p) => `<div class="chip ${pedas === p.id ? 'on' : ''}" data-act="pedas" data-id="${p.id}">${p.label}</div>`).join('')}</div></div>
+      <div><div class="grp-label">Sambal</div><div class="chip-row">${SAMBAL.map((p) => `<div class="chip ${sambal.includes(p.id) ? 'on' : ''}" data-act="sambal" data-id="${p.id}">${p.label}${p.price ? ' +' + rp(p.price) : ''}</div>`).join('')}</div></div>`;
+  }
+  function cta() {
+    const ok = ayam && porsi && pedas;
+    const c = document.getElementById('n4-cta');
+    c.textContent = ok ? 'Tambah · ' + rp(95000 + (AYAM.find((a) => a.id === ayam)?.price || 0) + sambal.reduce((s, id) => s + (SAMBAL.find((x) => x.id === id)?.price || 0), 0)) : (ayam ? 'Atur modifier dulu' : 'Pilih ayam dulu');
+    c.classList.toggle('disabled', !ok);
+  }
+  function renderAll() { ayamList(); summary(); cta(); }
+  document.getElementById('n4-ayam').addEventListener('click', (e) => {
+    const t = e.target.closest('[data-id]'); if (!t) return;
+    ayam = t.dataset.id; porsi = null; pedas = null; sambal = [];
+    renderAll();
+    document.getElementById('n4-modal').style.display = 'flex';
+    modalBody();
+  });
+  document.getElementById('n4-summary').addEventListener('click', (e) => {
+    if (e.target.id === 'n4-open') { document.getElementById('n4-modal').style.display = 'flex'; modalBody(); }
+  });
+  document.getElementById('n4-modal-body').addEventListener('click', (e) => {
+    const t = e.target.closest('[data-act]'); if (!t) return;
+    const { act, id } = t.dataset;
+    if (act === 'porsi') porsi = id;
+    if (act === 'pedas') pedas = id;
+    if (act === 'sambal') sambal = sambal.includes(id) ? sambal.filter((x) => x !== id) : [...sambal, id];
+    modalBody();
+  });
+  document.getElementById('n4-modal-save').addEventListener('click', () => {
+    document.getElementById('n4-modal').style.display = 'none';
+    renderAll();
+  });
+  renderAll();
+})();
+
+</script>
+</body>
+</html>

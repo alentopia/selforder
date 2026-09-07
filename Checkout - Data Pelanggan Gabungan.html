@@ -1,0 +1,299 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<title>Checkout — Data Pelanggan Gabungan</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body {
+    background: #f0f0ef;
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+    display: flex;
+    justify-content: center;
+    padding: 60px 20px;
+  }
+  .phone {
+    width: 402px;
+    height: 874px;
+    background: #EEF2F2;
+    border-radius: 44px;
+    box-shadow: 0 0 0 12px #0d0d0d, 0 30px 60px rgba(0,0,0,0.3);
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+    position: relative;
+  }
+  .statusbar {
+    height: 44px;
+    flex-shrink: 0;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0 24px;
+    font-size: 14px;
+    font-weight: 600;
+    color: #13201F;
+  }
+  .topbar {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 6px 14px 14px;
+    flex-shrink: 0;
+  }
+  .topbar .back {
+    width: 34px; height: 34px;
+    border-radius: 999px;
+    background: #FFFFFF;
+    display: flex; align-items: center; justify-content: center;
+    color: #13201F;
+    font-size: 18px;
+  }
+  .topbar .title {
+    font-size: 17px;
+    font-weight: 700;
+    color: #13201F;
+  }
+  .body {
+    flex: 1;
+    padding: 10px 14px 12px;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    overflow: hidden;
+  }
+  .card {
+    background: #FFFFFF;
+    border: 1px solid rgba(19,32,31,0.08);
+    border-radius: 16px;
+    box-shadow: 0 1px 2px rgba(19,32,31,0.04);
+    overflow: hidden;
+  }
+  .info-row {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 11px 14px;
+    font-size: 14px;
+    font-weight: 700;
+    color: #13201F;
+  }
+  .info-row .icon { color: #5C6B6A; }
+
+  .section-label {
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 1px;
+    text-transform: uppercase;
+    color: #9BAAA9;
+    padding-left: 2px;
+  }
+  .section-label span {
+    font-weight: 600;
+    letter-spacing: 0;
+    text-transform: none;
+  }
+  .datapelanggan { display: flex; flex-direction: column; gap: 8px; }
+  .fields-row { display: flex; gap: 10px; }
+  .field {
+    flex: 1;
+    min-width: 0;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    background: #FFFFFF;
+    border: 1.5px solid rgba(19,32,31,0.08);
+    border-radius: 16px;
+    box-shadow: 0 1px 2px rgba(19,32,31,0.04);
+    padding: 14px 14px;
+  }
+  .field.readonly { background: #F6F9F9; }
+  .field .icon { color: #9BAAA9; flex-shrink: 0; }
+  .field input {
+    border: none;
+    outline: none;
+    background: transparent;
+    font-size: 14.5px;
+    color: #13201F;
+    flex: 1;
+    min-width: 0;
+    font-family: inherit;
+  }
+  .field input::placeholder { color: #9BAAA9; }
+  .field .value {
+    flex: 1; min-width: 0;
+    font-size: 14.5px;
+    color: #13201F;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+  .field .check { color: #1799A5; flex-shrink: 0; }
+
+  .summary-card { padding: 6px 16px 0; }
+  .summary-line {
+    display: flex;
+    gap: 10px;
+    align-items: center;
+    padding: 12px 0;
+    border-top: 1px solid rgba(19,32,31,0.08);
+  }
+  .summary-line:first-child { border-top: none; }
+  .summary-line .qty { min-width: 22px; font-size: 13px; font-weight: 800; color: #5C6B6A; }
+  .summary-line .name { flex: 1; font-size: 14px; font-weight: 600; color: #13201F; }
+  .summary-line .price { font-size: 13.5px; font-weight: 700; color: #13201F; }
+  .summary-total {
+    display: flex; justify-content: space-between; align-items: baseline;
+    padding: 12px 16px; border-top: 1px solid rgba(19,32,31,0.08); background: #F6F9F9;
+    margin: 0 -16px;
+  }
+  .summary-total .label { font-size: 14px; font-weight: 700; color: #13201F; }
+  .summary-total .val { font-size: 16px; font-weight: 800; color: #13201F; }
+
+  .payment-label {
+    font-size: 11px; font-weight: 700; letter-spacing: 1px; text-transform: uppercase;
+    color: #9BAAA9; padding: 2px 2px 0;
+  }
+  .payment-options { display: flex; gap: 10px; margin-top: 10px; }
+  .pay-opt {
+    flex: 1;
+    display: flex; align-items: center; gap: 10px;
+    background: #FFFFFF; border: 1.5px solid rgba(19,32,31,0.08); border-radius: 16px;
+    padding: 12px;
+  }
+  .pay-opt.selected { border-color: #1799A5; }
+  .pay-opt .ic { width: 34px; height: 34px; border-radius: 10px; background: rgba(23,153,165,0.1); display: flex; align-items: center; justify-content: center; color: #1799A5; flex-shrink: 0; }
+  .pay-opt .lbl { font-size: 13px; font-weight: 700; color: #13201F; }
+  .radio { width: 18px; height: 18px; border-radius: 999px; border: 2px solid rgba(19,32,31,0.15); margin-left: auto; flex-shrink: 0; }
+  .pay-opt.selected .radio { border-color: #1799A5; background: #1799A5; box-shadow: inset 0 0 0 3px #fff; }
+
+  .footer {
+    flex-shrink: 0;
+    background: #FFFFFF;
+    border-top: 1px solid rgba(19,32,31,0.08);
+    padding: 12px 16px 20px;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+  }
+  .footer .total-label { font-size: 11.5px; color: #5C6B6A; font-weight: 500; }
+  .footer .total-val { font-size: 18px; font-weight: 800; color: #13201F; }
+  .footer .cta {
+    margin-left: auto;
+    background: #1799A5;
+    color: #FFFFFF;
+    font-size: 15px;
+    font-weight: 700;
+    border-radius: 14px;
+    padding: 14px 32px;
+  }
+
+  .callout {
+    position: absolute;
+    left: 430px;
+    top: 260px;
+    width: 300px;
+    font-size: 13px;
+    line-height: 1.6;
+    color: #33403f;
+    background: #fff;
+    border: 1px solid rgba(19,32,31,0.1);
+    border-radius: 12px;
+    padding: 16px 18px;
+    box-shadow: 0 8px 24px rgba(0,0,0,0.08);
+  }
+  .callout b { color: #1799A5; }
+  .callout::before {
+    content: '';
+    position: absolute;
+    left: -8px; top: 24px;
+    width: 0; height: 0;
+    border-top: 8px solid transparent;
+    border-bottom: 8px solid transparent;
+    border-right: 8px solid #fff;
+  }
+  .wrap { position: relative; }
+</style>
+</head>
+<body>
+  <div class="wrap">
+    <div class="phone">
+      <div class="statusbar">
+        <span>9:41</span>
+        <span>📶 🔋</span>
+      </div>
+      <div class="topbar">
+        <div class="back">←</div>
+        <div class="title">Konfirmasi Pesanan</div>
+      </div>
+      <div class="body">
+        <div class="card">
+          <div class="info-row">
+            <span class="icon">🍽️</span> Dine In
+          </div>
+        </div>
+
+        <div class="datapelanggan">
+          <div class="section-label">Data Pelanggan <span>· opsional</span></div>
+          <div class="fields-row">
+            <div class="field">
+              <span class="icon">👤</span>
+              <input placeholder="Nama" disabled>
+            </div>
+            <div class="field readonly">
+              <span class="icon">📱</span>
+              <span class="value">+62 813 8001 2025</span>
+              <span class="check">✓</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="card summary-card">
+          <div class="summary-line">
+            <span class="qty">1×</span>
+            <span class="name">Nasi Ayam Bakar Madu</span>
+            <span class="price">Rp32.000</span>
+          </div>
+          <div class="summary-line">
+            <span class="qty">2×</span>
+            <span class="name">Es Cendol Durian</span>
+            <span class="price">Rp36.000</span>
+          </div>
+          <div class="summary-total">
+            <span class="label">Total Pembayaran</span>
+            <span class="val">Rp75.400</span>
+          </div>
+        </div>
+
+        <div>
+          <div class="payment-label">Metode Pembayaran</div>
+          <div class="payment-options">
+            <div class="pay-opt selected">
+              <div class="ic">▦</div>
+              <div class="lbl">QRIS</div>
+              <div class="radio"></div>
+            </div>
+            <div class="pay-opt">
+              <div class="ic">💵</div>
+              <div class="lbl">Bayar Langsung</div>
+              <div class="radio"></div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="footer">
+        <div>
+          <div class="total-label">Total Pembayaran</div>
+          <div class="total-val">Rp75.400</div>
+        </div>
+        <div class="cta">Bayar</div>
+      </div>
+    </div>
+
+    <div class="callout">
+      QR Statis <b>tanpa nomor meja</b> → field "Nama" &amp; nomor HP terverifikasi digabung jadi satu baris <b>"Data Pelanggan"</b>, biar kartu info di atas nggak sepi.
+    </div>
+  </div>
+</body>
+</html>
