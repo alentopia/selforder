@@ -64,7 +64,7 @@ function CashStatusScreen({ params }) {
 
   // 0 = menunggu, 1 = diterima, 2 = diproses
   const [phase, setPhase] = useStateCS(0);
-  const [ref] = useStateCS(() => 'REF-' + String(app.orderRef).padStart(6, '0'));
+  const ref = app.refCode;
   const [placedAt] = useStateCS(() => new Date());
   const [checking, setChecking] = useStateCS(false);
   const [checkMsg, setCheckMsg] = useStateCS(null);
@@ -86,7 +86,8 @@ function CashStatusScreen({ params }) {
     setChecking(true);
     setTimeout(() => {
       setChecking(false);
-      if (paidRef.current) { setCheckMsg(null); setPhase(1); }
+      // Close Bill (MVP): sudah dibayar → halaman "Pembayaran berhasil" (Figma: Pesanan Selesai)
+      if (paidRef.current) { setCheckMsg(null); if (isOpenBill) setPhase(1); else app.go('success', { root: true }); }
       else setCheckMsg({ ok: false, text: 'Pembayaran belum diterima kasir. Selesaikan pembayaran, lalu cek lagi.' });
     }, 1100);
   };
@@ -106,6 +107,7 @@ function CashStatusScreen({ params }) {
   [{ type: isDine ? 'dinein' : 'takeaway', label: isDine ? 'Dine In' : 'Take Away', n: qtyTotal, table: isDine }];
   const bill = app.computeBill();
   const freeLines = lines.filter((l) => l.free);
+  const txPromoName = (app.applied.map((a) => promoById(a.id)).find((p) => p && isVoucher(p)) || {}).title;
   // Open Bill: rincian dihitung dari settleBill (PPN sekali untuk seluruh tagihan)
   const obDiscount = (params && params.discount) || 0;
   const sb = isOpenBill ? app.settleBill(obDiscount) : null;
@@ -228,9 +230,9 @@ function CashStatusScreen({ params }) {
                     <span style={{ flex: 1, fontSize: 13.5, fontWeight: 600, color: t.ink, lineHeight: 1.3 }}>{l.name}</span>
                     {l.free
                       ? <span style={{ fontSize: 12.5, fontWeight: 800, color: t.primary, flexShrink: 0 }}>Gratis</span>
-                      : <Money value={l.unit * l.qty} style={{ fontSize: 13, fontWeight: 700, color: t.ink, flexShrink: 0 }} />}
+                      : <Money value={isOpenBill ? l.unit * l.qty : app.linePrice(l).final} style={{ fontSize: 13, fontWeight: 700, color: t.ink, flexShrink: 0 }} />}
                   </div>
-                  {l.options && l.options.length > 0 && <div style={{ fontSize: 12, color: t.muted, marginTop: 3 }}>{l.options.join(' · ')}</div>}
+                  {isPaketLine(l) ? <div style={{ marginTop: 3 }}><PaketDetail line={l} withContents /></div> : l.options && l.options.length > 0 && <div style={{ fontSize: 12, color: t.muted, marginTop: 3 }}>{l.options.join(' · ')}</div>}
                   {l.notes && <div style={{ fontSize: 12, color: t.faint, marginTop: 2, fontStyle: 'italic' }}>"{l.notes}"</div>}
                   {mixedType &&
                   <div style={{ marginTop: 4, display: 'inline-flex', alignItems: 'center', gap: 4, fontSize: 11, fontWeight: 700, color: t.muted }}>
@@ -255,23 +257,11 @@ function CashStatusScreen({ params }) {
           </div>
           {discount > 0 && (
             <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-              <span style={{ fontSize: 13, color: t.primary, fontWeight: 600 }}>Diskon</span>
+              <span style={{ fontSize: 13, color: t.primary, fontWeight: 600 }}>{(!isOpenBill && txPromoName) || 'Diskon'}</span>
               <span style={{ fontSize: 13, fontWeight: 700, color: t.primary }}>– {rupiah(discount)}</span>
             </div>
           )}
-          {!isOpenBill && freeLines.map((l) => {
-            const it = itemById(l.itemId);
-            const full = (it ? it.price : 0) * l.qty;
-            return (
-              <div key={l.uid} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 8 }}>
-                <span style={{ display: 'inline-flex', alignItems: 'center', gap: 6, fontSize: 13, color: t.primary, fontWeight: 600, minWidth: 0 }}>
-                  <Icon name="tag" size={14} color={t.primary} style={{ flexShrink: 0 }} />
-                  <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>Gratis {l.name}</span>
-                </span>
-                <span style={{ fontSize: 13, fontWeight: 700, color: t.primary, flexShrink: 0 }}>– {rupiah(full)}</span>
-              </div>);
-
-          })}
+          {/* Close Bill: item gratis & Promo Produk sudah masuk ke subtotal (lihat baris item) */}
           {isOpenBill && itemDisc > 0 && (
             <div style={{ display: 'flex', justifyContent: 'space-between' }}>
               <span style={{ fontSize: 13, color: t.primary, fontWeight: 600 }}>Diskon produk</span>

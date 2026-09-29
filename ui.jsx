@@ -29,6 +29,8 @@ function Icon({ name, size = 22, color = 'currentColor', stroke = 2, style }) {
     bolt: <path d="M13 3 L6 13 H11 L10 21 L18 10 H13 L13 3 Z" {...p} />,
     info: <g {...p}><circle cx="12" cy="12" r="9" /><path d="M12 11v5M12 8h.01" /></g>,
     clock: <g {...p}><circle cx="12" cy="12" r="9" /><path d="M12 7v5l3 2" /></g>,
+    calendar: <g {...p}><rect x="3" y="4" width="18" height="18" rx="2" /><path d="M16 2v4M8 2v4M3 10h18" /></g>,
+    repeat: <g {...p}><path d="M17 2l4 4-4 4" /><path d="M3 11v-1a4 4 0 0 1 4-4h14" /><path d="M7 22l-4-4 4-4" /><path d="M21 13v1a4 4 0 0 1-4 4H3" /></g>,
     edit: <g {...p}><path d="M5 19h14M14 5l5 5-9 9H6v-4l8-10z" /></g>,
     receipt: <g {...p}><path d="M6 3h12v18l-2.5-1.5L13 21l-2.5-1.5L8 21l-2-1.5V3z" /><path d="M9 8h6M9 12h6" /></g>,
     download: <g {...p}><path d="M12 4v11M8 11l4 4 4-4" /><path d="M5 19h14" /></g>,
@@ -43,8 +45,11 @@ function Icon({ name, size = 22, color = 'currentColor', stroke = 2, style }) {
     user: <g {...p}><circle cx="12" cy="8" r="3.5" /><path d="M5 20c0-3.5 3-5.5 7-5.5s7 2 7 5.5" /></g>,
     pin: <g {...p}><path d="M12 22s-8-6.5-8-12a8 8 0 0 1 16 0c0 5.5-8 12-8 12z" /><circle cx="12" cy="10" r="3" /></g>,
     home: <g {...p}><path d="M4 11l8-7 8 7" /><path d="M6 10v9a1 1 0 0 0 1 1h3v-6h4v6h3a1 1 0 0 0 1-1v-9" /></g>,
-    dineIn: <g {...p}><path d="M12 3v10M8 3c0 3 1 5 4 6" /><path d="M16 3v4a4 4 0 0 1-4 4" /><path d="M10 19h4M12 13v6" /><ellipse cx="12" cy="20" rx="4" ry="1" /></g>,
-    takeaway: <g {...p}><path d="M6 2h12l1 5H5L6 2z" /><path d="M5 7l1 13a1 1 0 0 0 1 1h10a1 1 0 0 0 1-1l1-13" /><path d="M9 11h6" /></g>,
+    // dineIn & takeaway: ikon terisi dari Figma (Icon/dineIn = Material local_dining, Icon/takeaway)
+    dineIn: <path fill={color} d="M8.1 13.34l2.83-2.83L3.91 3.5c-1.56 1.56-1.56 4.09 0 5.66l4.19 4.18zm6.78-1.81c1.53.71 3.68.21 5.27-1.38 1.91-1.91 2.28-4.65.81-6.12-1.46-1.46-4.2-1.1-6.12.81-1.59 1.59-2.09 3.74-1.38 5.27L3.7 19.87l1.41 1.41L12 14.41l6.88 6.88 1.41-1.41L13.41 13l1.47-1.47z" />,
+    takeaway: <path fill={color} d="M5.23 10L3 7.45L4.19 6.05L5.55 7.65L5.51 7.05L8.95 3H14.05L17.49 7.05L17.45 7.65L18.81 6.05L20 7.45L17.77 10H5.23ZM6.36 20L5.8 11.55H17.2L16.64 20H6.36Z" />,
+    // store: Figma Icon/storefront (Material storefront, terisi) — opsi "Bayar di Kasir"
+    store: <path fill={color} d="M21 11.05V19C21 19.55 20.8 20.02 20.41 20.41C20.02 20.8 19.55 21 19 21H5C4.45 21 3.98 20.8 3.59 20.41C3.2 20.02 3 19.55 3 19V11.05C2.62 10.7 2.32 10.25 2.11 9.7C1.9 9.15 1.9 8.55 2.1 7.9L3.15 4.5C3.28 4.07 3.52 3.71 3.86 3.43C4.2 3.14 4.6 3 5.05 3H18.95C19.4 3 19.79 3.14 20.12 3.41C20.46 3.69 20.7 4.05 20.85 4.5L21.9 7.9C22.1 8.55 22.1 9.14 21.89 9.67C21.68 10.21 21.38 10.67 21 11.05ZM14.2 10C14.65 10 14.99 9.85 15.22 9.54C15.46 9.23 15.55 8.88 15.5 8.5L14.95 5H13V8.7C13 9.05 13.12 9.35 13.35 9.61C13.58 9.87 13.87 10 14.2 10ZM9.7 10C10.08 10 10.4 9.87 10.64 9.61C10.88 9.35 11 9.05 11 8.7V5H9.05L8.5 8.5C8.43 8.9 8.52 9.25 8.76 9.55C9 9.85 9.32 10 9.7 10ZM5.25 10C5.55 10 5.81 9.89 6.04 9.67C6.26 9.46 6.4 9.18 6.45 8.85L7 5H5.05L4.05 8.35C3.95 8.68 4 9.04 4.21 9.43C4.42 9.81 4.77 10 5.25 10ZM18.75 10C19.23 10 19.58 9.81 19.8 9.43C20.02 9.04 20.07 8.68 19.95 8.35L18.9 5H17L17.55 8.85C17.6 9.18 17.74 9.46 17.96 9.67C18.19 9.89 18.45 10 18.75 10ZM5 19H19V11.95C18.92 11.98 18.86 12 18.84 12H18.75C18.3 12 17.9 11.92 17.56 11.78C17.22 11.62 16.88 11.38 16.55 11.05C16.25 11.35 15.91 11.58 15.52 11.75C15.14 11.92 14.73 12 14.3 12C13.85 12 13.43 11.92 13.04 11.75C12.64 11.58 12.3 11.35 12 11.05C11.72 11.35 11.39 11.58 11.01 11.75C10.64 11.92 10.23 12 9.8 12C9.32 12 8.88 11.92 8.49 11.75C8.1 11.58 7.75 11.35 7.45 11.05C7.1 11.4 6.75 11.65 6.41 11.79C6.07 11.93 5.68 12 5.25 12H5.14C5.1 12 5.05 11.98 5 11.95V19Z" />,
     whatsapp: <path fill={color} d="M12.04 2C6.58 2 2.13 6.45 2.13 11.91c0 1.75.46 3.45 1.32 4.95L2 22l5.25-1.38c1.45.79 3.08 1.21 4.79 1.21h.01c5.46 0 9.91-4.45 9.91-9.91 0-2.65-1.03-5.14-2.9-7.01A9.82 9.82 0 0 0 12.04 2zm5.8 14.16c-.24.68-1.42 1.31-1.95 1.38-.5.07-1.13.1-1.82-.11-.42-.13-.96-.31-1.65-.61-2.9-1.25-4.79-4.17-4.94-4.36-.14-.19-1.18-1.57-1.18-2.99 0-1.42.75-2.12 1.01-2.41.26-.29.57-.36.76-.36.19 0 .38 0 .55.01.18.01.41-.07.64.49.24.57.81 1.97.88 2.11.07.14.12.31.02.5-.1.19-.14.31-.29.48-.14.17-.3.38-.43.51-.14.14-.29.29-.12.57.17.28.74 1.22 1.59 1.98 1.09.97 2.01 1.27 2.3 1.41.29.14.45.12.62-.07.17-.19.71-.83.9-1.11.19-.29.38-.24.64-.14.26.09 1.66.78 1.95.93.29.14.48.21.55.33.07.12.07.69-.17 1.37z" />,
     bell: <g {...p}><path d="M6 9a6 6 0 0 1 12 0c0 5 2 6 2 6H4s2-1 2-6z" /><path d="M10 20a2 2 0 0 0 4 0" /></g>,
     megaphone: <g {...p}><path d="M4 10v4h3l9 4V6l-9 4H4z" /><path d="M18.5 9a4 4 0 0 1 0 6" /><path d="M7 14v3.5a1.5 1.5 0 0 0 3 0V16" /></g>,
@@ -300,6 +305,34 @@ function FoodImg({ label, h = 120, radius, style, src }) {
 
 }
 
+// ── PaketDetail — rincian Barang Grup: rail teal 3px + satu baris per slot ──
+// Figma "Case: Isi Paket & Pilihan": Keranjang menyembunyikan isi tetap (maks. 3 slot,
+// sisanya "+n lainnya"); Konfirmasi & Struk menampilkan isi tetap + pilihan.
+// Add-on berbayar "(+RpX)" ditulis Regular muted, sama seperti opsi biasa.
+const isPaketLine = (line) => (line.contents || []).length > 0;
+function PaketDetail({ line, withContents, max, gap = 7 }) {
+  const t = useTheme();
+  const all = line.options || [];
+  const slots = withContents ? all : all.slice((line.contents || []).length);
+  if (!slots.length) return null;
+  const shown = max ? slots.slice(0, max) : slots;
+  const more = slots.length - shown.length;
+  return (
+    <div style={{ display: 'flex', gap: 10, alignItems: 'stretch' }}>
+      <div style={{ width: 3, borderRadius: 2, background: t.primary, flexShrink: 0 }} />
+      <div style={{ flex: 1, minWidth: 0, display: 'flex', flexDirection: 'column', gap }}>
+        {shown.map((o, i) => {
+          const cut = o.indexOf(' (+');
+          return (
+            <div key={i} style={{ fontSize: 12.5, lineHeight: 1.42, color: t.ink, fontWeight: 600 }}>
+              {cut < 0 ? o : <>{o.slice(0, cut)}<span style={{ fontWeight: 400, color: t.muted }}>{o.slice(cut)}</span></>}
+            </div>);
+        })}
+        {more > 0 && <div style={{ fontSize: 12, lineHeight: 1.42, color: t.muted }}>+{more} lainnya</div>}
+      </div>
+    </div>);
+}
+
 // ── Bottom sheet shell ─────────────────────────────────────
 function Sheet({ children, onClose, title, footer, maxH = '86%' }) {
   const t = useTheme();
@@ -429,5 +462,5 @@ function openFreeItemPick(app, promo) {
 
 Object.assign(window, {
   ThemeCtx, AppCtx, useTheme, useApp,
-  Icon, Money, OptLines, ReceiptLines, lineBreakdown, EmptyState, Button, QtyStepper, Pill, FoodImg, Sheet, TopBar, ConfirmDialog, OrderTypePills, hexA, shade, openFreeItemPick
+  Icon, Money, OptLines, ReceiptLines, lineBreakdown, PaketDetail, isPaketLine, EmptyState, Button, QtyStepper, Pill, FoodImg, Sheet, TopBar, ConfirmDialog, OrderTypePills, hexA, shade, openFreeItemPick
 });

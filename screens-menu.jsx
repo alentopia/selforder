@@ -57,14 +57,14 @@ function OrderTypeSheet({ params }) {
               transition: 'border-color .15s, background .15s',
               textAlign: 'left'
             }}>
-              <div style={{ width: 44, height: 44, borderRadius: t.radiusSm, flexShrink: 0, background: on ? hexA(t.primary, 0.15) : t.surface2, display: 'flex', alignItems: 'center', justifyContent: 'center', transition: 'background .15s' }}>
-                <Icon name={o.icon} size={22} color={on ? t.primary : t.muted} stroke={1.7} />
+              <div style={{ width: 44, height: 44, borderRadius: t.radiusSm, flexShrink: 0, background: on ? t.primary : t.surface2, display: 'flex', alignItems: 'center', justifyContent: 'center', transition: 'background .15s' }}>
+                <Icon name={o.icon} size={22} color={on ? t.onPrimary : t.muted} />
               </div>
               <div style={{ flex: 1 }}>
                 <div style={{ fontSize: 14.5, fontWeight: 700, color: on ? t.primary : t.ink, transition: 'color .15s' }}>{o.label}</div>
                 <div style={{ fontSize: 12.5, color: t.faint, marginTop: 2 }}>{o.sub}</div>
               </div>
-              <div style={{ width: 22, height: 22, borderRadius: 999, border: '2px solid ' + (on ? t.primary : t.faint), background: on ? t.primary : 'transparent', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0, transition: 'all .15s' }}>
+              <div style={{ width: 22, height: 22, boxSizing: 'border-box', borderRadius: 999, border: '1px solid ' + (on ? t.primary : t.muted), background: on ? t.primary : 'transparent', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0, transition: 'all .15s' }}>
                 {on && <Icon name="check" size={12} color={t.onPrimary} stroke={3} />}
               </div>
             </button>);
@@ -141,66 +141,30 @@ function SearchScreen() {
 
 }
 
-// ── Today's Offer — item diskon, list horizontal (selalu list) ──
-// Hanya item dengan diskon harga langsung (oldPrice / promo scope item).
-// Item yang cuma jadi HADIAH free-item promo transaksi (mis. Es Teh gratis
-// min. belanja) TIDAK ditampilkan di sini — itu muncul sebagai voucher.
+// Item diskon langsung (oldPrice / promo scope item) — daftar di OffersScreen.
 const isOfferItem = (m) => m.oldPrice || PROMOS.some((p) => p.scope === 'item' && p.requireItem === m.id);
 
-function OfferCard({ item, onOpen }) {
-  const t = useTheme();
-  const out = item.stock === 0;
-  const triggerPromo = PROMOS.find((p) => p.scope === 'item' && p.requireItem === item.id) ||
-  PROMOS.find((p) => p.kind === 'free-item' && (p.fixedItem === item.id || (p.choices || []).includes(item.id)));
-  return (
-    <div onClick={out ? undefined : onOpen} style={{ scrollSnapAlign: 'start', flexShrink: 0, width: 232, display: 'flex', alignItems: 'center', gap: 11, background: t.surface, border: '1px solid ' + t.line, borderRadius: t.radius, boxShadow: t.shadow, padding: 9, cursor: out ? 'default' : 'pointer', opacity: out ? 0.55 : 1 }}>
-      <FoodImg label={item.name.toLowerCase()} h={62} radius={t.radiusSm} src={item.photo} style={{ width: 62, flexShrink: 0 }} />
-      <div style={{ flex: 1, minWidth: 0 }}>
-        {triggerPromo && <div style={{ fontSize: 11, color: '#E2680E', marginBottom: 2, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', fontWeight: "500" }}>{triggerPromo.tagline || triggerPromo.title}</div>}
-        <h4 style={{ margin: 0, color: t.ink, lineHeight: 1.25, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', fontSize: "15.5px", fontWeight: "400" }}>{item.name}</h4>
-        <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginTop: 5 }}>
-          <Money value={item.price} style={{ fontSize: 14.5, fontWeight: 800, color: t.ink }} />
-          {item.oldPrice && <Money value={item.oldPrice} strike style={{ fontSize: 12, color: t.faint, fontWeight: 600 }} />}
-          {item.oldPrice && <Icon name="tag" size={13} color={t.primary} />}
-        </div>
-      </div>
-      {out ? <StockNote item={item} /> :
-      <div style={{ flexShrink: 0, width: 24, height: 24, borderRadius: 999, background: t.primary, color: t.onPrimary, display: 'flex', alignItems: 'center', justifyContent: 'center', boxShadow: '0 4px 12px ' + hexA(t.primary, 0.4) }}><Icon name="plus" size={14} stroke={2.8} /></div>
-      }
-    </div>);
-
-}
-
-function TodayOffer() {
+// ── OfferHeader — judul "Promo Hari Ini" + Lihat Semua → katalog promo ──
+// Figma: OfferHeader (Case: Lihat List Voucher Hari Ini). Tombol ikut tweak app.offerSeeAll:
+// 'icon' (default) = lingkaran chevron di kanan judul · 'pill' = pill "Lihat Semua" ·
+// 'card' = kartu putus-putus di ujung rail (dirender VoucherRail).
+function OfferHeader() {
   const t = useTheme();
   const app = useApp();
-  const offers = MENU.filter(isOfferItem);
-  if (!offers.length) return null;
-  const seeAll = app.offerSeeAll || 'card';
+  const seeAll = app.offerSeeAll || 'icon';
   return (
-    <div style={{ marginTop: 14 }}>
-      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 10, padding: '0 18px 11px' }}>
-        <h3 style={{ margin: 0, fontFamily: t.fontDisplay, fontStyle: t.displayItalic ? 'italic' : 'normal', fontWeight: t.displayWeight, color: t.ink, fontSize: '21px', whiteSpace: 'nowrap' }}>Promo Hari Ini</h3>
-        {seeAll === 'pill' &&
-        <button onClick={() => app.go('offers')} style={{ ...{ flexShrink: 0, border: 'none', cursor: 'pointer', background: t.primarySoft, color: t.primary, borderRadius: 999, padding: '6px 13px', fontFamily: t.fontBody, fontSize: 12, fontWeight: 700, display: 'inline-flex', alignItems: 'center', gap: 3, WebkitTapHighlightColor: 'transparent' }, color: "rgb(124, 55, 55)", background: "rgba(2, 2, 2, 0.1)" }}>
-            Lihat Semua <Icon name="chevron" size={12} color={t.primary} />
-          </button>
-        }
-        {seeAll === 'icon' &&
-        <button onClick={() => app.go('offers')} aria-label="Lihat semua promo" style={{ flexShrink: 0, width: 30, height: 30, borderRadius: 999, border: '1px solid ' + t.line, background: t.surface, display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', WebkitTapHighlightColor: 'transparent', fontWeight: "400", fontSize: "13px" }}>
-            <Icon name="chevron" size={15} color={t.primary} />
-          </button>
-        }
-      </div>
-      <div style={{ display: 'flex', gap: 12, overflowX: 'auto', scrollSnapType: 'x mandatory', scrollbarWidth: 'none', scrollPaddingLeft: 18, padding: '2px 18px 8px' }}>
-        {offers.slice(0, 3).map((m) => <OfferCard key={m.id} item={m} onOpen={() => app.openItem(m.id)} />)}
-        {seeAll === 'card' &&
-        <button onClick={() => app.go('offers')} style={{ scrollSnapAlign: 'start', flexShrink: 0, width: 104, alignSelf: 'stretch', border: '1px dashed ' + t.line, background: 'transparent', borderRadius: t.radius, cursor: 'pointer', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 8, color: t.primary, fontFamily: t.fontBody, fontSize: 12, fontWeight: 700, WebkitTapHighlightColor: 'transparent' }}>
-            <div style={{ width: 36, height: 36, borderRadius: 999, background: t.primarySoft, display: 'flex', alignItems: 'center', justifyContent: 'center' }}><Icon name="arrowRight" size={18} color={t.primary} /></div>
-            Lihat Semua
-          </button>
-        }
-      </div>
+    <div style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '8px 18px' }}>
+      <h3 style={{ flex: 1, minWidth: 0, margin: 0, fontFamily: t.fontDisplay, fontStyle: t.displayItalic ? 'italic' : 'normal', fontWeight: t.displayWeight, color: t.ink, fontSize: 21, overflowWrap: 'break-word' }}>Promo Hari Ini</h3>
+      {seeAll === 'pill' &&
+      <button onClick={() => app.go('vouchers')} style={{ ...{ flexShrink: 0, border: 'none', cursor: 'pointer', background: t.primarySoft, color: t.primary, borderRadius: 999, padding: '6px 13px', fontFamily: t.fontBody, fontSize: 12, fontWeight: 700, display: 'inline-flex', alignItems: 'center', gap: 3, WebkitTapHighlightColor: 'transparent' }, color: "rgb(124, 55, 55)", background: "rgba(2, 2, 2, 0.1)" }}>
+          Lihat Semua <Icon name="chevron" size={12} color={t.primary} />
+        </button>
+      }
+      {seeAll === 'icon' &&
+      <button onClick={() => app.go('vouchers')} aria-label="Lihat semua promo" style={{ flexShrink: 0, width: 30, height: 30, borderRadius: 999, border: '1px solid ' + t.line, background: t.surface, display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', WebkitTapHighlightColor: 'transparent' }}>
+          <Icon name="chevron" size={15} color={t.primary} />
+        </button>
+      }
     </div>);
 
 }
@@ -238,26 +202,27 @@ function VoucherTicket({ p, onClick, full }) {
         <Icon name={p.kind === 'free-item' ? 'gift' : 'tag'} size={16} color={t.primary} />
       </div>
       <div style={{ minWidth: 0 }}>
-        <div style={{ fontSize: 13, fontWeight: 800, color: t.ink, lineHeight: 1.15, whiteSpace: 'nowrap' }}>{headline}</div>
+        <div style={{ fontSize: 13, fontWeight: 800, color: t.ink, whiteSpace: 'nowrap' }}>{headline}</div>
         <div style={{ fontSize: 10.5, color: t.muted, marginTop: 1, whiteSpace: 'nowrap' }}>{sub}</div>
       </div>
     </button>);
 
 }
 
+// Figma: PromoRail — tiket voucher transaksi saja; tap tiket → Detail Voucher (lihat saja).
 function VoucherRail() {
   const t = useTheme();
   const app = useApp();
   const vouchers = PROMOS.filter(isVoucher);
   if (!vouchers.length) return null;
   return (
-    <div style={{ marginTop: 16, margin: "10px 0px 0px" }}>
-      <div style={{ display: 'flex', gap: 10, overflowX: 'auto', padding: '2px 18px 8px', scrollSnapType: 'x mandatory', scrollbarWidth: 'none', scrollPaddingLeft: 18, textAlign: "left", justifyContent: "flex-start", alignItems: "flex-start" }}>
-        {vouchers.map((p) => <VoucherTicket key={p.id} p={p} onClick={() => app.openSheet('voucher', { id: p.id })} />)}
-        <button onClick={() => app.go('vouchers')} aria-label="Lihat semua voucher" style={{ scrollSnapAlign: 'start', flexShrink: 0, alignSelf: 'stretch', width: 46, border: '1px dashed ' + t.lineStrong, background: 'transparent', borderRadius: t.radiusSm, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', color: t.primary, WebkitTapHighlightColor: 'transparent' }}>
+    <div style={{ display: 'flex', gap: 10, overflowX: 'auto', padding: '0 18px 8px', scrollSnapType: 'x mandatory', scrollbarWidth: 'none', scrollPaddingLeft: 18, alignItems: 'flex-start' }}>
+      {vouchers.map((p) => <VoucherTicket key={p.id} p={p} onClick={() => app.openSheet('voucher', { id: p.id })} />)}
+      {app.offerSeeAll === 'card' &&
+      <button onClick={() => app.go('vouchers')} aria-label="Lihat semua promo" style={{ scrollSnapAlign: 'start', flexShrink: 0, alignSelf: 'stretch', width: 46, border: '1px dashed ' + t.lineStrong, background: 'transparent', borderRadius: t.radiusSm, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', color: t.primary, WebkitTapHighlightColor: 'transparent' }}>
           <Icon name="chevron" size={18} color={t.primary} />
         </button>
-      </div>
+      }
     </div>);
 
 }
@@ -267,78 +232,54 @@ function VoucherSheet({ params }) {
   const app = useApp();
   const p = promoById(params.id);
   if (!p) return null;
-  const r = promoReward(p);
-  const conds = promoConds(p);
-  const canClaim = !!(params && params.claim);
-  const locked = p.activation === 'locked' && !(app.unlocked || []).includes(p.id);
-  const on = app.applied.some((a) => a.id === p.id);
-  // syarat min. belanja — promo tak bisa dipakai sampai keranjang memenuhi minimum
-  const sub = app.cartSubtotal();
-  const belowMin = !!(p.min && sub < p.min);
-  const shortfall = belowMin ? p.min - sub : 0;
-  const doClaim = () => {
-    if (belowMin) return;
-    if (p.kind === 'free-item' && p.needsPick) {app.closeSheet();openFreeItemPick(app, p);return;}
-    app.applyPromo(p.id);app.closeSheet();
-  };
-  const footer = !canClaim ?
-  <Button full onClick={app.closeSheet}>Mengerti</Button> :
-  locked ?
-  <Button full icon="instagram" onClick={() => app.unlockPromo(p.id)}>Saya Sudah Follow</Button> :
-  on ?
-  <Button full variant="ghost" onClick={() => {app.removePromo(p.id);app.closeSheet();}}>Lepas Promo</Button> :
-  belowMin ?
-  <div style={{ width: '100%' }}>
-      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 7, marginBottom: 9, fontSize: 12.5, fontWeight: 600, color: t.muted }}>
-        <Icon name="info" size={14} color={t.faint} />
-        <span>Kurang {rupiah(shortfall)} lagi untuk pakai promo ini</span>
-      </div>
-      <Button full disabled onClick={() => {}}>Belanja Min. {rupiah(p.min)}</Button>
-    </div> :
-  <Button full onClick={doClaim}>{p.kind === 'free-item' && p.needsPick ? 'Pilih & Pakai' : 'Pakai Promo'}</Button>;
+  // MVP: promo otomatis — detail ini hanya untuk dilihat (dari menu, katalog, atau
+  // penanda promo di keranjang). Tidak ada Pakai/Lepas. Figma: DetailPromoSheet.
+  const terms = promoTerms(p);
+  const period = promoPeriod(p);
+  const box = { border: '1px solid ' + t.line, borderRadius: t.radiusSm, padding: '11px 14px', display: 'flex', flexDirection: 'column', gap: 7 };
+  const boxLabel = { fontSize: 11, fontWeight: 800, textTransform: 'uppercase', color: t.faint };
   return (
-    <Sheet title={p.voucher ? 'Detail Voucher' : 'Detail Promo'} onClose={app.closeSheet} footer={footer}>
-      <div style={{ display: 'flex', gap: 13, alignItems: 'center', marginBottom: 16 }}>
+    <Sheet title={p.voucher ? 'Detail Voucher' : 'Detail Promo'} onClose={app.closeSheet} footer={<Button full onClick={app.closeSheet}>Mengerti</Button>}>
+      <div style={{ display: 'flex', gap: 13, alignItems: 'center', paddingBottom: 16 }}>
         <div style={{ flexShrink: 0, width: 48, height: 48, borderRadius: 13, background: t.primarySoft, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-          <Icon name={r.free ? 'gift' : 'tag'} size={22} color={t.primary} />
+          <Icon name="tag" size={22} color={t.primary} />
         </div>
-        <div style={{ flex: 1, minWidth: 0 }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: 7 }}>
-            <div style={{ fontSize: 17, fontWeight: 800, color: t.ink, lineHeight: 1.2 }}>{p.title}</div>
-          </div>
-          <div style={{ fontSize: 12.5, color: t.muted, marginTop: 2 }}>{p.sub}</div>
+        <div style={{ flex: 1, minWidth: 0, display: 'flex', flexDirection: 'column', gap: 2 }}>
+          {/* nama promo maks. 25 karakter; di atas itu turun ke 15px (Figma: Input Panjang) */}
+          <div style={{ fontSize: p.title.length > 25 ? 15 : 17, fontWeight: 800, color: t.ink, overflowWrap: 'break-word' }}>{p.title}</div>
+          <div style={{ fontSize: 12.5, color: t.muted }}>{promoSummary(p)}</div>
         </div>
       </div>
 
-      {/* syarat — berapa pun jumlahnya, sebagai deskripsi */}
-      <div style={{ marginBottom: 14, border: '1px solid ' + t.line, borderRadius: t.radiusSm, padding: '11px 14px' }}>
-        <div style={{ fontSize: 11, fontWeight: 800, letterSpacing: 0.5, textTransform: 'uppercase', color: t.faint, marginBottom: 7 }}>Syarat</div>
-        <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
-          {conds.map((c, i) =>
-          <div key={i} style={{ display: 'flex', alignItems: 'flex-start', gap: 8 }}>
-              <Icon name="checkCircle" size={14} color={t.primary} style={{ flexShrink: 0, marginTop: 1 }} />
-              <span style={{ fontSize: 13, fontWeight: 500, color: t.ink, lineHeight: 1.45 }}>{c}</span>
+      {/* syarat — berapa pun jumlahnya */}
+      <div style={box}>
+        <div style={{ ...boxLabel, letterSpacing: 0.5 }}>{p.kelipatan ? 'Syarat (Berlaku kelipatan)' : 'Syarat'}</div>
+        {terms.map((c, i) =>
+        <div key={i} style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+            <span aria-hidden="true" style={{ flexShrink: 0, width: 4, height: 4, borderRadius: 999, background: t.faint }} />
+            <span style={{ flex: 1, minWidth: 0, fontSize: 13, fontWeight: 600, color: t.ink }}>{c}</span>
+          </div>
+        )}
+      </div>
+
+      {/* periode promosi — tanggal · hari berlaku · jam berlaku */}
+      {period &&
+      <div style={{ ...box, marginTop: 14 }}>
+          <div style={{ ...boxLabel, letterSpacing: 0.3 }}>Periode Promosi</div>
+          {[['calendar', period.dates], ['repeat', period.days], ['clock', period.hours]].map(([icon, text]) =>
+        <div key={icon} style={{ display: 'flex', alignItems: 'flex-start', gap: 6 }}>
+              {/* stroke 3.4 di grid 24 = garis 2px pada ikon 14px, setebal ikon di Figma */}
+              <Icon name={icon} size={14} color={t.muted} stroke={3.4} style={{ flexShrink: 0, marginTop: 0.5 }} />
+              <span style={{ flex: 1, minWidth: 0, fontSize: 12.5, color: t.ink }}>{text}</span>
             </div>
-          )}
+        )}
         </div>
-      </div>
-
-      {/* blok follow Instagram — hanya untuk promo terkunci, saat mode klaim (di keranjang) */}
-      {locked && canClaim && p.social &&
-      <a href={p.social.url} target="_blank" rel="noopener noreferrer" style={{ display: 'flex', alignItems: 'center', gap: 11, marginBottom: 14, padding: '12px 14px', borderRadius: t.radius, background: t.primarySoft, textDecoration: 'none', WebkitTapHighlightColor: 'transparent' }}>
-          <div style={{ flexShrink: 0, width: 38, height: 38, borderRadius: 10, background: t.primary, color: t.onPrimary, display: 'flex', alignItems: 'center', justifyContent: 'center' }}><Icon name="instagram" size={20} color={t.onPrimary} /></div>
-          <div style={{ flex: 1, minWidth: 0 }}>
-            <div style={{ fontSize: 13.5, fontWeight: 700, color: t.ink }}>Buka Instagram</div>
-            <div style={{ fontSize: 12, color: t.muted, marginTop: 1 }}>{p.social.handle}</div>
-          </div>
-          <Icon name="arrowRight" size={16} color={t.primary} style={{ flexShrink: 0 }} />
-        </a>
       }
 
-      <div style={{ borderTop: '1px solid ' + t.line, paddingTop: 12 }}>
-        <div style={{ fontSize: 12.5, fontWeight: 700, color: t.ink, marginBottom: 5 }}>Syarat &amp; Ketentuan</div>
-        <p style={{ margin: 0, fontSize: 12.5, color: t.muted, lineHeight: 1.55, whiteSpace: 'pre-line' }}>{p.detail}</p>
-        <p style={{ margin: '10px 0 0', fontSize: 12, color: t.faint, lineHeight: 1.5 }}>{!canClaim ? 'Pakai voucher ini saat pembayaran.' : locked ? 'Follow Instagram kami untuk membuka promo ini.' : 'Promo & potongan dihitung saat konfirmasi pesanan.'}</p>
+      <div style={{ marginTop: 14, borderTop: '1px solid ' + t.line, paddingTop: 12, display: 'flex', flexDirection: 'column', gap: 5 }}>
+        <div style={{ fontSize: 12.5, fontWeight: 700, color: t.ink }}>Deskripsi</div>
+        <p style={{ margin: 0, fontSize: 12.5, color: t.muted, lineHeight: 1.55, whiteSpace: 'pre-line', overflowWrap: 'break-word' }}>{p.detail}</p>
+        <p style={{ margin: 0, fontSize: 12, color: t.faint }}>Promo &amp; potongan dihitung saat berada di halaman keranjang.</p>
       </div>
     </Sheet>);
 
@@ -399,7 +340,6 @@ function PromoTicket({ p, onClick }) {
 
 }
 
-// ── PromoToday — satu rail gabungan semua promo & voucher ──
 // ── PromoRow — satu rail promo berjudul ────────────────────
 function PromoRow({ title, promos, tab }) {
   const t = useTheme();
@@ -420,16 +360,18 @@ function PromoRow({ title, promos, tab }) {
 
 }
 
+// ── PromoToday — "Promo Hari Ini" di menu: judul + rail tiket voucher ──
+// Lihat Semua → katalog semua promo (PromoScreen mode lihat). Kartu item promo
+// tidak lagi tampil di menu — promo barang cukup lewat katalog (Figma PAGE-04V).
 function PromoToday() {
   const app = useApp();
   if (!PROMOS.length) return null;
   const vouchers = PROMOS.filter(isVoucher);
+  if (app.voucherStyle === 'kartu') return <PromoRow title="Voucher" promos={vouchers} tab="voucher" />;
   return (
     <>
-      {app.voucherStyle === 'kartu' ?
-      <PromoRow title="Voucher" promos={vouchers} tab="voucher" /> :
-      <VoucherRail />}
-      <TodayOffer />
+      <OfferHeader />
+      <VoucherRail />
     </>);
 
 }
@@ -475,7 +417,7 @@ function BillStrip({ ctx = 'menu' }) {
   const dockGap = hasCart ? 84 : 0; // ruang utk CartDock di layar menu
   const goBill = () => app.go('bill');
   const cartCount = app.cart.reduce((s, l) => s + l.qty, 0);
-  const cartTotal = rupiah(app.cartSubtotal());
+  const cartTotal = rupiah(app.productSubtotal());
   const viewCart = () => app.go('cart');
   const isBottom = layout === 'bawah' || layout === 'pill' || layout === 'dua' || layout === 'struk';
 
@@ -818,9 +760,9 @@ function MenuClassicScreen({ params = {} }) {
               <span style={{ fontWeight: 700, color: t.muted, flexShrink: 0, fontSize: "15px" }}>Pesanan</span>
               <div style={{ flex: 1 }}></div>
               <button onClick={() => app.openSheet('orderType')} style={{ display: 'inline-flex', alignItems: 'center', gap: 5, padding: '6px 11px', border: '1px solid ' + t.line, borderRadius: 8, background: t.surface, color: t.ink, fontFamily: t.fontBody, fontSize: 12.5, fontWeight: 700, cursor: 'pointer', WebkitTapHighlightColor: 'transparent' }}>
-                <Icon name={app.orderType === 'dinein' ? 'dineIn' : 'takeaway'} size={14} color={t.primary} stroke={1.9} />
+                <Icon name={app.orderType === 'dinein' ? 'dineIn' : 'takeaway'} size={18} color={t.primary} />
                 {app.orderType === 'dinein' ? 'Dine In' : 'Take Away'}
-                <Icon name="chevron" size={12} color={t.muted} style={{ transform: 'rotate(90deg)' }} />
+                <Icon name="chevron" size={12} color="#D4E0E0" stroke={2.6} style={{ transform: 'rotate(90deg)' }} />
               </button>
             </div>
 
@@ -1066,19 +1008,14 @@ function StockNote({ item }) {
 function MenuCardList({ item, qty, onOpen, hidePromo }) {
   const t = useTheme();
   const out = item.stock === 0;
-  const triggerPromo = PROMOS.find((p) => p.scope === 'item' && p.requireItem === item.id);
-  const freeInPromo = PROMOS.find((p) => p.scope === 'item' && (
-  p.choices && p.choices.includes(item.id) || p.fixedItem === item.id)
-  );
   return (
     <div onClick={out ? undefined : onOpen} style={{ display: 'flex', gap: 14, background: t.surface, border: '1px solid ' + t.line, borderRadius: t.radius, padding: 12, boxShadow: t.shadow, cursor: out ? 'default' : 'pointer', opacity: out ? 0.6 : 1, position: 'relative' }}>
       <FoodImg label={item.name.toLowerCase()} h={92} style={{ width: 92 }} src={item.photo} />
       <div style={{ flex: 1, minWidth: 0, display: 'flex', flexDirection: 'column' }}>
         <div style={{ display: 'flex', alignItems: 'flex-start', gap: 6 }}>
-          <h3 style={{ margin: 0, fontSize: 15.5, fontWeight: 700, color: t.ink, lineHeight: 1.2, flex: 1 }}>{item.name}</h3>
+          <h3 style={{ margin: 0, fontSize: 15.5, fontWeight: 700, color: t.ink, lineHeight: 1.2, flex: 1, minWidth: 0, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{item.name}</h3>
         </div>
-        {!hidePromo && triggerPromo && <div style={{ marginTop: 5, display: 'inline-flex', alignSelf: 'flex-start', alignItems: 'center', gap: 4, maxWidth: '100%', padding: '2px 8px', borderRadius: 999, background: 'rgba(230,125,47,0.12)', color: 'rgb(204,106,30)', fontSize: 11, fontWeight: 600, lineHeight: 1.3 }}><span style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{triggerPromo.tagline || triggerPromo.title}</span></div>}
-        <p style={{ margin: '4px 0 0', fontSize: 12.5, color: t.muted, lineHeight: 1.4, display: '-webkit-box', WebkitLineClamp: (!hidePromo && triggerPromo) ? 1 : 2, WebkitBoxOrient: 'vertical', overflow: 'hidden' }}>{item.desc}</p>
+        <p style={{ margin: '4px 0 0', fontSize: 12.5, color: t.muted, lineHeight: 1.4, display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical', overflow: 'hidden' }}>{item.desc}</p>
         <div style={{ flex: 1 }} />
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginTop: 8 }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
@@ -1097,25 +1034,15 @@ function MenuCardList({ item, qty, onOpen, hidePromo }) {
 function MenuCardGrid({ item, qty, onOpen }) {
   const t = useTheme();
   const out = item.stock === 0;
-  const triggerPromo = PROMOS.find((p) => p.scope === 'item' && p.requireItem === item.id);
-  const freeInPromo = PROMOS.find((p) => p.scope === 'item' && (
-  p.choices && p.choices.includes(item.id) || p.fixedItem === item.id)
-  );
-  const hasPromo = triggerPromo || freeInPromo;
   return (
     <div onClick={out ? undefined : onOpen} style={{
-      cursor: out ? 'default' : 'pointer', opacity: out ? 0.55 : 1, display: 'flex', flexDirection: 'column',
+      // minWidth 0: item grid tidak boleh melebar mengikuti nama panjang (nama dipotong "…")
+      minWidth: 0, cursor: out ? 'default' : 'pointer', opacity: out ? 0.55 : 1, display: 'flex', flexDirection: 'column',
       background: t.surface, border: '1px solid ' + t.line, borderRadius: t.radius, padding: '8px 8px 10px', gap: 10,
       boxShadow: t.shadow
     }}>
       <div style={{ position: 'relative', height: 146 }}>
         <FoodImg label={item.name.toLowerCase()} h={146} radius={t.radiusSm} src={item.photo} style={{ width: '100%', display: 'block', borderRadius: t.radiusSm, objectFit: 'cover' }} />
-        {hasPromo &&
-        <div style={{ position: 'absolute', top: 8, left: 8, display: 'flex', alignItems: 'center', gap: 3, background: t.primary, color: t.onPrimary, borderRadius: 6, padding: '2px 4px', height: 21 }}>
-          <Icon name="tag" size={12} color={t.onPrimary} />
-          <span style={{ fontSize: 13, fontWeight: 800, lineHeight: 1 }}>PROMO</span>
-        </div>
-        }
         {!out && (qty > 0 ?
         <div style={{ position: 'absolute', right: 8, bottom: 8, minWidth: 24, height: 24, padding: '0 6px', borderRadius: 999, background: t.primary, color: t.onPrimary, display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 800, fontSize: 12.5, boxShadow: '0 4px 12px ' + hexA(t.primary, 0.4) }}>{qty}</div> :
         <div style={{ position: 'absolute', right: 8, bottom: 8, width: 24, height: 24, borderRadius: 999, background: t.primary, color: t.onPrimary, display: 'flex', alignItems: 'center', justifyContent: 'center', boxShadow: '0 4px 12px ' + hexA(t.primary, 0.4) }}>
@@ -1278,7 +1205,7 @@ function CartDock() {
   const t = useTheme();
   const app = useApp();
   const count = app.cart.reduce((s, l) => s + l.qty, 0);
-  const total = app.cartSubtotal();
+  const total = app.productSubtotal(); // setelah Promo Produk (beli-N ikut terpotong)
   const isNavbar = app.menuShell === 'klasik' && (app.billStripLayout || 'atas') === 'navbar';
   const bottomOffset = isNavbar ? 'calc(80px + env(safe-area-inset-bottom))' : 'calc(10px + env(safe-area-inset-bottom))';
   if (count === 0) return null;
@@ -1307,26 +1234,17 @@ function ItemScreen({ params }) {
   const app = useApp();
   const item = itemById(params.id);
   const editLine = params.edit || null; // baris keranjang yang sedang diubah
-  const freePromoId = params.freePromo || (editLine && editLine.free ? editLine.promoId : null);
-  const isFree = !!freePromoId;
+  const mods = item.mods || [];
+  // grup wajib yang hanya punya SATU opsi: terpilih otomatis, tampil sebagai baris tetap (OptionRow State=Fixed)
+  const isFixedGroup = (m) => m.type === 'single' && m.required && m.options.length === 1;
   const [qty, setQty] = useStateM(editLine ? editLine.qty : 1);
   const [sel, setSel] = useStateM(() => {
     const init = {};
     const matchOpt = (o) => (editLine.options || []).some((s) => s === o.label || s.indexOf(o.label + ' (+') === 0);
-    (item.mods || []).forEach((m) => {
+    mods.forEach((m) => {
       if (m.type === 'single') {
         const found = editLine && m.options.find((o) => matchOpt(o));
-        init[m.id] = found ? found.id : undefined;
-        m.options.forEach((o) => {
-          (o.subs || []).forEach((sg) => {
-            if (sg.type === 'single') {
-              const foundSub = editLine && sg.options.find((so) => matchOpt(so));
-              init[sg.id] = foundSub ? foundSub.id : undefined;
-            } else {
-              init[sg.id] = editLine ? sg.options.filter((so) => matchOpt(so)).map((so) => so.id) : [];
-            }
-          });
-        });
+        init[m.id] = found ? found.id : isFixedGroup(m) ? m.options[0].id : undefined;
       } else if (m.type === 'multi') {
         init[m.id] = editLine ? m.options.filter((o) => matchOpt(o)).map((o) => o.id) : [];
       }
@@ -1335,196 +1253,99 @@ function ItemScreen({ params }) {
   });
   const [notes, setNotes] = useStateM(editLine ? editLine.notes || '' : '');
 
-  const subPrice = (o) => (o.subs || []).reduce((s, sg) => {
-    if (sg.type === 'single') {const so = sg.options.find((x) => x.id === sel[sg.id]);return s + (so ? so.price : 0);}
-    return s + (sel[sg.id] || []).reduce((s2, id) => s2 + (sg.options.find((x) => x.id === id)?.price || 0), 0);
-  }, 0);
+  const chosen = (m) => m.type === 'single' ? m.options.filter((o) => o.id === sel[m.id]) : m.options.filter((o) => (sel[m.id] || []).includes(o.id));
+  const modPrice = mods.reduce((sum, m) => sum + chosen(m).reduce((s2, o) => s2 + o.price, 0), 0);
+  const unit = item.price + modPrice;
+  // semua grup wajib harus terisi sebelum bisa ditambahkan
+  const requiredOk = mods.every((m) => !m.required || chosen(m).length > 0);
 
-  const modPrice = (item.mods || []).reduce((sum, m) => {
-    const v = sel[m.id];
-    if (m.type === 'single') {
-      const o = m.options.find((x) => x.id === v);
-      return sum + (o ? o.price + subPrice(o) : 0);
-    }
-    if (m.type === 'multi') {return sum + (v || []).reduce((s, id) => s + (m.options.find((x) => x.id === id)?.price || 0), 0);}
-    return sum;
-  }, 0);
-  const unit = isFree ? 0 : item.price + modPrice;
-
-  // semua grup wajib harus terisi sebelum bisa ditambahkan (termasuk sub-modifier bersarang, bisa lebih dari satu)
-  const requiredOk = (item.mods || []).every((m) => {
-    if (m.type === 'single') {
-      if (m.required && sel[m.id] == null) return false;
-      const o = m.options.find((x) => x.id === sel[m.id]);
-      if (o) {
-        return (o.subs || []).every((sg) => !sg.required || (sg.type === 'single' ? sel[sg.id] != null : (sel[sg.id] || []).length > 0));
-      }
-      return true;
-    }
-    if (m.required && m.type === 'multi') return (sel[m.id] || []).length > 0;
-    return true;
-  });
-
-  const toggleMulti = (mid, oid) => setSel((s) => {
-    const cur = s[mid] || [];
-    return { ...s, [mid]: cur.includes(oid) ? cur.filter((x) => x !== oid) : [...cur, oid] };
+  const pick = (m, o) => setSel((s) => {
+    if (m.type === 'single') return { ...s, [m.id]: o.id };
+    const cur = s[m.id] || [];
+    return { ...s, [m.id]: cur.includes(o.id) ? cur.filter((x) => x !== o.id) : [...cur, o.id] };
   });
 
   const add = () => {
     const contentLabels = (item.contents || []).map((c) => c.qty + '× ' + c.name);
     // sertakan biaya tambahan di label opsi (mis. "Telur Dadar (+Rp7.000)") biar user paham kenapa harganya beda
-    const fmt = (o) => !isFree && o.price > 0 ? o.label + ' (+' + rupiah(o.price) + ')' : o.label;
-    const optLabels = (item.mods || []).flatMap((m) => {
-      if (m.type === 'single') {
-        const o = m.options.find((x) => x.id === sel[m.id]);
-        if (!o) return [];
-        const labels = [fmt(o)];
-        (o.subs || []).forEach((sg) => {
-          if (sg.type === 'single') {
-            const so = sg.options.find((x) => x.id === sel[sg.id]);
-            if (so) labels.push(fmt(so));
-          } else {
-            (sel[sg.id] || []).forEach((id) => {
-              const so = sg.options.find((x) => x.id === id);
-              if (so) labels.push(fmt(so));
-            });
-          }
-        });
-        return labels;
-      }
-      if (m.type === 'multi') return (sel[m.id] || []).map((id) => fmt(m.options.find((x) => x.id === id)));
-      return [];
-    });
-    if (isFree) {
-      app.applyPromo(freePromoId, item.id, { options: optLabels, notes });
-      app.back();
-      return;
-    }
+    const fmt = (o) => o.price > 0 ? o.label + ' (+' + rupiah(o.price) + ')' : o.label;
+    const optLabels = mods.flatMap((m) => chosen(m).map(fmt));
     if (editLine) app.removeLine(editLine.uid);
-    app.addToCart({ itemId: item.id, name: item.name, unit, qty, options: [...contentLabels, ...optLabels], notes });
-    // Promo gratis terkait item (mis. Beli 1 Gratis 1) diklaim dari keranjang,
-    // bukan otomatis diarahkan langsung dari sini.
+    // isi tetap paket ikut disimpan di options (tampil di Konfirmasi & Struk) dan ditandai
+    // lewat `contents` supaya Keranjang bisa menyembunyikannya.
+    app.addToCart({ itemId: item.id, name: item.name, unit, qty, options: [...contentLabels, ...optLabels], contents: contentLabels, notes });
+    // Promo terkait item (mis. item gratis) dihitung otomatis di keranjang dari barang yang ditambah tamu.
     app.back();
   };
 
-  const triggerPromo = PROMOS.find((p) => p.scope === 'item' && p.requireItem === item.id);
-  const freeInPromo = PROMOS.find((p) => p.scope === 'item' && (
-  p.choices && p.choices.includes(item.id) || p.fixedItem === item.id)
-  );
-  const freeItemLabel = triggerPromo ?
-  triggerPromo.needsPick ?
-  triggerPromo.choices.map((id) => itemById(id)?.name).filter(Boolean).join(' atau ') :
-  itemById(triggerPromo.fixedItem)?.name :
-  null;
-  const triggerItemName = freeInPromo ? itemById(freeInPromo.requireItem)?.name : null;
-  const promoName = triggerPromo ? triggerPromo.tagline || triggerPromo.title : freeInPromo ? freeInPromo.title : item.oldPrice ? 'Diskon Produk' : null;
-  const promoObj = triggerPromo || freeInPromo;
+  // ── tampilan — Figma: Item Detail (529:361) & Burger Combo Deluxe (4461:3140) ──
+  const groupLabel = (title, subtitle) =>
+  <div style={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
+      <h4 style={{ margin: 0, fontSize: 13, fontWeight: 800, letterSpacing: 0.6, textTransform: 'uppercase', color: t.ink }}>{title}</h4>
+      {subtitle && <div style={{ fontSize: 11.5, color: t.faint }}>{subtitle}</div>}
+    </div>;
+  const group = (key, children) =>
+  <div key={key} style={{ marginTop: 16, borderTop: '1px solid ' + t.line, paddingTop: 16, display: 'flex', flexDirection: 'column', gap: 6 }}>{children}</div>;
+  // OptionRow: label 14.5 semibold · harga +RpX · kotak centang 24 (r8), sama untuk pilih-1 & pilih-banyak
+  const rowStyle = { display: 'flex', alignItems: 'flex-start', gap: 12, padding: '14.5px 2px', width: '100%', border: 'none', background: 'transparent', textAlign: 'left', fontFamily: t.fontBody, WebkitTapHighlightColor: 'transparent' };
+  const labelStyle = (on) => ({ flex: 1, minWidth: 0, fontSize: 14.5, fontWeight: 600, lineHeight: '21px', color: on ? t.ink : t.muted });
+  const check = (on) =>
+  <span style={{ height: 21, display: 'flex', alignItems: 'center', flexShrink: 0 }}>
+      <span style={{ width: 24, height: 24, boxSizing: 'border-box', borderRadius: 8, border: on ? 'none' : '1px solid ' + t.faint, background: on ? t.primary : 'transparent', display: 'flex', alignItems: 'center', justifyContent: 'center', transition: 'background .12s' }}>
+        {on && <Icon name="check" size={14} color={t.onPrimary} stroke={3} />}
+      </span>
+    </span>;
+  const fixedRow = (label, key) =>
+  <div key={key} style={rowStyle}><span style={labelStyle(true)}>{label}</span><span style={{ width: 24, height: 21, flexShrink: 0 }} /></div>;
 
   return (
     <div style={{ height: '100%', display: 'flex', flexDirection: 'column', background: t.bg }}>
-      <TopBar title={isFree ? editLine ? 'Ubah Item Gratis' : 'Item Gratis' : editLine ? 'Ubah Pesanan' : 'Detail Menu'} onBack={app.back} />
+      <TopBar title={editLine ? 'Ubah Pesanan' : 'Detail Menu'} onBack={app.back} />
       <div style={{ flex: 1, overflow: 'auto', WebkitOverflowScrolling: 'touch', padding: '12px 18px 24px' }}>
-      <FoodImg label={item.name.toLowerCase()} h={210} radius={t.radius} src={item.photo} />
-      <h2 style={{ margin: '16px 0 0', fontFamily: t.fontDisplay, fontStyle: t.displayItalic ? 'italic' : 'normal', fontWeight: t.displayWeight, fontSize: 26, color: t.ink, lineHeight: 1.1 }}>{item.name}</h2>
-      <p style={{ color: t.muted, fontSize: 14, lineHeight: 1.55, margin: '8px 0 4px' }}>{item.desc}</p>
-      {item.stock <= 5 && item.stock > 0 && <Pill tone="promo" icon="fire" style={{ marginTop: 6 }}>Stok terbatas · sisa {item.stock}</Pill>}
+        <FoodImg label={item.name.toLowerCase()} h={210} radius={t.radius} src={item.photo} />
+        <h2 style={{ margin: '16px 0 0', fontFamily: t.fontDisplay, fontStyle: t.displayItalic ? 'italic' : 'normal', fontWeight: t.displayWeight, fontSize: 26, color: t.ink, lineHeight: 1.1, overflowWrap: 'anywhere' }}>{item.name}</h2>
+        <p style={{ color: t.muted, fontSize: 14, lineHeight: 1.55, margin: '8px 0 4px' }}>{item.desc}</p>
+        {item.stock <= 5 && item.stock > 0 && <Pill tone="promo" icon="fire" style={{ marginTop: 6 }}>Stok terbatas · sisa {item.stock}</Pill>}
 
-
-      {/* Informasi Promo — ketuk untuk lihat detail promo terkait */}
-      {!isFree && promoName &&
-        <div style={{ marginTop: 20 }}>
-          <h4 style={{ margin: '0 0 10px', fontSize: 15, fontWeight: 700, color: t.ink }}>Informasi Promo</h4>
-          <button
-            onClick={() => promoObj && app.openSheet('voucher', { id: promoObj.id })}
-            disabled={!promoObj}
-            style={{
-              width: '100%', display: 'flex', alignItems: 'center', gap: 12, textAlign: 'left', fontFamily: t.fontBody,
-              background: t.surface2, border: '1px solid ' + t.line, borderRadius: t.radius, padding: '13px 14px',
-              cursor: promoObj ? 'pointer' : 'default', WebkitTapHighlightColor: 'transparent' }}>
-            <div style={{ width: 36, height: 36, borderRadius: 10, flexShrink: 0, background: t.primarySoft, color: t.primary, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-              <Icon name="tag" size={18} color={t.primary} />
-            </div>
-            <div style={{ flex: 1, minWidth: 0, fontSize: 13, lineHeight: 1.4, color: t.muted }}>
-              Item ini diberlakukan Promo:<br /><b style={{ color: t.ink, fontWeight: 700 }}>{promoName}</b>
-            </div>
-            {promoObj && <Icon name="chevron" size={16} color={t.faint} />}
-          </button>
-        </div>
+        {/* isi tetap paket — tanpa kontrol & tanpa harga: tidak ada yang perlu diputuskan */}
+        {(item.contents || []).length > 0 &&
+        group('isi', <>
+            {groupLabel('Isi paket')}
+            <div>{item.contents.map((c, i) => fixedRow(c.qty + '× ' + c.name, i))}</div>
+          </>)
         }
 
-      {(item.mods || []).map((m) => {
-          const isSingle = m.type === 'single';
-          const chosen = isSingle ? sel[m.id] != null : (sel[m.id] || []).length > 0;
-          const sub = m.required ?
-          isSingle ? 'Wajib dipilih · maks. 1' : 'Wajib dipilih' :
-          isSingle ? 'Opsional · maks. 1' : 'Opsional · bisa lebih dari satu';
+        {mods.map((m) => {
+          const fixed = isFixedGroup(m);
+          const subtitle = fixed ? null : m.required ?
+          m.type === 'single' ? 'Wajib dipilih · maks. 1' : 'Wajib dipilih' :
+          m.type === 'single' ? 'Opsional · maks. 1' : 'Opsional · bisa lebih dari satu';
           return (
-            <div key={m.id} style={{ marginTop: 16, borderTop: '1px solid ' + t.line, paddingTop: 16 }}>
-          {/* header grup: judul + subjudul */}
-          <div style={{ display: 'flex', alignItems: 'center', marginBottom: 6 }}>
-            <div style={{ flex: 1, minWidth: 0 }}>
-              <h4 style={{ margin: 0, fontSize: 13, fontWeight: 800, letterSpacing: 0.6, textTransform: 'uppercase', color: t.ink }}>{m.label}</h4>
-              <div style={{ fontSize: 11.5, color: t.faint, marginTop: 2 }}>{sub}</div>
-            </div>
-          </div>
-          <div style={{ display: 'flex', flexDirection: 'column' }}>
-            {m.options.map((o, oi) => {
-                  const on = isSingle ? sel[m.id] === o.id : (sel[m.id] || []).includes(o.id);
+            group(m.id, <>
+              {groupLabel(m.label, subtitle)}
+              <div>
+                {fixed ? fixedRow(m.options[0].label) :
+                m.options.map((o) => {
+                  const on = chosen(m).includes(o);
                   return (
-                    <React.Fragment key={o.id}>
-                    <button onClick={() => isSingle ? setSel((s) => ({ ...s, [m.id]: o.id })) : toggleMulti(m.id, o.id)} style={{
-                      display: 'flex', alignItems: 'center', gap: 12, padding: '13px 2px', cursor: 'pointer',
-                      background: 'transparent', border: 'none', borderTop: oi ? '1px solid ' + t.line : 'none',
-                      WebkitTapHighlightColor: 'transparent'
-                    }}>
-                  <span style={{ flex: 1, textAlign: 'left', fontSize: 14.5, fontWeight: 600, color: on ? t.ink : t.muted }}>{o.label}</span>
-                  {!isFree && o.price > 0 && <span style={{ fontSize: 13, fontWeight: 600, color: t.muted, flexShrink: 0 }}>+{rupiah(o.price)}</span>}
-                  <span style={{ width: 22, height: 22, borderRadius: isSingle ? 999 : 8, flexShrink: 0,
-                        border: on ? (isSingle ? '2px solid ' + t.primary : 'none') : '2px solid ' + t.faint, background: on && !isSingle ? t.primary : 'transparent',
-                        display: 'flex', alignItems: 'center', justifyContent: 'center', transition: 'all .12s' }}>
-                    {on && (isSingle ? <div style={{ width: 10, height: 10, borderRadius: 999, background: t.primary }} /> : <Icon name="check" size={14} color={t.onPrimary} stroke={3} />)}
-                  </span>
-                </button>
-                {/* sub-modifier bersarang \u2014 bisa lebih dari satu grup sekaligus (potongan, pedas, sambal, dst.) */}
-                {on && (o.subs || []).map((sg) => {
-                    const subChosen = sg.type === 'single' ? sel[sg.id] != null : (sel[sg.id] || []).length > 0;
-                    return (
-                      <div key={sg.id} style={{ margin: '2px 0 12px', paddingLeft: 14, borderLeft: '2px solid ' + t.primarySoft }}>
-                        <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 8, paddingLeft: 4 }}>
-                          <span style={{ fontSize: 11, fontWeight: 800, letterSpacing: 0.5, textTransform: 'uppercase', color: t.faint }}>{sg.label}</span>
-                          {sg.required && !subChosen && <span style={{ fontSize: 10.5, fontWeight: 700, color: t.primary, background: t.primarySoft, borderRadius: 999, padding: '2px 8px' }}>{sg.type === 'single' ? 'Pilih 1' : 'Wajib'}</span>}
-                        </div>
-                        <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
-                          {sg.options.map((so) => {
-                                const subOn = sg.type === 'single' ? sel[sg.id] === so.id : (sel[sg.id] || []).includes(so.id);
-                                return (
-                                  <button key={so.id} onClick={() => setSel((s) => sg.type === 'single' ? ({ ...s, [sg.id]: so.id }) : (() => {const cur = s[sg.id] || [];return { ...s, [sg.id]: cur.includes(so.id) ? cur.filter((x) => x !== so.id) : [...cur, so.id] };})())} style={{
-                                    display: 'flex', alignItems: 'center', gap: 6, cursor: 'pointer', WebkitTapHighlightColor: 'transparent',
-                                    border: '1.5px solid ' + (subOn ? t.primary : t.line), background: subOn ? t.primarySoft : t.surface,
-                                    borderRadius: 999, padding: '8px 14px', transition: 'all .12s' }}>
-                                <span style={{ fontSize: 13, fontWeight: 700, color: subOn ? t.primary : t.muted }}>{so.label}</span>
-                                {!isFree && so.price > 0 && <span style={{ fontSize: 11.5, fontWeight: 600, color: subOn ? t.primary : t.faint }}>+{rupiah(so.price)}</span>}
-                              </button>);
-                              })}
-                        </div>
-                      </div>);
-                  })}
-                </React.Fragment>);
+                    <button key={o.id} onClick={() => pick(m, o)} style={{ ...rowStyle, cursor: 'pointer' }}>
+                      <span style={labelStyle(on)}>{o.label}</span>
+                      {o.price > 0 && <span style={{ flexShrink: 0, fontSize: 13, fontWeight: 600, lineHeight: '21px', color: t.muted, whiteSpace: 'nowrap' }}>+{rupiah(o.price)}</span>}
+                      {check(on)}
+                    </button>);
                 })}
-          </div>
-        </div>);
+              </div>
+            </>));
         })}
 
-      <div style={{ marginTop: 22 }}>
-        <h4 style={{ margin: '0 0 10px', fontSize: 15, fontWeight: 700, color: t.ink }}>Catatan untuk dapur</h4>
-        <textarea value={notes} onChange={(e) => setNotes(e.target.value)} placeholder="cth. tanpa bawang, sambal pisah" rows={2} style={{ width: '100%', boxSizing: 'border-box', resize: 'none', border: '1.5px solid ' + t.line, borderRadius: t.radiusSm, padding: 12, fontFamily: t.fontBody, fontSize: 14, color: t.ink, background: t.surface2, outline: 'none' }} />
-      </div>
+        <h4 style={{ margin: '22px 0 10px', fontSize: 15, fontWeight: 700, color: t.ink }}>Catatan untuk dapur</h4>
+        <textarea value={notes} onChange={(e) => setNotes(e.target.value)} placeholder="cth. tanpa bawang, sambal pisah" rows={2} style={{ width: '100%', boxSizing: 'border-box', resize: 'none', display: 'block', border: '1.5px solid ' + t.line, borderRadius: t.radiusSm, background: t.surface2, padding: '12px 12px 24px', fontFamily: t.fontBody, fontSize: 14, color: t.ink, outline: 'none' }} />
       </div>
       {/* dock bawah — qty + tambah */}
       <div style={{ flexShrink: 0, background: t.surface, borderTop: '1px solid ' + t.line, padding: '12px 18px 26px' }}>
         <div style={{ display: 'flex', gap: 12, alignItems: 'center' }}>
-          {!isFree && <QtyStepper value={qty} onChange={setQty} />}
-          <Button full onClick={add} disabled={!requiredOk} style={{ flex: 1 }}>{isFree ? editLine ? 'Simpan Item Gratis' : 'Tambahkan' : editLine ? 'Simpan · ' + rupiah(unit * qty) : 'Tambah · ' + rupiah(unit * qty)}</Button>
+          <QtyStepper value={qty} onChange={setQty} />
+          <Button full onClick={add} disabled={!requiredOk} style={{ flex: 1 }}>{editLine ? 'Simpan · ' + rupiah(unit * qty) : 'Tambah · ' + rupiah(unit * qty)}</Button>
         </div>
       </div>
     </div>);

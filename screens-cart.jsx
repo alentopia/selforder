@@ -1,105 +1,67 @@
 // screens-cart.jsx — Cart, Promo sheet, Free-item picker. Exported to window.
 const { useState: useStateC, useEffect: useEffectC, useRef: useRefC } = React;
 
-// ── LineRow ────────────────────────────────────────────────
+// ── PromoLine — penanda promo di tempat hasil promo jatuh ──
+// Figma: promo-line (ikon tag 12 + nama promo teal 12). Tap → Detail Promo.
+function PromoLine({ promo }) {
+  const t = useTheme();
+  const app = useApp();
+  if (!promo) return null;
+  return (
+    <button onClick={(e) => {e.stopPropagation();app.openSheet('voucher', { id: promo.id });}} style={{ display: 'flex', alignItems: 'center', gap: 4, width: '100%', minWidth: 0, padding: 0, border: 'none', background: 'none', cursor: 'pointer', textAlign: 'left', fontFamily: t.fontBody, WebkitTapHighlightColor: 'transparent' }}>
+      <Icon name="tag" size={12} color={t.primary} style={{ flexShrink: 0 }} />
+      <span style={{ flex: 1, minWidth: 0, fontSize: 12, lineHeight: 1.42, color: t.primary, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{promo.title}</span>
+    </button>);
+}
+
+// modifier per baris (teks polos 12 muted) + catatan dapur (ikon edit + italic)
+function LineOptions({ options }) {
+  const t = useTheme();
+  if (!options || !options.length) return null;
+  return <div style={{ fontSize: 12, color: t.muted, lineHeight: 1.25 }}>{options.map((o, i) => <div key={i}>{o}</div>)}</div>;
+}
+function LineNote({ notes }) {
+  const t = useTheme();
+  if (!notes) return null;
+  return (
+    <div style={{ display: 'flex', alignItems: 'center', gap: 4, minWidth: 0 }}>
+      <Icon name="edit" size={12} color={t.faint} style={{ flexShrink: 0 }} />
+      <span style={{ fontSize: 11.5, fontStyle: 'italic', color: t.faint, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{notes}</span>
+    </div>);
+}
+// badge qty bulat 24 primary — sama untuk item berbayar & item gratis
+function QtyBadge({ qty, top }) {
+  const t = useTheme();
+  return <div style={{ position: 'absolute', right: 0, top, width: 24, height: 24, borderRadius: 999, background: t.primary, color: t.onPrimary, display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 800, fontSize: 12.5 }}>{qty}</div>;
+}
+
+// ── LineRow — baris item keranjang ─────────────────────────
+// Figma: LineRow (Tanpa Promo / PromoProduk). Promo Produk (harga coret, beli-N,
+// item gratis yang ditambah tamu sendiri) → penanda promo + harga asal dicoret + harga akhir.
 function LineRow({ line, editable, noSep }) {
   const t = useTheme();
   const app = useApp();
-  const eligiblePromo = !line.free ? PROMOS.find((p) => p.scope === 'item' && p.kind === 'free-item' && p.requireItem === line.itemId) : null;
-  const promoApplied = eligiblePromo && app.applied.some((a) => a.id === eligiblePromo.id);
-  const bulkPromo = !line.free ? PROMOS.find((p) => p.scope === 'item' && p.kind === 'bulk' && p.requireItem === line.itemId) : null;
-  const bulkQty = bulkPromo ? app.cart.filter((l) => !l.free && l.itemId === line.itemId).reduce((s, l) => s + l.qty, 0) : 0;
-  const bulkMin = bulkPromo ? bulkPromo.minQty || 2 : 0;
-  const bulkActive = bulkPromo && bulkQty >= bulkMin;
-  const bulkNeed = bulkPromo ? Math.max(0, bulkMin - bulkQty) : 0;
-  const canEdit = editable && !line.free;
-  const rinci = app.itemDetail === 'rinci';
-  const itemPrice = (itemById(line.itemId) || {}).price || 0;
-  const openEdit = () => {if (canEdit) app.openSheet('itemPicker', { id: line.itemId });};
+  const price = app.linePrice(line);
+  const openEdit = () => {
+    if (!editable) return;
+    app.openSheet('itemPicker', { id: line.itemId });
+  };
   return (
-    <div onClick={openEdit} style={{ display: 'flex', gap: 12, alignItems: 'center', padding: '14px 0', borderBottom: noSep ? 'none' : '1px solid ' + t.line, cursor: canEdit ? 'pointer' : 'default', WebkitTapHighlightColor: 'transparent' }}>
-      <FoodImg label={line.name.toLowerCase()} h={60} radius={10} style={{ width: 60, flexShrink: 0 }} src={itemById(line.itemId)?.photo} />
-      <div style={{ flex: 1, minWidth: 0 }}>
-        <h4 style={{ margin: 0, fontSize: 14, fontWeight: 700, color: t.ink, lineHeight: 1.2 }}>{line.name}</h4>
-        {line.options && line.options.length > 0 && (
-        rinci ?
-        <ReceiptLines line={line} style={{ marginTop: 4 }} /> :
-        <OptLines options={line.options} style={{ marginTop: 2 }} />)}
-        {line.notes &&
-        <div style={{ fontSize: 12, color: t.faint, marginTop: 2, fontStyle: 'italic' }}>"{line.notes}"</div>}
-        {bulkActive ?
-        <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginTop: 6, flexWrap: 'wrap' }}>
-          <Money value={line.unit * line.qty} strike style={{ fontWeight: 600, fontSize: 12.5 }} />
-          <Money value={line.unit * line.qty - Math.round(line.unit * line.qty * bulkPromo.value)} style={{ fontWeight: 700, fontSize: 14, color: t.primary }} />
-        </div> :
-        rinci && line.free ?
-        <div style={{ display: 'flex', alignItems: 'baseline', gap: 5, marginTop: 6 }}>
-          <Money value={itemPrice * line.qty} strike style={{ fontSize: 12.5, fontWeight: 600, color: t.faint }} />
-          <Money value={0} style={{ fontSize: 14, fontWeight: 700, color: t.ink }} />
-        </div> :
-        <Money value={(rinci ? (line.free ? 0 : itemPrice) : line.free ? itemPrice : line.unit) * line.qty}
-        style={{ fontWeight: 700, fontSize: 14, color: t.ink, display: 'block', marginTop: 6 }} />}
-        {eligiblePromo && !promoApplied &&
-        <button
-          onClick={(e) => {e.stopPropagation();eligiblePromo.needsPick ? openFreeItemPick(app, eligiblePromo) : app.applyPromo(eligiblePromo.id);}}
-          style={{ marginTop: 6, display: 'inline-flex', alignItems: 'center', gap: 4,
-            border: 'none', background: t.primarySoft, borderRadius: 999,
-            padding: '3px 10px', cursor: 'pointer', color: t.primary, fontSize: 11.5, fontWeight: 700 }}>
-            Klaim promo
-            <Icon name="chevron" size={12} color={t.primary} />
-          </button>
-        }
-      </div>
-      <div style={{ flexShrink: 0, alignSelf: 'flex-start' }}>
-        {line.free ?
-        editable ?
-        <span style={{ display: 'inline-flex', alignItems: 'center', gap: 8 }}>
-            <span style={{ fontSize: 12, color: t.muted, fontWeight: 600 }}>×{line.qty}</span>
-            <button onClick={(e) => {e.stopPropagation();app.askConfirm({ title: 'Hapus item?', message: 'Hapus "' + line.name + '" dari keranjang?', confirmLabel: 'Hapus', onConfirm: () => app.removePromo(line.promoId) });}} style={{ border: 'none', background: 'none', cursor: 'pointer', color: t.faint, display: 'flex', padding: 2 }}><Icon name="trash" size={15} /></button>
-          </span> :
-        <span style={{ fontSize: 12, color: t.muted, fontWeight: 600 }}>×{line.qty}</span> :
-        editable ?
-        <div style={{ width: 24, height: 24, borderRadius: 999, background: t.primary, color: t.onPrimary, display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 800, fontSize: 12.5, flexShrink: 0 }}>{line.qty}</div> :
-        <span style={{ fontSize: 12, color: t.muted, fontWeight: 600 }}>×{line.qty}</span>}
-      </div>
-    </div>);
-
-}
-
-// ── FreeChildRow — item gratis, tampil di bawah trigger ─────
-function FreeChildRow({ line, last }) {
-  const t = useTheme();
-  const app = useApp();
-  const item = itemById(line.itemId);
-  const rinci = app.itemDetail === 'rinci';
-  const openEdit = () => app.go('item', { id: line.itemId, edit: line, freePromo: line.promoId });
-  return (
-    <div style={{ display: 'flex' }}>
-      {/* accent strip kiri sebagai connector — warna primary */}
-      <div style={{ width: 3, background: t.primary, flexShrink: 0 }} />
-      <div onClick={openEdit} style={{ display: 'flex', gap: 10, padding: '10px 12px', flex: 1, alignItems: 'center', cursor: 'pointer', WebkitTapHighlightColor: 'transparent', borderBottom: last ? 'none' : '1px solid ' + t.line }}>
-        <FoodImg label={line.name.toLowerCase()} h={48} radius={8} style={{ width: 48, flexShrink: 0 }} src={item && item.photo} />
-        <div style={{ flex: 1, minWidth: 0 }}>
-          <span style={{ fontSize: 13, fontWeight: 700, color: t.ink, display: 'block' }}>{line.name}</span>
-          {line.options && line.options.length > 0 && (
-          rinci ?
-          <ReceiptLines line={line} size={11.5} style={{ marginTop: 2 }} /> :
-          <OptLines options={line.options} size={11.5} style={{ marginTop: 2 }} />)}
-          {rinci ?
-          <div style={{ display: 'flex', alignItems: 'baseline', gap: 5, marginTop: 3 }}>
-            <Money value={(item && item.price || 0) * line.qty} strike style={{ fontSize: 12, fontWeight: 600, color: t.faint }} />
-            <Money value={0} style={{ fontSize: 13, fontWeight: 700, color: t.ink }} />
-          </div> :
-          <div style={{ display: 'flex', alignItems: 'baseline', gap: 5, marginTop: 3 }}>
-            <Money value={(item && item.price || 0) * line.qty} strike style={{ fontSize: 12, fontWeight: 600, color: t.faint }} />
-            <Money value={0} style={{ fontSize: 12.5, fontWeight: 800, color: t.primary }} />
-          </div>}
+    <div onClick={openEdit} style={{ position: 'relative', display: 'flex', gap: 12, alignItems: 'flex-start', padding: '14px 0', borderBottom: noSep ? 'none' : '1px solid ' + t.line, cursor: editable ? 'pointer' : 'default', WebkitTapHighlightColor: 'transparent' }}>
+      <FoodImg label={line.name.toLowerCase()} h={60} radius={t.radiusSm} style={{ width: 60, flexShrink: 0 }} src={itemById(line.itemId)?.photo} />
+      <div style={{ flex: 1, minWidth: 0, display: 'flex', flexDirection: 'column', gap: 4, paddingRight: 32 }}>
+        <h4 style={{ margin: 0, fontSize: 14, fontWeight: 700, color: t.ink, lineHeight: 1.3, overflowWrap: 'anywhere' }}>{line.name}</h4>
+        <PromoLine promo={price.promo} />
+        {isPaketLine(line) ? <PaketDetail line={line} max={3} /> : <LineOptions options={line.options} />}
+        <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+          {price.orig !== price.final && <Money value={price.orig} strike style={{ fontSize: 12, fontWeight: 600, color: t.faint }} />}
+          <Money value={price.final} style={{ fontSize: 14, fontWeight: 700, color: t.ink }} />
         </div>
-        <button onClick={(e) => {e.stopPropagation();app.askConfirm({ title: 'Hapus item?', message: 'Hapus "' + line.name + '" dari keranjang?', confirmLabel: 'Hapus', onConfirm: () => app.removePromo(line.promoId) });}}
-        style={{ border: 'none', background: 'none', cursor: 'pointer', color: t.faint, display: 'flex', padding: '0 4px' }}>
-          <Icon name="trash" size={16} />
-        </button>
+        <LineNote notes={line.notes} />
       </div>
+      {editable ?
+      <QtyBadge qty={line.qty} top={14} /> :
+      <span style={{ position: 'absolute', right: 0, top: 14, fontSize: 12, color: t.muted, fontWeight: 600 }}>×{line.qty}</span>}
     </div>);
 
 }
@@ -199,25 +161,9 @@ function CartScreen() {
   const app = useApp();
   const [checking, setChecking] = useStateC(false);
   const lines = app.cart;
-  const subtotal = app.cartSubtotal();
-  const discount = app.promoDiscount();
-  const itemDiscLines = app.itemDiscountLines();
-  const itemDisc = app.itemDiscount();
-  const net = Math.max(0, subtotal - discount - itemDisc);
-  const tax = app.taxAmount(net);
-  const rawTotal = net + tax;
-  const total = app.roundValue(rawTotal);
-  const rounding = total - rawTotal;
   const bill = app.computeBill();
-  const totalSaved = bill.discount + bill.itemDisc + bill.freeDisc;
-  const stripShown = app.menuShell === 'klasik' && (app.billStrip || 'on') !== 'off' && (app.billStripLayout || 'atas') !== 'off' && app.mode === 'dyn-openbill' && app.orders.length > 0;
-  const isDine = app.orderType === 'dinein';
-  const txApplied = app.applied.filter((a) => {const p = promoById(a.id);return p && p.scope === 'transaction';});
-  // Subtotal "face value": semua item di harga normal (item gratis pun tampil harganya). Promo & pajak dihitung di konfirmasi.
-  const faceTotal = lines.reduce((s, l) => s + (l.free ? (itemById(l.itemId) || {}).price || 0 : l.unit) * l.qty, 0);
-  const activeBulk = PROMOS.filter((p) => p.scope === 'item' && p.kind === 'bulk' &&
-  lines.filter((l) => !l.free && l.itemId === p.requireItem).reduce((s, l) => s + l.qty, 0) >= (p.minQty || 2)).length;
-  const readyCount = app.applied.length + activeBulk;
+  // Diskon Transaksi otomatis (maks. 1) — namanya tampil di bawah baris "Diskon transaksi"
+  const txPromo = app.applied.map((a) => promoById(a.id)).find((p) => p && isVoucher(p));
 
   const isOpenBill = app.mode === 'dyn-openbill';
   const runCheck = () => {
@@ -259,29 +205,10 @@ function CartScreen() {
           </button>
         </div>
         {(() => {
-          const regular = lines.filter((l) => !l.free);
-          const freeNoTrigger = lines.filter((l) => l.free && !(promoById(l.promoId) && promoById(l.promoId).requireItem));
-          const groups = [
-          ...regular.map((trigger) => ({
-            key: trigger.uid,
-            type: trigger.type === 'takeaway' ? 'takeaway' : 'dinein',
-            trigger,
-            children: lines.filter((l) => l.free && promoById(l.promoId) && promoById(l.promoId).requireItem === trigger.itemId) })),
-
-          ...freeNoTrigger.map((l) => ({ key: l.uid, type: l.type === 'takeaway' ? 'takeaway' : 'dinein', standalone: l }))];
-
-          const renderGroup = (g, isLast) => {
-            if (g.standalone) return <LineRow key={g.key} line={g.standalone} editable noSep={isLast} />;
-            return (
-              <div key={g.key}>
-                <LineRow line={g.trigger} editable noSep={g.children.length > 0 || isLast} />
-                {g.children.map((f, ci) => <FreeChildRow key={f.uid} line={f} last={isLast && ci === g.children.length - 1} />)}
-              </div>);
-
-          };
+          // barang hadiah promo = baris biasa yang ditambah tamu sendiri (tidak menempel ke pemicunya)
           const card = (list) =>
           <div style={{ background: t.surface, borderRadius: t.radius, padding: '0 16px', border: '1px solid ' + t.line, boxShadow: t.shadow }}>
-              {list.map((g, i) => renderGroup(g, i === list.length - 1))}
+              {list.map((l, i) => <LineRow key={l.uid} line={l} editable noSep={i === list.length - 1} />)}
             </div>;
 
           const header = (type, n) =>
@@ -290,19 +217,17 @@ function CartScreen() {
               <span style={{ fontSize: 12, color: t.faint, fontWeight: 600 }}>&middot; {n} item</span>
             </div>;
 
-          const di = groups.filter((g) => g.type !== 'takeaway');
-          const ta = groups.filter((g) => g.type === 'takeaway');
-          const diN = lines.filter((l) => (l.type === 'takeaway' ? 'takeaway' : 'dinein') !== 'takeaway').length;
-          const taN = lines.length - diN;
+          const di = lines.filter((l) => l.type !== 'takeaway');
+          const ta = lines.filter((l) => l.type === 'takeaway');
           if (di.length && ta.length) {
             return (
               <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
-                <div>{header('dinein', diN)}{card(di)}</div>
-                <div>{header('takeaway', taN)}{card(ta)}</div>
+                <div>{header('dinein', di.length)}{card(di)}</div>
+                <div>{header('takeaway', ta.length)}{card(ta)}</div>
               </div>);
 
           }
-          return card(groups);
+          return card(lines);
         })()}
 
         {/* Catatan untuk pesanan — field ringkas satu baris */}
@@ -326,62 +251,11 @@ function CartScreen() {
           </div>
         </div>
 
-        {/* 2 · Promo Barang ditangani inline di LineRow */}
-
-        {/* Voucher & diskon transaksi — disembunyikan di Open Bill (muncul saat Bayar Semua) */}
-        {!isOpenBill && (() => {
-          const has = txApplied.length > 0;
-          const title = has ? txApplied.map((a) => promoById(a.id).title).join(', ') : '';
-          const saved = bill.discount;
-
-          // ── Belum ada voucher — CTA ajakan ──
-          if (!has) {
-            return (
-              <button onClick={() => app.go('promo', { claim: true })} style={{
-                width: '100%', display: 'flex', alignItems: 'center', gap: 11, marginTop: 16, padding: '10px 13px',
-                background: t.surface, border: '1px solid ' + t.line, borderRadius: t.radius, boxShadow: t.shadow,
-                cursor: 'pointer', textAlign: 'left', WebkitTapHighlightColor: 'transparent'
-              }}>
-                <div style={{ width: 32, height: 32, borderRadius: t.radiusSm, background: t.primarySoft, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
-                  <Icon name="tag" size={16} color={t.primary} stroke={1.8} />
-                </div>
-                <div style={{ flex: 1, minWidth: 0 }}>
-                  <div style={{ fontSize: 13.5, fontWeight: 700, color: t.ink }}>Voucher &amp; diskon</div>
-                  <div style={{ fontSize: 11.5, color: t.muted, fontWeight: 500, marginTop: 1 }}>Punya kode promo? Pakai di sini</div>
-                </div>
-                <Icon name="chevron" size={16} color={t.faint} style={{ flexShrink: 0 }} />
-              </button>);
-          }
-
-          // ── Voucher terpakai — layout sama dgn state "belum ada", hanya isi berubah ──
-          return (
-            <div style={{
-              width: '100%', display: 'flex', alignItems: 'center', gap: 12, marginTop: 18, padding: '13px 14px',
-              background: t.surface, border: '1px solid ' + hexA(t.primary, 0.45), borderRadius: t.radius, boxShadow: t.shadow,
-              textAlign: 'left'
-            }}>
-              <div style={{ width: 36, height: 36, borderRadius: t.radiusSm, background: t.primarySoft, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
-                <Icon name="tag" size={18} color={t.primary} stroke={1.8} />
-              </div>
-              <div style={{ flex: 1, minWidth: 0 }}>
-                <div style={{ display: 'flex', alignItems: 'center', gap: 5, fontSize: 14.5, fontWeight: 700, color: t.ink }}>
-                  <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{title}</span>
-                </div>
-                <div style={{ fontSize: 12, color: saved > 0 ? t.primary : t.muted, fontWeight: saved > 0 ? 700 : 500, marginTop: 1 }}>
-                  {saved > 0 ? 'Kamu hemat ' + rupiah(saved) : (txApplied.length > 1 ? txApplied.length + ' promo aktif' : 'Promo aktif')}
-                </div>
-              </div>
-              <button onClick={() => app.go('promo', { claim: true })} style={{
-                flexShrink: 0, padding: '8px 15px', border: '1.5px solid ' + t.primary, background: t.surface,
-                borderRadius: 999, color: t.primary, fontFamily: t.fontBody, fontSize: 12.5, fontWeight: 800,
-                cursor: 'pointer', WebkitTapHighlightColor: 'transparent' }}>Ubah</button>
-            </div>);
-        })()}
-
-
+        {/* Promo otomatis (MVP): tidak ada CTA "Voucher & diskon" — Promo Produk ditandai
+            di baris item, Diskon Transaksi di baris ringkasan. Figma: Case Diskon Transaksi Otomatis. */}
 
         {/* 3 · Ringkasan harga — promo sudah otomatis diterapkan */}
-        <div style={{ marginTop: 12, background: t.surface, borderRadius: t.radius, border: '1px solid ' + t.line, padding: '14px 16px', boxShadow: t.shadow }}>
+        <div style={{ marginTop: 16, background: t.surface, borderRadius: t.radius, border: '1px solid ' + t.line, padding: '14px 16px', boxShadow: t.shadow }}>
           {isOpenBill ?
           <>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline' }}>
@@ -394,14 +268,14 @@ function CartScreen() {
             </div>
           </> :
           <>
+          {/* Subtotal sudah setelah Promo Produk — tidak ada baris diskon produk terpisah */}
           <Row label="Subtotal" value={rupiah(bill.subtotal)} />
           {bill.discount > 0 && <Row label="Diskon transaksi" value={'−' + rupiah(bill.discount)} accent />}
-          {bill.itemDisc > 0 && <Row label="Diskon produk" value={'−' + rupiah(bill.itemDisc)} accent />}
-          {bill.freeDisc > 0 && <Row label="Potongan harga" value={'−' + rupiah(bill.freeDisc)} accent />}
+          {bill.discount > 0 && <PromoLine promo={txPromo} />}
           {bill.service > 0 && <Row label={'Service ' + Math.round(bill.serviceRate * 100) + '%'} value={rupiah(bill.service)} />}
           <Row label={(bill.taxInclusive ? 'Termasuk PPN ' : 'PPN ') + Math.round(bill.taxRate * 100) + '%'} value={rupiah(bill.tax)} />
           {bill.rounding !== 0 && <Row label="Pembulatan" value={(bill.rounding > 0 ? '' : '−') + rupiah(Math.abs(bill.rounding))} />}
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', marginTop: 8, paddingTop: 12, borderTop: '1px solid ' + t.line }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', paddingTop: 12, borderTop: '1px solid ' + t.line }}>
             <span style={{ fontWeight: 800, fontSize: 16, color: t.ink }}>Total</span>
             <Money value={bill.total} style={{ fontWeight: 800, fontSize: 22, color: t.ink }} />
           </div>
@@ -702,25 +576,39 @@ function EmptyVouchers() {
     </div>);
 }
 
-// ── PromoScreen — hub semua promo + filter syarat ──────────
-function PromoScreen({ params }) {
+// ── PromoCatalogCard — baris katalog "Promo Hari Ini" (lihat saja) ──
+// Figma: PromoCard di "Promo Hari Ini — Katalog (PAGE-04V)". Chip PROMO + nama 1 baris
+// (ellipsis) + kalimat template promoSummary + chevron. Tap → Detail Voucher/Promo.
+function PromoCatalogCard({ p, onOpen }) {
+  const t = useTheme();
+  return (
+    <button onClick={onOpen} style={{ width: '100%', textAlign: 'left', display: 'flex', alignItems: 'center', gap: 10, padding: 12, background: t.surface, border: '1px solid ' + t.line, borderRadius: t.radius, boxShadow: t.shadow, cursor: 'pointer', fontFamily: t.fontBody, WebkitTapHighlightColor: 'transparent' }}>
+      <div style={{ flexShrink: 0, width: 52, height: 52, borderRadius: 12, background: t.primarySoft, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 3 }}>
+        <Icon name="tag" size={22} color={t.primary} />
+        <span style={{ fontSize: 8.5, fontWeight: 800, letterSpacing: 0.6, textTransform: 'uppercase', color: t.primary }}>Promo</span>
+      </div>
+      <div style={{ flex: 1, minWidth: 0, display: 'flex', flexDirection: 'column', gap: 3 }}>
+        <div style={{ fontSize: 15, fontWeight: 800, color: t.ink, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{p.title}</div>
+        <div style={{ fontSize: 12, color: t.muted }}>{promoSummary(p)}</div>
+      </div>
+      <Icon name="chevron" size={20} color={t.primary} style={{ flexShrink: 0 }} />
+    </button>);
+}
+
+// ── PromoScreen — katalog "Promo Hari Ini" (Figma PAGE-04V) ──
+// SEMUA promo — voucher transaksi + promo barang — hanya untuk dilihat; promo dipasang
+// otomatis di keranjang. Halaman pilih voucher dari keranjang (PAGE-06V) sudah gugur.
+function PromoScreen() {
   const t = useTheme();
   const app = useApp();
-  const claim = !!(params && params.claim);
-  // voucher = potongan transaksi saja (item gratis muncul di "Promo Hari Ini", bukan di sini)
-  // Open Bill + claim mode: sembunyikan diskon transaksi (hanya berlaku saat Bayar Semua di akhir)
-  const rawList = PROMOS.filter(isVoucher);
-  const list = (claim && app.mode === 'dyn-openbill')
-    ? rawList.filter((p) => p.scope !== 'transaction')
-    : rawList;
+  const list = PROMOS;
   return (
     <div style={{ height: '100%', display: 'flex', flexDirection: 'column', background: t.bg }}>
-      <TopBar title="Voucher" onBack={app.back} />
+      <TopBar title="Promo Hari Ini" onBack={app.back} />
 
       <div style={{ flex: 1, overflow: 'auto', WebkitOverflowScrolling: 'touch', padding: '14px 16px 130px' }}>
-        {/* banner — voucher dipakai saat checkout (mode browse) */}
-        {!claim &&
-        <div style={{ display: 'flex', alignItems: 'center', gap: 14, background: t.primarySoft, borderRadius: t.radius, padding: '15px 16px', marginBottom: 16 }}>
+        {/* banner — voucher dipakai saat checkout */}
+        <div style={{ display: 'flex', alignItems: 'center', gap: 14, background: t.primarySoft, borderRadius: t.radius, padding: '15px 16px', marginBottom: 12 }}>
           <div style={{ flex: 1, minWidth: 0 }}>
             <div style={{ fontFamily: t.fontDisplay, fontStyle: t.displayItalic ? 'italic' : 'normal', fontWeight: t.displayWeight, fontSize: 18, color: t.ink, lineHeight: 1.2 }}>Lihat sekarang, pakai nanti</div>
             <p style={{ margin: '6px 0 0', fontSize: 13, color: t.muted, lineHeight: 1.5 }}>Pakai voucher ini saat checkout dan nikmati lebih banyak hemat!</p>
@@ -729,9 +617,9 @@ function PromoScreen({ params }) {
             <Icon name="megaphone" size={28} color={t.primary} stroke={1.8} />
           </div>
         </div>
-        }
         {list.length ?
-        <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>{list.map((p) => <PromoClaimRow key={p.id} p={p} />)}</div> :
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>{list.map((p) =>
+          <PromoCatalogCard key={p.id} p={p} onOpen={() => app.openSheet('voucher', { id: p.id })} />)}</div> :
         <div style={{ height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center' }}><EmptyVouchers /></div>}
       </div>
     </div>);

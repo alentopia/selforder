@@ -6,7 +6,7 @@ const TWEAK_DEFAULTS = /*EDITMODE-BEGIN*/{
   "primaryColor": "#1799A5",
   "fonts": "elegan",
   "menuLayout": "grid",
-  "menuShell": "sidebar",
+  "menuShell": "klasik",
   "menuHeader": "kartu",
   "billStrip": "on",
   "billStripLayout": "navbar",
@@ -15,7 +15,7 @@ const TWEAK_DEFAULTS = /*EDITMODE-BEGIN*/{
   "authMethod": "whatsapp",
   "pickerStyle": "kartu",
   "itemDetail": "sekarang",
-  "rounding": "100",
+  "rounding": "off",
   "taxMode": "exclude",
   "serviceCharge": "off",
   "checkoutSummary": "flat",
@@ -48,7 +48,10 @@ function Stage({ children }) {
 function App() {
   // Exported variants can preset defaults via window.__TWEAK_OVERRIDES
   // (e.g. the "Klasik" standalone build) without forking app.jsx.
-  const [tw, setTweak] = useTweaks(Object.assign({}, TWEAK_DEFAULTS, window.__TWEAK_OVERRIDES || {}));
+  const [twStored, setTweak] = useTweaks(Object.assign({}, TWEAK_DEFAULTS, window.__TWEAK_OVERRIDES || {}));
+  // MVP: semua pengaturan dikunci ke TWEAK_DEFAULTS (menu Klasik, tanpa pembulatan, dst.) —
+  // hanya "Warna utama" yang masih bisa diubah lewat Tweaks. Nilai lama di localStorage diabaikan.
+  const tw = { ...TWEAK_DEFAULTS, primaryColor: twStored.primaryColor || TWEAK_DEFAULTS.primaryColor };
   const theme = useM(() => makeTheme({ style: tw.visualStyle, primary: tw.primaryColor, fonts: tw.fonts }), [tw.visualStyle, tw.primaryColor, tw.fonts]);
 
   // ── store state ──
@@ -113,77 +116,78 @@ function App() {
   };
 
   // ── cart ──
-  const addToCart = ({ itemId, name, unit, qty, options, notes }) => {
+  const addToCart = ({ itemId, name, unit, qty, options, contents, notes }) => {
     setCart((c) => {
       const key = (l) => l.itemId + '|' + (l.options || []).join(',') + '|' + (l.notes || '');
       const cand = { itemId, options, notes };
       const idx = c.findIndex((l) => !l.free && key(l) === key(cand) && l.unit === unit);
       if (idx >= 0) {const n = [...c];n[idx] = { ...n[idx], qty: n[idx].qty + qty };return n;}
-      return [...c, { uid: uid.current++, itemId, name, unit, qty, options, notes, free: false, type: orderType }];
+      return [...c, { uid: uid.current++, itemId, name, unit, qty, options, contents: contents || [], notes, free: false, type: orderType }];
     });
   };
   const setLineQty = (u, v) => setCart((c) => v < 1 ? c.filter((l) => l.uid !== u) : c.map((l) => l.uid === u ? { ...l, qty: v } : l));
-  // tipe per baris (dine-in / takeaway) — item gratis ikut baris pemicunya
-  const setLineType = (u, type) => setCart((c) => {
-    const target = c.find((l) => l.uid === u);
-    return c.map((l) => {
-      if (l.uid === u) return { ...l, type };
-      if (target && !target.free && l.free && l.promoId) {
-        const p = promoById(l.promoId);
-        if (p && p.requireItem === target.itemId) return { ...l, type };
-      }
-      return l;
-    });
-  });
+  // tipe per baris (dine-in / takeaway)
+  const setLineType = (u, type) => setCart((c) => c.map((l) => l.uid === u ? { ...l, type } : l));
   // set tipe untuk SEMUA baris + jadikan default (dipakai toggle global)
   const applyOrderTypeAll = (type) => {setOrderType(type);setCart((c) => c.map((l) => ({ ...l, type })));};
-  const removeLine = (u) => {
-    const next = cart.filter((l) => l.uid !== u);
-    // buang item-gratis yang trigger-nya sudah tidak ada di keranjang
-    const cleaned = next.filter((l) => {
-      if (!l.free || !l.promoId) return true;
-      const p = promoById(l.promoId);
-      if (p && p.scope === 'item' && p.requireItem) return next.some((x) => !x.free && x.itemId === p.requireItem);
-      return true;
-    });
-    setCart(cleaned);
-    // lepas promo item-gratis yang baris gratisnya ikut terbuang
-    const liveFreePromoIds = cleaned.filter((l) => l.free && l.promoId).map((l) => l.promoId);
-    setApplied((a) => a.filter((x) => {
-      const p = promoById(x.id);
-      if (p && p.kind === 'free-item' && p.scope === 'item') return liveFreePromoIds.includes(x.id);
-      return true;
-    }));
-  };
+  // barang hadiah promo TIDAK ikut dibuang saat pemicunya dihapus — ia barang yang ditambah
+  // tamu sendiri, jadi tetap di keranjang dan kembali ke harga normal.
+  const removeLine = (u) => setCart((c) => c.filter((l) => l.uid !== u));
 
   const cartSubtotal = () => cart.filter((l) => !l.free).reduce((s, l) => s + l.unit * l.qty, 0);
-  const freeCount = () => cart.filter((l) => l.free).reduce((s, l) => s + l.qty, 0);
+  // Subtotal SETELAH Promo Produk: item gratis Rp0, harga coret sudah di harga menu,
+  // diskon beli-N dipotong. Ini dasar syarat min. belanja & Diskon Transaksi.
+  const productSubtotal = () => Math.max(0, cartSubtotal() - itemDiscount());
   const promoDiscount = () => {
-    const sub = cartSubtotal();
+    const sub = productSubtotal();
     return applied.reduce((sum, a) => {
       const p = promoById(a.id);
-      if (!p || p.min && sub < p.min) return sum;
-      if (p.kind === 'percent') return sum + Math.min(p.cap || Infinity, Math.round(sub * p.value));
-      if (p.kind === 'fixed') return sum + p.value;
-      return sum;
+      return p && isVoucher(p) ? sum + txPromoAmount(p, sub) : sum;
     }, 0);
   };
 
   const TAX_RATE = 0.10;
 
   // diskon item otomatis (mis. beli 2 diskon 40%) — dihitung dari isi keranjang, tak perlu di-apply
-  const itemDiscountLines = () => PROMOS.
-  filter((p) => p.scope === 'item' && p.kind === 'bulk').
-  map((p) => {
-    const minQ = p.minQty || 2;
-    const lines = cart.filter((l) => !l.free && l.itemId === p.requireItem);
-    const qty = lines.reduce((s, l) => s + l.qty, 0);
-    if (qty < minQ) return null;
-    const base = lines.reduce((s, l) => s + l.unit * l.qty, 0);
-    const amount = Math.round(base * p.value);
-    return amount > 0 ? { id: p.id, title: p.title, item: (itemById(p.requireItem) || {}).name, pct: Math.round(p.value * 100), amount } : null;
-  }).
-  filter(Boolean);
+  const itemDiscountLines = () => {
+    const bulk = PROMOS.
+    filter((p) => p.scope === 'item' && p.kind === 'bulk').
+    map((p) => {
+      const minQ = p.minQty || 2;
+      const lines = cart.filter((l) => !l.free && l.itemId === p.requireItem);
+      const qty = lines.reduce((s, l) => s + l.qty, 0);
+      if (qty < minQ) return null;
+      const base = lines.reduce((s, l) => s + l.unit * l.qty, 0);
+      const amount = Math.round(base * p.value);
+      return amount > 0 ? { id: p.id, title: p.title, item: (itemById(p.requireItem) || {}).name, pct: Math.round(p.value * 100), amount } : null;
+    }).
+    filter(Boolean);
+    // item gratis (free-item): barang hadiah TIDAK disisipkan sistem — tamu menambahkannya
+    // sendiri dari menu. Kalau barangnya ada di keranjang & syarat terpenuhi, 1 pcs jadi gratis
+    // (Diskon 100%, maks. 1 barang — lihat promoSummary). Yang digratiskan harga menunya saja;
+    // modifier berbayar tetap ditagih. Dua pilihan hadiah ada → yang termahal (seri: yang duluan).
+    // Syarat min. belanja dihitung dari subtotal setelah Promo Produk lain & tanpa porsi yang
+    // digratiskan → promo berpemicu barang dihitung dulu, baru yang bersyarat min. belanja.
+    let base = cartSubtotal() - bulk.reduce((s, x) => s + x.amount, 0);
+    const free = PROMOS.
+    filter((p) => p.kind === 'free-item').
+    sort((a, b) => (a.min ? 1 : 0) - (b.min ? 1 : 0)).
+    map((p) => {
+      const ids = p.needsPick ? p.choices || [] : [p.fixedItem];
+      const priceOf = (l) => (itemById(l.itemId) || {}).price || 0;
+      const line = cart.
+      filter((l) => ids.includes(l.itemId)).
+      reduce((best, l) => !best || priceOf(l) > priceOf(best) ? l : best, null);
+      if (!line) return null;
+      const amount = Math.min(priceOf(line), line.unit);
+      const ok = p.requireItem ? cart.some((l) => l.itemId === p.requireItem) : !p.min || base - amount >= p.min;
+      if (!ok || amount <= 0) return null;
+      base -= amount;
+      return { id: p.id, title: p.title, item: line.name, uid: line.uid, pct: 100, amount };
+    }).
+    filter(Boolean);
+    return [...bulk, ...free];
+  };
   const itemDiscount = () => itemDiscountLines().reduce((s, x) => s + x.amount, 0);
 
   // pembulatan total ke kelipatan terdekat (naik/turun)
@@ -197,18 +201,18 @@ function App() {
   // Rincian pembayaran terpusat — semua layar memakai angka yang sama
   const computeBill = () => {
     const paidSubtotal = cartSubtotal();
-    const freeValue = cart.filter((l) => l.free).reduce((s, l) => s + ((itemById(l.itemId) || {}).price || 0) * l.qty, 0);
-    const subtotal = paidSubtotal + freeValue;
-    const discount = promoDiscount();
     const itemDisc = itemDiscount();
-    const freeDisc = freeValue;
-    const net = Math.max(0, subtotal - discount - itemDisc - freeDisc);
+    // subtotal = setelah Promo Produk (Figma: "Subtotal = jumlah harga SETELAH promo").
+    // Promo Produk tidak punya baris sendiri di ringkasan — penandanya menempel di baris item.
+    const subtotal = Math.max(0, paidSubtotal - itemDisc);
+    const discount = promoDiscount();
+    const net = Math.max(0, subtotal - discount);
     const service = Math.round(net * SERVICE_RATE);
     const taxBase = net + service;
     const tax = taxInclusive ? taxBase - Math.round(taxBase / (1 + TAX_RATE)) : Math.round(taxBase * TAX_RATE);
     const rawTotal = taxInclusive ? taxBase : taxBase + tax;
     const total = roundValue(rawTotal);
-    return { subtotal, paidSubtotal, freeValue, freeDisc, discount, itemDisc, net, service, serviceRate: SERVICE_RATE, tax, taxInclusive, taxRate: TAX_RATE, rounding: total - rawTotal, total };
+    return { subtotal, paidSubtotal, discount, itemDisc, net, service, serviceRate: SERVICE_RATE, tax, taxInclusive, taxRate: TAX_RATE, rounding: total - rawTotal, total };
   };
 
   const taxAmount = (base) => {
@@ -218,31 +222,7 @@ function App() {
   const orderTotal = () => computeBill().total;
 
   // ── promo ──
-  const applyPromo = (id, pick, opts) => {
-    const p = promoById(id);
-    if (p.scope === 'transaction') {
-      // hanya 1 voucher transaksi boleh aktif — voucher transaksi lain dilepas dulu
-      setApplied((a) => {
-        const dropIds = a.filter((x) => {const q = promoById(x.id);return q && q.scope === 'transaction' && x.id !== id;}).map((x) => x.id);
-        const kept = a.filter((x) => !dropIds.includes(x.id));
-        return kept.some((x) => x.id === id) ? kept : [...kept, { id, pick: pick || null }];
-      });
-      // buang baris item-gratis milik voucher transaksi yang dilepas
-      setCart((c) => c.filter((l) => {const q = l.promoId && promoById(l.promoId);return !(q && q.scope === 'transaction' && l.promoId !== id);}));
-    } else {
-      setApplied((a) => a.some((x) => x.id === id) ? a : [...a, { id, pick: pick || null }]);
-    }
-    if (p.kind === 'free-item') {
-      const itemId = p.needsPick ? pick : p.fixedItem;
-      const it = itemById(itemId);
-      setCart((c) => {
-        const without = c.filter((l) => l.promoId !== id);
-        const trig = p.requireItem ? without.find((l) => !l.free && l.itemId === p.requireItem) : null;
-        const ftype = trig ? trig.type : orderType;
-        return [...without, { uid: uid.current++, itemId, name: it.name, unit: 0, qty: 1, options: opts && opts.options || [], notes: opts && opts.notes || '', free: true, promoId: id, type: ftype }];
-      });
-    }
-  };
+  // MVP: promo dipasang & dilepas otomatis (efek auto-apply di bawah).
   const removePromo = (id) => {
     setApplied((a) => a.filter((x) => x.id !== id));
     // Kembalikan referensi cart yang sama jika tidak ada item yang dihapus (voucher).
@@ -251,21 +231,32 @@ function App() {
   };
   const unlockPromo = (id) => setUnlocked((u) => u.includes(id) ? u : [...u, id]);
 
-  // ── Promo transaksi 100% manual: TIDAK ada auto-apply ──
-  // Voucher hanya aktif kalau user klaim sendiri dari keranjang. Effect ini cuma
-  // menjaga konsistensi: kalau voucher yang sudah dipakai jadi tidak lagi memenuhi
-  // syarat (keranjang kosong atau turun di bawah min. belanja), voucher dilepas
-  // otomatis — supaya tidak ada promo "nyangkut" yang tak berlaku.
+  // ── MVP: semua promo otomatis (Figma "Case: Diskon Transaksi Otomatis") ──
+  // Tamu tidak memilih promo, dan sistem TIDAK PERNAH menambah/membuang barang di keranjang —
+  // semua barang (termasuk barang hadiah promo) diinput tamu sendiri. Promo hanya menghitung:
+  // · item gratis (free-item), beli-N (bulk) & harga coret (price) → dari isi keranjang
+  //   (itemDiscountLines / linePrice), tidak perlu dipasang
+  // · Diskon Transaksi → maks. 1 aktif. Kalau >1 memenuhi syarat, dipilih potongan
+  //   TERBESAR (asumsi prototipe — di Figma ditandai "BELUM DIPUTUSKAN").
   useE(() => {
-    const appliedTx = applied.find((a) => {const q = promoById(a.id);return q && q.scope === 'transaction';});
-    if (!appliedTx) return;
-    const p = promoById(appliedTx.id);
-    if (!p) return;
-    const paidCount = cart.filter((l) => !l.free).length;
-    const sub = cartSubtotal();
-    const stillValid = paidCount > 0 && (!p.min || sub >= p.min);
-    if (!stillValid) removePromo(appliedTx.id);
-  }, [cart, unlocked]);
+    const tx = bestTxPromo(productSubtotal());
+    const want = tx ? [tx.id] : [];
+    const same = applied.length === want.length && want.every((id) => applied.some((a) => a.id === id));
+    if (!same) setApplied(want.map((id) => applied.find((a) => a.id === id) || { id, pick: null }));
+  }, [cart]);
+
+  // harga per baris untuk tampilan: asal (dicoret) vs akhir + promo produk yang berlaku
+  const linePrice = (line) => {
+    const it = itemById(line.itemId) || {};
+    const disc = itemDiscountLines();
+    const free = disc.find((d) => d.uid === line.uid);
+    if (free) {const orig = line.unit * line.qty;return { orig, final: orig - free.amount, promo: promoById(free.id) };}
+    const bulk = disc.find((d) => {const p = promoById(d.id);return p.kind === 'bulk' && p.requireItem === line.itemId;});
+    if (bulk) {const p = promoById(bulk.id);const orig = line.unit * line.qty;return { orig, final: orig - Math.round(orig * p.value), promo: p };}
+    const strike = strikePromoFor(line.itemId);
+    if (strike && it.oldPrice) return { orig: (line.unit + it.oldPrice - it.price) * line.qty, final: line.unit * line.qty, promo: strike };
+    return { orig: line.unit * line.qty, final: line.unit * line.qty, promo: null };
+  };
 
   // ── open bill ──
   // Per order kita simpan NET PRA-PAJAK (subtotal item − diskon produk). Pajak transaksi
@@ -309,11 +300,11 @@ function App() {
     mode, table, menuLayout: tw.menuLayout, menuShell: tw.menuShell, menuHeader: tw.menuHeader, billStrip: tw.billStrip, billStripLayout: tw.billStripLayout, voucherStyle: tw.voucherStyle, offerSeeAll: tw.offerSeeAll, authMethod: tw.authMethod, pickerStyle: tw.pickerStyle, itemDetail: tw.itemDetail, checkoutSummary: tw.checkoutSummary, shareStyle: tw.shareStyle, memberBlock: tw.memberBlock, orderType, setOrderType, orderNote, setOrderNote,
     phone, loggedIn, login, logout,
     phoneHint: phone ? phone.slice(0, 3) + ' ' + phone.slice(3, 7) + ' ' + phone.slice(7) : '••• •••• ••••',
-    orderRef, cart, applied, unlocked, orders, payment,
+    orderRef, refCode: 'REF-' + String(orderRef).padStart(6, '0'), cart, applied, unlocked, orders, payment,
     confirm, askConfirm: (opts) => setConfirm(opts), closeConfirm: () => setConfirm(null),
     go, back, openSheet, closeSheet, openItem, reset, startSession,
     setPhone: setPhoneNum, addToCart, setLineQty, setLineType, applyOrderTypeAll, removeLine,
-    cartSubtotal, freeCount, promoDiscount, itemDiscount, itemDiscountLines, taxAmount, orderTotal, computeBill, serviceRate: SERVICE_RATE, taxInclusive, roundValue, roundTo: ROUND_TO, TAX_RATE, applyPromo, removePromo, unlockPromo,
+    cartSubtotal, productSubtotal, linePrice, promoDiscount, itemDiscount, itemDiscountLines, taxAmount, orderTotal, computeBill, serviceRate: SERVICE_RATE, taxInclusive, roundValue, roundTo: ROUND_TO, TAX_RATE, removePromo, unlockPromo,
     submitOrder, grandTotal, ordersNet, ordersSubtotal, settleBill, cartNet: () => { const b = computeBill(); return Math.max(0, b.paidSubtotal - b.itemDisc); }, setPayment: setPay,
     statusWhite, setStatusWhite
   };
@@ -325,7 +316,7 @@ function App() {
     profile: ProfileScreen,
     bill: BillScreen, settle: SettleScreen, success: SuccessScreen, paid: SuccessScreen, cashstatus: CashStatusScreen, share: ShareReceiptScreen
   };
-  const SHEETS = { freeitem: FreeItemSheet, orderType: OrderTypeSheet, login: LoginSheet, voucher: VoucherSheet, itemPicker: ItemPickerSheet, shareReceipt: ShareReceiptSheet };
+  const SHEETS = { orderType: OrderTypeSheet, login: LoginSheet, voucher: VoucherSheet, itemPicker: ItemPickerSheet, shareReceipt: ShareReceiptSheet };
   const ScreenComp = SCREENS[current.name] || EntryScreen;
   const SheetComp = sheet ? SHEETS[sheet.name] : null;
 
@@ -346,54 +337,7 @@ function App() {
 
         <TweaksPanel>
           <TweakSection label="Gaya Visual" />
-          <TweakSelect label="Tema" value={tw.visualStyle} options={[
-          { value: 'linen', label: 'Linen · hangat' },
-          { value: 'porcelain', label: 'Porcelain · sejuk' },
-          { value: 'noir', label: 'Noir · gelap mewah' }]
-          } onChange={(v) => setTweak('visualStyle', v)} />
-          <TweakSelect label="Tipografi" value={tw.fonts} options={[
-          { value: 'elegan', label: 'Elegan · serif' },
-          { value: 'modern', label: 'Modern · sans' },
-          { value: 'kontras', label: 'Kontras · editorial' }]
-          } onChange={(v) => setTweak('fonts', v)} />
           <TweakColor label="Warna utama" value={tw.primaryColor} options={['#1799A5', '#1F8A5B', '#B5532A', '#2A5DB0', '#8C5BD0', '#C23B5E', '#D97706', '#0E7C66', '#4338CA', '#BE185D', '#166534', '#DC2626', '#0891B2', '#7C3AED', '#CA8A04', '#0F172A']} onChange={(v) => setTweak('primaryColor', v)} />
-          <TweakSection label="Tata Letak" />
-          <TweakRadio label="Tampilan Menu" value={tw.menuShell || 'sidebar'} options={[{ value: 'sidebar', label: 'Sidebar' }, { value: 'klasik', label: 'Klasik' }]} onChange={(v) => setTweak('menuShell', v)} />
-          {(tw.menuShell || 'sidebar') === 'klasik' && <TweakRadio label="Tagihan Berjalan" value={tw.billStrip || 'on'} options={[{ value: 'off', label: 'Off' }, { value: 'on', label: 'On' }]} onChange={(v) => setTweak('billStrip', v)} />}
-          {(tw.menuShell || 'sidebar') === 'klasik' && (tw.billStrip || 'on') !== 'off' && <TweakSelect label="Layout Tagihan" value={tw.billStripLayout || 'navbar'} options={[
-          { value: 'navbar', label: 'Navbar bawah ★' },
-          { value: 'atas', label: 'Strip atas' },
-          { value: 'banner', label: 'Banner · bawah header' },
-          { value: 'bawah', label: 'Bar bawah' },
-          { value: 'dua', label: 'Bar bawah · 2 segmen' },
-          { value: 'pill', label: 'Pill mengambang' },
-          { value: 'chip', label: 'Chip di header' },
-          { value: 'struk', label: 'Struk mengintip' },
-          { value: 'shade', label: 'Tarik (shade)' },
-          { value: 'tab', label: 'Tab di atas' }]
-          } onChange={(v) => setTweak('billStripLayout', v)} />}
-          <TweakRadio label="Kartu Menu" value={tw.menuLayout} options={[{ value: 'list', label: 'List' }, { value: 'grid', label: 'Grid' }]} onChange={(v) => setTweak('menuLayout', v)} />
-          <TweakSelect label="Header Menu" value={tw.menuHeader || 'kartu'} options={[
-            { value: 'kartu', label: 'Kartu' },
-            { value: 'menyatu', label: 'Menyatu' },
-            { value: 'hero-search', label: 'A \u00b7 Hero + Search' },
-            { value: 'split', label: 'B \u00b7 Split warna' },
-            { value: 'search-first', label: 'C \u00b7 Search first' },
-            { value: 'cat-visual', label: 'D \u00b7 Kategori visual' }
-          ]} onChange={(v) => setTweak('menuHeader', v)} />
-          <TweakRadio label="Voucher" value={tw.voucherStyle} options={[{ value: 'kupon', label: 'Kupon' }, { value: 'kartu', label: 'Kartu' }, { value: 'tiket', label: 'Tiket' }, { value: 'minimal', label: 'Minimalis' }]} onChange={(v) => setTweak('voucherStyle', v)} />
-          <TweakRadio label="Lihat Semua" value={tw.offerSeeAll} options={[{ value: 'icon', label: 'Ikon' }, { value: 'card', label: 'Kartu' }, { value: 'pill', label: 'Pill' }]} onChange={(v) => setTweak('offerSeeAll', v)} />
-          <TweakRadio label="Picker Item" value={tw.pickerStyle} options={[{ value: 'kartu', label: 'Kartu' }, { value: 'ringkas', label: 'Ringkas' }, { value: 'blok', label: 'Blok' }]} onChange={(v) => setTweak('pickerStyle', v)} />
-          <TweakRadio label="Rincian Item" value={tw.itemDetail || 'sekarang'} options={[{ value: 'sekarang', label: 'Sekarang' }, { value: 'rinci', label: 'Struk Rinci' }]} onChange={(v) => setTweak('itemDetail', v)} />
-          <TweakRadio label="Ringkasan Checkout" value={tw.checkoutSummary} options={[{ value: 'dua', label: 'Dua Kartu' }, { value: 'struk', label: 'Struk' }, { value: 'flat', label: 'Flat' }, { value: 'sheet', label: 'Ringkas' }]} onChange={(v) => setTweak('checkoutSummary', v)} />
-          <TweakRadio label="Bagikan Struk" value={tw.shareStyle || 'overlay'} options={[{ value: 'overlay', label: 'Overlay' }, { value: 'page', label: 'Halaman' }]} onChange={(v) => setTweak('shareStyle', v)} />
-          <TweakRadio label="Blok Member" value={tw.memberBlock || 'dashed'} options={[{ value: 'dashed', label: 'Dashed' }, { value: 'solid', label: 'Solid' }, { value: 'inline', label: 'Baris' }, { value: 'banner', label: 'Banner' }, { value: 'benefit', label: 'Poin-forward' }, { value: 'pill', label: 'Pill' }, { value: 'field', label: 'Field-first' }, { value: 'ticket', label: 'Struk' }, { value: 'card', label: 'Kartu Meja' }, { value: 'footer', label: 'Footer' }]} onChange={(v) => setTweak('memberBlock', v)} />
-          <TweakSection label="Tarif & Pajak" />
-          <TweakRadio label="Pajak" value={tw.taxMode || 'exclude'} options={[{ value: 'exclude', label: 'Belum termasuk' }, { value: 'include', label: 'Termasuk' }]} onChange={(v) => setTweak('taxMode', v)} />
-          <TweakRadio label="Service Charge" value={tw.serviceCharge || 'off'} options={[{ value: 'off', label: 'Tidak' }, { value: '5', label: '5%' }, { value: '10', label: '10%' }]} onChange={(v) => setTweak('serviceCharge', v)} />
-          <TweakRadio label="Pembulatan" value={tw.rounding} options={[{ value: 'off', label: 'Tidak' }, { value: '100', label: 'Rp100' }, { value: '500', label: 'Rp500' }]} onChange={(v) => setTweak('rounding', v)} />
-          <TweakSection label="Autentikasi" />
-          <TweakRadio label="Login" value={tw.authMethod} options={[{ value: 'whatsapp', label: 'WhatsApp' }, { value: 'otp', label: 'No. HP + OTP' }]} onChange={(v) => setTweak('authMethod', v)} />
         </TweaksPanel>
       </AppCtx.Provider>
     </ThemeCtx.Provider>);

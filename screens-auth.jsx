@@ -30,54 +30,28 @@ function NumPad({ onKey, onBack }) {
 function EntryScreen() {
   const t = useTheme();
   const app = useApp();
-  const opts = [
-  { mode: 'static', icon: 'qr', title: 'QR Statis', sub: 'Tempel di meja · bayar langsung', note: 'Meja 5', table: 'Meja 5' },
-  { mode: 'dyn-openbill', icon: 'table', title: 'QR Dinamis · Open Bill', sub: 'Pesan dulu, bayar di akhir', note: 'Meja 12', table: 'Meja 12' }];
-
+  // MVP: hanya QR Statis. Kartu ini = stiker QR di meja (Figma node 1605:37560);
+  // ketuk kartu untuk mensimulasikan scan. Nomor meja dari QR_TABLE (data.jsx).
+  const fira = "'Fira Sans', " + t.fontBody;
+  const line = <img src="assets/qr-card-line.svg" alt="" width={240} height={1} style={{ display: 'block' }} />;
   return (
     <div style={{ height: '100%', display: 'flex', flexDirection: 'column', background: t.bgTint }}>
-      <div style={{ flex: 1, display: 'flex', flexDirection: 'column', justifyContent: 'center', padding: '60px 24px 8px' }}>
-        {/* brand */}
-        <div style={{ textAlign: 'center', marginBottom: 26 }}>
-          <div style={{ display: 'inline-flex', alignItems: 'center', width: 64, height: 64, borderRadius: 20, background: t.primary, color: t.onPrimary, marginBottom: 16, boxShadow: '0 10px 26px ' + hexA(t.primary, 0.32), fontWeight: "400", fontSize: "16px", justifyContent: "center" }}>
-            <Icon name="spark" size={32} />
-          </div>
-          <h1 style={{ margin: 0, fontFamily: t.fontDisplay, fontStyle: t.displayItalic ? 'italic' : 'normal', fontWeight: t.displayWeight, fontSize: 36, color: t.ink, letterSpacing: t.displayItalic ? 0 : -0.5 }}>{BRAND.name}</h1>
-          <p style={{ margin: '4px 0 0', color: t.muted, fontSize: 13, letterSpacing: 1.8, textTransform: 'uppercase' }}>{BRAND.tagline}</p>
-        </div>
-
-        {/* scan viewfinder */}
-        <div style={{ alignSelf: 'center', width: 132, height: 132, borderRadius: 24, position: 'relative', marginBottom: 26, background: t.surface, boxShadow: t.shadow, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-          <Icon name="qr" size={64} color={t.primary} stroke={1.6} />
-          {['tl', 'tr', 'bl', 'br'].map((c) => {
-            const pos = { tl: { top: 10, left: 10 }, tr: { top: 10, right: 10 }, bl: { bottom: 10, left: 10 }, br: { bottom: 10, right: 10 } }[c];
-            const rot = { tl: '0deg', tr: '90deg', br: '180deg', bl: '270deg' }[c];
-            return <div key={c} style={{ position: 'absolute', width: 22, height: 22, borderTop: '3px solid ' + t.primary, borderLeft: '3px solid ' + t.primary, borderTopLeftRadius: 8, transform: `rotate(${rot})`, ...pos }} />;
-          })}
-        </div>
-
-        <p style={{ textAlign: 'center', color: t.muted, fontSize: 13.5, margin: '0 0 14px' }}>Pilih QR untuk simulasi pemindaian</p>
-
-        <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
-          {opts.map((o) =>
-          <button key={o.mode} onClick={() => app.startSession(o.mode, o.table)} style={{
-            display: 'flex', alignItems: 'center', gap: 14, textAlign: 'left', cursor: 'pointer',
-            background: t.surface, border: '1px solid ' + t.line, borderRadius: t.radius, padding: '13px 15px',
-            boxShadow: t.shadow, WebkitTapHighlightColor: 'transparent'
-          }}>
-              <div style={{ width: 44, height: 44, borderRadius: 12, background: t.primarySoft, color: t.primary, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
-                <Icon name={o.icon} size={22} />
-              </div>
-              <div style={{ flex: 1, minWidth: 0 }}>
-                <div style={{ fontWeight: 700, fontSize: 15, color: t.ink }}>{o.title}</div>
-                <div style={{ fontSize: 12.5, color: t.muted, marginTop: 1 }}>{o.sub}</div>
-              </div>
-              <Pill tone={o.table ? 'primary' : 'neutral'}>{o.note}</Pill>
-            </button>
-          )}
-        </div>
+      <div style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', padding: '60px 24px 8px' }}>
+        <button onClick={() => app.startSession('static', 'Meja ' + QR_TABLE)} aria-label={'Scan QR meja ' + QR_TABLE} style={{
+          width: 240, display: 'flex', flexDirection: 'column', alignItems: 'center', padding: '16px 0',
+          background: '#fff', border: '1px dashed #000', borderRadius: 8, cursor: 'pointer',
+          fontFamily: fira, textAlign: 'center', WebkitTapHighlightColor: 'transparent'
+        }}>
+          <div style={{ width: '100%', fontSize: 12, color: '#303030' }}>Scan QR Code</div>
+          <img src="assets/qr-meja.png" alt="" width={180} height={180} style={{ display: 'block', borderRadius: 4 }} />
+          <div style={{ width: '100%', paddingBottom: 16, fontSize: 16, fontWeight: 500, color: '#0b0b0b' }}>Table : {QR_TABLE.replace('-', ' - ')}</div>
+          {line}
+          <div style={{ width: '100%', padding: '8px 0', fontSize: 12, color: '#303030' }}>{BRAND.name}</div>
+          {line}
+          <div style={{ width: '100%', paddingTop: 24, fontSize: 12, color: '#303030' }}>Powered by Accurate POS</div>
+        </button>
       </div>
-      <div style={{ textAlign: 'center', padding: '4px 0 calc(14px + env(safe-area-inset-bottom))', color: t.faint, fontSize: 11 }}>Prototype · pilihan ini mensimulasikan jenis QR</div>
+      <div style={{ textAlign: 'center', padding: '4px 0 calc(14px + env(safe-area-inset-bottom))', color: t.faint, fontSize: 11 }}>Prototype · ketuk kartu QR untuk mensimulasikan scan</div>
     </div>);
 
 }

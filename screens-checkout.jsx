@@ -25,13 +25,14 @@ function PaymentPicker({ value, onChange }) {
       {PAYMENTS.map((p) => {
         const on = value === p.id;
         return (
+            // Figma PaymentOption: terpilih = bg primarySoft + border primary, kotak ikon primary + ikon putih
             <button key={p.id} onClick={() => onChange(p.id)} style={{
-              display: 'flex', alignItems: 'center', gap: 12, padding: '12px 14px', cursor: 'pointer',
-              background: t.surface, border: '1.5px solid ' + (on ? t.primary : t.line),
-              borderRadius: t.radiusSm, WebkitTapHighlightColor: 'transparent'
+              display: 'flex', alignItems: 'center', gap: 12, height: 62, boxSizing: 'border-box', padding: '12px 14px', cursor: 'pointer',
+              background: on ? t.primarySoft : t.surface, border: '1.5px solid ' + (on ? t.primary : t.line),
+              borderRadius: t.radiusSm, WebkitTapHighlightColor: 'transparent', transition: 'background-color .15s, border-color .15s'
             }}>
-              <div style={{ width: 38, height: 38, borderRadius: 9, background: 'rgba(23,153,165,0.12)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: t.primary, transition: 'all .15s' }}>
-                <Icon name={p.kind === 'qr' ? 'qr' : 'store'} size={20} color={t.primary} />
+              <div style={{ width: 38, height: 38, flexShrink: 0, borderRadius: 9, background: on ? t.primary : t.primarySoft, display: 'flex', alignItems: 'center', justifyContent: 'center', transition: 'background-color .15s' }}>
+                <Icon name={p.kind === 'qr' ? 'qr' : 'store'} size={20} color={on ? t.onPrimary : t.primary} />
               </div>
             <div style={{ flex: 1, textAlign: 'left' }}>
               <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
@@ -39,8 +40,8 @@ function PaymentPicker({ value, onChange }) {
               </div>
               <div style={{ fontSize: 12, color: t.muted }}>{p.sub}</div>
             </div>
-            <div style={{ width: 20, height: 20, borderRadius: 999, border: '2px solid ' + (on ? t.primary : t.faint), background: 'transparent', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-              {on && <div style={{ width: 10, height: 10, borderRadius: 999, background: t.primary }} />}
+            <div style={{ width: 20, height: 20, flexShrink: 0, boxSizing: 'border-box', borderRadius: 999, border: '2px solid ' + (on ? t.primary : t.faint), background: on ? t.primary : 'transparent', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+              {on && <Icon name="check" size={12} color={t.onPrimary} stroke={3} />}
             </div>
           </button>);
 
@@ -189,49 +190,23 @@ function BreakdownRows({ subtotal, tax, rounding, itemDiscLines }) {
   const t = useTheme();
   const app = useApp();
   const bill = app.computeBill();
-  const freeLines = app.cart.filter((l) => l.free);
+  // MVP: subtotal sudah setelah Promo Produk (item gratis, beli-N, harga coret) — penandanya
+  // di baris item. Di ringkasan hanya Diskon Transaksi otomatis (maks. 1) beserta namanya.
+  const txPromo = app.applied.map((a) => promoById(a.id)).find((p) => p && isVoucher(p));
   return (
     <>
       <div style={{ display: 'flex', justifyContent: 'space-between' }}>
         <span style={{ fontSize: 13, color: t.muted }}>Subtotal</span>
         <Money value={subtotal} style={{ fontSize: 13, fontWeight: 600, color: t.ink }} />
       </div>
-      {app.applied.map((a) => {
-        const p = promoById(a.id);
-        if (!p || p.kind === 'free-item') return null;
-        const amt = p.kind === 'percent' ? Math.min(p.cap || Infinity, Math.round(bill.paidSubtotal * p.value)) : p.kind === 'fixed' ? p.value : 0;
-        return (
-          <div key={a.id} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 8 }}>
-            <span style={{ display: 'inline-flex', alignItems: 'center', gap: 6, fontSize: 13, color: t.primary, fontWeight: 600, minWidth: 0 }}>
-              <Icon name="tag" size={13} color={t.primary} />
-              <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{p.title}</span>
-            </span>
-            <span style={{ fontSize: 13, fontWeight: 700, color: t.primary, flexShrink: 0 }}>– {rupiah(amt)}</span>
-          </div>);
-
-      })}
-      {itemDiscLines.map((d) =>
-      <div key={d.id} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 8 }}>
+      {txPromo && bill.discount > 0 &&
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 8 }}>
           <span style={{ display: 'inline-flex', alignItems: 'center', gap: 6, fontSize: 13, color: t.primary, fontWeight: 600, minWidth: 0 }}>
             <Icon name="tag" size={13} color={t.primary} />
-            <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{d.title}</span>
+            <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{txPromo.title}</span>
           </span>
-          <span style={{ fontSize: 13, fontWeight: 700, color: t.primary, flexShrink: 0 }}>– {rupiah(d.amount)}</span>
-        </div>
-      )}
-      {freeLines.map((l) => {
-        const it = itemById(l.itemId);
-        const full = (it ? it.price : 0) * l.qty;
-        return (
-          <div key={l.uid} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 8 }}>
-            <span style={{ display: 'inline-flex', alignItems: 'center', gap: 6, fontSize: 13, color: t.primary, fontWeight: 600, minWidth: 0 }}>
-              <Icon name="tag" size={14} color={t.primary} style={{ flexShrink: 0 }} />
-              <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>Gratis {l.name}</span>
-            </span>
-            <span style={{ fontSize: 13, fontWeight: 700, color: t.primary, flexShrink: 0 }}>– {rupiah(full)}</span>
-          </div>);
-
-      })}
+          <span style={{ fontSize: 13, fontWeight: 700, color: t.primary, flexShrink: 0 }}>– {rupiah(bill.discount)}</span>
+        </div>}
       {bill.service > 0 &&
       <div style={{ display: 'flex', justifyContent: 'space-between' }}>
           <span style={{ fontSize: 13, color: t.muted }}>Service Charge ({Math.round(bill.serviceRate * 100)}%)</span>
@@ -305,7 +280,7 @@ function OrderSummary({ subtotal, tax, total, rounding, itemDiscLines, expanded,
                       <span style={{ fontWeight: 700, fontSize: 14, color: t.ink, flex: 1, lineHeight: 1.3 }}>{l.name}</span>
                       {l.free ?
                     <FreePrice line={l} size={13.5} /> :
-                    <Money value={l.unit * l.qty} style={{ fontWeight: 700, fontSize: 13.5, color: t.ink, flexShrink: 0 }} />}
+                    <Money value={app.linePrice(l).final} style={{ fontWeight: 700, fontSize: 13.5, color: t.ink, flexShrink: 0 }} />}
                     </div>
                     {l.options && l.options.length > 0 && <OptLines options={l.options} size={12} style={{ marginTop: 2 }} />}
                     {l.notes && <div style={{ fontSize: 12, color: t.faint, marginTop: 2, fontStyle: 'italic' }}>"{l.notes}"</div>}
@@ -363,7 +338,7 @@ function OrderSummary({ subtotal, tax, total, rounding, itemDiscLines, expanded,
                 {l.notes && <div style={{ fontSize: 12, color: t.faint, marginTop: 2, fontStyle: 'italic' }}>"{l.notes}"</div>}
                 {l.free ?
                   <div style={{ marginTop: 6 }}><FreePrice line={l} size={13.5} /></div> :
-                  <div style={{ fontSize: 14, fontWeight: 800, color: t.ink, marginTop: 6, fontVariantNumeric: 'tabular-nums' }}>{rupiah(l.unit * l.qty)}</div>}
+                  <div style={{ fontSize: 14, fontWeight: 800, color: t.ink, marginTop: 6, fontVariantNumeric: 'tabular-nums' }}>{rupiah(app.linePrice(l).final)}</div>}
               </div>
             </div>;
               if (!mixedType) return items.map(strukLine);
@@ -412,18 +387,18 @@ function OrderSummary({ subtotal, tax, total, rounding, itemDiscLines, expanded,
         <div style={{ background: t.surface, borderRadius: 18, boxShadow: '0px 2px 12px 0px rgba(0,0,0,0.06)', padding: 16 }}>
           <div style={{ display: 'flex', flexDirection: 'column' }}>
             {items.map((l, i) =>
-            <div key={l.uid} style={{ display: 'flex', gap: 12, alignItems: 'center', paddingBottom: 11, marginBottom: 11, borderBottom: i === items.length - 1 && app.cart.length === 1 ? 'none' : 'none' }}>
+            <div key={l.uid} style={{ display: 'flex', gap: 12, alignItems: 'flex-start', paddingBottom: 11, marginBottom: 11, borderBottom: i === items.length - 1 && app.cart.length === 1 ? 'none' : 'none' }}>
                 <FoodImg label={l.name.toLowerCase()} h={60} radius={12} style={{ width: 60, flexShrink: 0 }} src={itemById(l.itemId)?.photo} />
                 <div style={{ flex: 1, minWidth: 0, display: 'flex', flexDirection: 'column', gap: 3 }}>
                   <div style={{ display: 'flex', alignItems: 'baseline', justifyContent: 'space-between' }}>
                     <span style={{ fontSize: 14, fontWeight: 600, color: t.ink, flex: 1, lineHeight: 1.3 }}>{l.name}</span>
                     <span style={{ fontSize: 12.5, color: t.faint, flexShrink: 0, whiteSpace: 'nowrap' }}>{l.qty} pcs</span>
                   </div>
-                  {l.options && l.options.length > 0 && <div style={{ fontSize: 12, color: t.faint }}>{l.options.join(' · ')}</div>}
+                  {isPaketLine(l) ? <PaketDetail line={l} withContents gap={6} /> : l.options && l.options.length > 0 && <div style={{ fontSize: 12, color: t.faint }}>{l.options.join(' · ')}</div>}
                   {l.notes && <div style={{ fontSize: 12, color: t.faint, fontStyle: 'italic' }}>"{l.notes}"</div>}
                   {l.free ?
                     <FreePrice line={l} size={13.5} /> :
-                    <div style={{ fontSize: 13.5, fontWeight: 700, color: t.ink }}>{rupiah(l.unit * l.qty)}</div>}
+                    <div style={{ display: 'flex', alignItems: 'baseline', gap: 6 }}>{app.linePrice(l).orig !== app.linePrice(l).final && <Money value={app.linePrice(l).orig} strike style={{ fontSize: 12, fontWeight: 600, color: t.faint }} />}<span style={{ fontSize: 13.5, fontWeight: 700, color: t.ink }}>{rupiah(app.linePrice(l).final)}</span></div>}
                 </div>
               </div>
             )}
@@ -467,7 +442,7 @@ function OrderSummary({ subtotal, tax, total, rounding, itemDiscLines, expanded,
                 <span style={{ fontWeight: 600, fontSize: 14, color: t.ink, flex: 1, lineHeight: 1.3 }}>{l.name}</span>
                 {l.free ?
               <FreePrice line={l} size={13.5} /> :
-              <Money value={l.unit * l.qty} style={{ fontWeight: 700, fontSize: 13.5, color: t.ink, flexShrink: 0 }} />}
+              <Money value={app.linePrice(l).final} style={{ fontWeight: 700, fontSize: 13.5, color: t.ink, flexShrink: 0 }} />}
               </div>
               {l.options && l.options.length > 0 && <div style={{ fontSize: 12, color: t.muted, marginTop: 3 }}>{l.options.join(' · ')}</div>}
               {l.notes && <div style={{ fontSize: 12, color: t.faint, marginTop: 2, fontStyle: 'italic' }}>"{l.notes}"</div>}
@@ -763,7 +738,7 @@ function ConfirmScreen() {
                 </div>
                 {l.free ?
                 <FreePrice line={l} size={13.5} /> :
-                <Money value={l.unit * l.qty} style={{ fontSize: 13.5, fontWeight: 700, color: t.ink, flexShrink: 0 }} />}
+                <Money value={app.linePrice(l).final} style={{ fontSize: 13.5, fontWeight: 700, color: t.ink, flexShrink: 0 }} />}
               </div>
               )}
             </div>
@@ -939,6 +914,8 @@ function ProcessingScreen({ params }) {
                 <button onClick={downloadQr} style={{ marginTop: 14, display: 'inline-flex', alignItems: 'center', justifyContent: 'center', gap: 7, border: '1px solid ' + t.line, background: t.surface, borderRadius: 999, padding: '8px 16px', cursor: 'pointer', fontFamily: t.fontBody, fontSize: 13, fontWeight: 700, color: t.primary, WebkitTapHighlightColor: 'transparent' }}>
                   <Icon name="download" size={16} color={t.primary} /> Download QR
                 </button>
+                {/* nomor referensi pesanan — sama dengan kode di Status Kasir & struk (Figma 1223:1655) */}
+                <div style={{ marginTop: 14, fontSize: 12, color: t.muted, textAlign: 'center' }}>{app.refCode}</div>
               </div>
 
               {/* accepted apps */}
@@ -1274,25 +1251,141 @@ function SettleScreen() {
 }
 
 // ── Success ────────────────────────────────────────────────
+// ── OrderItemRow — baris item di Pembayaran berhasil / struk (Figma OrderItemRow) ──
+function OrderItemRow({ line, border }) {
+  const t = useTheme();
+  const app = useApp();
+  const price = app.linePrice(line);
+  return (
+    <div>
+      {border && <div style={{ height: 1, background: t.line }} />}
+      <div style={{ display: 'flex', gap: 11, alignItems: 'flex-start', padding: '12px 0' }}>
+        <div style={{ width: 24, height: 24, flexShrink: 0, borderRadius: 7, background: t.surface2, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 12, fontWeight: 800, color: t.muted }}>{line.qty}</div>
+        <div style={{ flex: 1, minWidth: 0, display: 'flex', flexDirection: 'column', gap: 3 }}>
+          <div style={{ display: 'flex', alignItems: 'baseline', gap: 8 }}>
+            <span style={{ flex: 1, minWidth: 0, fontSize: 13.5, fontWeight: 600, color: t.ink }}>{line.name}</span>
+            <span style={{ flexShrink: 0, display: 'flex', gap: 5, whiteSpace: 'nowrap' }}>
+              {price.orig !== price.final && <Money value={price.orig} strike style={{ fontSize: 12, fontWeight: 600, color: t.faint }} />}
+              <Money value={price.final} style={{ fontSize: 13, fontWeight: 700, color: line.free ? t.primary : t.ink }} />
+            </span>
+          </div>
+          {price.promo &&
+          <div style={{ display: 'flex', alignItems: 'center', gap: 4, minWidth: 0 }}>
+              <Icon name="tag" size={12} color={t.primary} style={{ flexShrink: 0 }} />
+              <span style={{ fontSize: 12, color: t.primary, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{price.promo.title}</span>
+            </div>}
+          {isPaketLine(line) ? <PaketDetail line={line} withContents /> :
+          line.options && line.options.length > 0 && <div style={{ fontSize: 12, color: t.muted }}>{line.options.join(' · ')}</div>}
+          {line.notes && <div style={{ fontSize: 12, color: t.faint }}>{line.notes}</div>}
+        </div>
+      </div>
+    </div>);
+}
+
+// ── SuccessScreen — "Pembayaran berhasil" (Figma 543:740) ──────
+// Tujuan setelah pembayaran terkonfirmasi: QRIS (Update Status Pesanan) maupun
+// Bayar di Kasir (Cek Status Pembayaran setelah kasir menandai lunas).
 function SuccessScreen({ params }) {
   const t = useTheme();
   const app = useApp();
+  const bill = app.computeBill();
+  const lines = app.cart;
+  const total = params && params.amount != null ? params.amount : bill.total;
+  const pay = paymentById(app.payment) || PAYMENTS[0];
+  const txPromo = app.applied.map((a) => promoById(a.id)).find((p) => p && isVoucher(p));
+  const types = [...new Set(lines.map((l) => l.type === 'takeaway' ? 'takeaway' : 'dinein'))];
+  const typeLabel = types.length > 1 ? 'Campuran' : types[0] === 'takeaway' ? 'Take Away' : 'Dine In';
+  const [paidAt] = useStateK(() => new Date());
+  const dateText = paidAt.getDate() + ' ' + paidAt.toLocaleString('id-ID', { month: 'short' }) + ' ' + paidAt.getFullYear() + ', ' +
+  String(paidAt.getHours()).padStart(2, '0') + '.' + String(paidAt.getMinutes()).padStart(2, '0');
+  const txId = 'S.' + String(app.orderRef * 48291 % 1000000000).padStart(9, '0');
+  const [copied, setCopied] = useStateK(false);
+  const copyId = () => {
+    try {navigator.clipboard && navigator.clipboard.writeText(txId);} catch (_) {}
+    setCopied(true);setTimeout(() => setCopied(false), 1500);
+  };
+  const label = { fontSize: 11, fontWeight: 800, letterSpacing: 0.6, textTransform: 'uppercase', color: t.faint };
+  const sumRow = (l, v, accent) =>
+  <div style={{ display: 'flex', alignItems: 'flex-start' }}>
+      <span style={{ flex: 1, fontSize: 13, color: accent ? t.primary : t.muted }}>{l}</span>
+      <span style={{ fontSize: 13.5, fontWeight: 700, color: accent ? t.primary : t.ink, whiteSpace: 'nowrap' }}>{v}</span>
+    </div>;
+  const metaRow = (l, v, extra) =>
+  <div style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '7px 0', fontSize: 13 }}>
+      <span style={{ flex: 1, color: t.muted }}>{l}</span>
+      <span style={{ fontWeight: 700, color: t.ink, whiteSpace: 'nowrap' }}>{v}</span>
+      {extra}
+    </div>;
+
+  // "Download struk" → struk sederhana di tab baru
+  const downloadReceipt = () => {
+    const row = (a, b) => '<tr><td>' + a + '</td><td style="text-align:right">' + b + '</td></tr>';
+    const items = lines.map((l) => {const pr = app.linePrice(l);return row(l.qty + '× ' + l.name + (l.options && l.options.length ? '<br><small>' + l.options.join(' · ') + '</small>' : ''), rupiah(pr.final));}).join('');
+    const html = '<!doctype html><meta charset="utf-8"><title>Struk ' + txId + '</title><style>body{font:14px/1.45 Inter,system-ui,sans-serif;max-width:360px;margin:24px auto;padding:0 16px;color:#13201f}h1{font-size:18px;margin:0 0 4px}td{padding:4px 0;vertical-align:top}small{color:#5c6b6a}table{width:100%;border-collapse:collapse}hr{border:0;border-top:1px dashed #ccc;margin:12px 0}</style>' +
+    '<h1>' + BRAND.name + '</h1><div>' + BRAND.location + ' · ' + typeLabel + (app.table ? ' · ' + app.table : '') + '</div><div>' + dateText + ' · ' + txId + '</div><hr><table>' + items + '</table><hr><table>' +
+    row('Subtotal', rupiah(bill.subtotal)) + (bill.discount > 0 ? row('Diskon transaksi' + (txPromo ? ' (' + txPromo.title + ')' : ''), '−' + rupiah(bill.discount)) : '') +
+    (bill.service > 0 ? row('Service', rupiah(bill.service)) : '') + row('Pajak (' + Math.round(bill.taxRate * 100) + '%)', rupiah(bill.tax)) +
+    (bill.rounding ? row('Pembulatan', rupiah(bill.rounding)) : '') + '<tr><td><b>Total</b></td><td style="text-align:right"><b>' + rupiah(total) + '</b></td></tr></table><hr><div>Metode: ' + pay.label + '</div><p style="color:#5c6b6a">Powered by Accurate POS</p>';
+    window.open(URL.createObjectURL(new Blob([html], { type: 'text/html' })), '_blank');
+  };
 
   return (
     <div style={{ height: '100%', display: 'flex', flexDirection: 'column', background: t.surface }}>
-      <div style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', padding: '0 24px', textAlign: 'center' }}>
-        <div style={{ width: 80, height: 80, borderRadius: 999, background: 'rgba(27,174,90,0.1)', display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: 24 }}>
-          <Icon name="checkCircle" size={40} color="#1BAE5A" stroke={2.5} />
+      <div style={{ flex: 1, overflow: 'auto', WebkitOverflowScrolling: 'touch' }}>
+        {/* hero — gradasi dari warna utama merchant */}
+        <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 16, padding: '58px 24px 52px', marginBottom: -20, background: 'linear-gradient(139.2deg, ' + shade(t.primary, 28) + ' 0%, ' + t.primary + ' 45.455%, ' + shade(t.primary, -28) + ' 90.909%)' }}>
+          {/* animasi sekali saat layar tampil: lingkaran muncul → centang tergambar → ring menyusul (CSS om-success-*) */}
+          <div style={{ position: 'relative', width: 116, height: 116, flexShrink: 0 }}>
+            <div className="om-success-ring" style={{ position: 'absolute', left: 14, top: 14, width: 88, height: 88, boxSizing: 'border-box', borderRadius: 999, border: '1.5px solid rgba(255,255,255,0.38)' }} />
+            <div className="om-success-ring outer" style={{ position: 'absolute', left: 6, top: 6, width: 104, height: 104, boxSizing: 'border-box', borderRadius: 999, border: '2px solid rgba(255,255,255,0.25)' }} />
+            <div className="om-success-circle" style={{ position: 'absolute', left: 21, top: 21, width: 74, height: 74, borderRadius: 999, background: '#fff', boxShadow: '0 10px 26px rgba(5,48,43,0.34)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+              {/* geometri = aset Figma "check" (543:747); di-inline supaya garisnya bisa digambar */}
+              <svg width={40} height={40} viewBox="0 0 40 40" fill="none" aria-hidden="true" style={{ display: 'block' }}>
+                <path className="om-success-check" pathLength="1" d="M8.33333 20.8333L15.8333 28.3333L31.6667 11.6667" stroke="#1FAE5A" strokeWidth={5.66667} strokeLinecap="round" strokeLinejoin="round" />
+              </svg>
+            </div>
+          </div>
+          <div style={{ fontFamily: t.fontDisplay, fontWeight: 800, fontSize: 22, color: '#fff' }}>Pembayaran berhasil</div>
+          <div style={{ fontFamily: t.fontDisplay, fontWeight: 600, fontSize: 46, letterSpacing: -0.92, color: '#fff', lineHeight: 1.3 }}>{rupiah(total)}</div>
         </div>
-        <div style={{ fontSize: 20, fontWeight: 700, color: t.ink, marginBottom: 8 }}>Pesanan Berhasil Dibuat</div>
-        <div style={{ fontSize: 14, color: t.muted, lineHeight: 1.5 }}>Silakan tunggu pesanan diantarkan ke {app.table ? String(app.table) : 'Anda'}.</div>
+
+        <div style={{ position: 'relative', background: t.surface, borderTopLeftRadius: 22, borderTopRightRadius: 22, padding: '22px 22px 10px' }}>
+          <div style={{ display: 'flex', alignItems: 'baseline', paddingBottom: 10 }}>
+            <span style={{ flex: 1, fontSize: 11.5, fontWeight: 800, letterSpacing: 0.5, textTransform: 'uppercase', color: t.faint }}>Pesananmu</span>
+            <span style={{ fontSize: 12.5, fontWeight: 600, color: t.muted, whiteSpace: 'nowrap' }}>{typeLabel}{app.table ? ' · ' + app.table : ''}</span>
+          </div>
+          {lines.map((l, i) => <div key={l.uid} style={{ marginTop: i ? 8 : 0 }}><OrderItemRow line={l} border={i > 0} /></div>)}
+
+          <div style={{ marginTop: 14, borderTop: '1px solid ' + t.line, paddingTop: 14, display: 'flex', flexDirection: 'column', gap: 11 }}>
+            <span style={label}>Rincian Pembayaran</span>
+            {sumRow('Subtotal', rupiah(bill.subtotal))}
+            {bill.discount > 0 && sumRow('Diskon transaksi' + (txPromo ? ' · ' + txPromo.title : ''), '– ' + rupiah(bill.discount), true)}
+            {bill.service > 0 && sumRow('Service (' + Math.round(bill.serviceRate * 100) + '%)', rupiah(bill.service))}
+            {sumRow('Pajak (' + Math.round(bill.taxRate * 100) + '%)' + (bill.taxInclusive ? ' · termasuk' : ''), rupiah(bill.tax))}
+            {bill.rounding !== 0 && sumRow('Pembulatan', (bill.rounding > 0 ? '' : '– ') + rupiah(Math.abs(bill.rounding)))}
+          </div>
+
+          <div style={{ marginTop: 14, borderTop: '1px solid ' + t.line, paddingTop: 14, display: 'flex', flexDirection: 'column', gap: 4 }}>
+            <span style={label}>Detail Transaksi</span>
+            {metaRow('Metode', pay.kind === 'qr' ? 'QRIS' : 'Bayar di Kasir')}
+            {metaRow('Tanggal', dateText)}
+            {metaRow('ID Transaksi', txId,
+            <button onClick={copyId} aria-label="Salin ID transaksi" style={{ flexShrink: 0, border: 'none', background: 'none', padding: 0, cursor: 'pointer', display: 'flex', WebkitTapHighlightColor: 'transparent' }}>
+                <Icon name={copied ? 'check' : 'copy'} size={15} color={copied ? t.primary : t.faint} />
+              </button>)}
+          </div>
+
+          <div style={{ marginTop: 8, borderTop: '1px dashed ' + t.line, paddingTop: 16, display: 'flex', flexDirection: 'column', gap: 8 }}>
+            <Button full variant="ghost" icon="download" onClick={downloadReceipt}>Download struk</Button>
+            <div style={{ fontSize: 11.5, color: t.faint, textAlign: 'center' }}>Dibuka di tab baru</div>
+          </div>
+        </div>
       </div>
-      <div style={{ padding: '16px 20px calc(16px + env(safe-area-inset-bottom))', display: 'flex', flexDirection: 'column', gap: 12 }}>
-        <Button full onClick={() => app.go('status')}>Lihat Status Pesanan</Button>
-        <Button full variant="soft" onClick={app.reset}>Kembali ke Menu</Button>
+      <div style={{ flexShrink: 0, padding: '12px 18px calc(12px + env(safe-area-inset-bottom))', background: t.surface, borderTop: '1px solid ' + t.line }}>
+        <Button full onClick={() => app.startSession(app.mode || 'static', app.table)}>Kembali ke Menu</Button>
       </div>
-    </div>
-  );
+    </div>);
+
 }
 
 // ── Bagikan struk — sheet pilih channel (WhatsApp / Email), overlay in-app ──

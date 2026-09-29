@@ -6,7 +6,7 @@
 <title>Accurate POS · Self Order</title>
 <link rel="preconnect" href="https://fonts.googleapis.com" />
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-<link href="https://fonts.googleapis.com/css2?family=Hanken+Grotesk:wght@500;600;700;800&family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
+<link href="https://fonts.googleapis.com/css2?family=Fira+Sans:wght@400;500&family=Hanken+Grotesk:wght@500;600;700;800&family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
 <style>
   * { box-sizing: border-box; }
   html, body { margin: 0; padding: 0; height: 100%; }
@@ -29,7 +29,19 @@
   @keyframes om-blink  { 50% { opacity: 0; } }
   @keyframes om-pulse  { 0%,100% { opacity: 1; transform: scale(1); } 50% { opacity: .4; transform: scale(.7); } }
   @keyframes om-pop    { 0% { transform: scale(0); } 60% { transform: scale(1.12); } 100% { transform: scale(1); } }
+  /* Pembayaran berhasil — lingkaran muncul, centang tergambar, 2 ring menyusul (sekali per pesanan) */
+  @keyframes om-success-in   { from { opacity: 0; transform: scale(.8); } to { opacity: 1; transform: scale(1); } }
+  @keyframes om-success-draw { to { stroke-dashoffset: 0; } }
+  .om-success-circle { animation: om-success-in .4s cubic-bezier(0.23, 1, 0.32, 1) both; }
+  .om-success-check  { stroke-dasharray: 1; stroke-dashoffset: 1; animation: om-success-draw .32s cubic-bezier(0.23, 1, 0.32, 1) .22s forwards; }
+  .om-success-ring   { animation: om-success-in .5s cubic-bezier(0.23, 1, 0.32, 1) .12s both; }
+  .om-success-ring.outer { animation-delay: .18s; }
   @media (prefers-reduced-motion: reduce) { * { animation-duration: .001ms !important; } }
+  /* reduced motion: centang & ring cukup memudar, tanpa gerak skala */
+  @media (prefers-reduced-motion: reduce) {
+    .om-success-circle, .om-success-ring { animation: om-fade .2s ease both !important; }
+    .om-success-check { animation: none !important; stroke-dashoffset: 0; }
+  }
 
   /* tactile press — shrink while held/clicked */
   .om-press { transition: transform .12s cubic-bezier(.3,.7,.4,1); }
