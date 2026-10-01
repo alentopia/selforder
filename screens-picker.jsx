@@ -21,6 +21,14 @@ function PickerStepper({ value, onDec, onInc }) {
     </div>);
 }
 
+// Figma "Case: Hapus Item dari Keranjang (Qty ke 0)" (1127:8712): qty diturunkan di bawah 1 →
+// ConfirmDialog dulu, baru barisnya dihapus. Baris terakhir item itu terhapus → sheet menutup
+// sendiri (lihat ItemPickerSheet); item terakhir di keranjang → Keranjang Kosong.
+const askRemoveLine = (app, line) => app.askConfirm({
+  title: 'Hapus item?', message: 'Item akan dihapus dari keranjang.', confirmLabel: 'Hapus',
+  onConfirm: () => app.removeLine(line.uid)
+});
+
 // ── Tombol Edit (pill outline + ikon pensil) ──
 function EditPill({ onClick }) {
   const t = useTheme();
@@ -55,7 +63,7 @@ function LineKartu({ line, onEdit }) {
         </div>
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'flex-end', gap: 16, marginTop: 12 }}>
           <EditPill onClick={onEdit} />
-          <PickerStepper value={line.qty} onDec={() => app.setLineQty(line.uid, line.qty - 1)} onInc={() => app.setLineQty(line.uid, line.qty + 1)} />
+          <QtyStepper size="sm" value={line.qty} onChange={(v) => app.setLineQty(line.uid, v)} onRemove={() => askRemoveLine(app, line)} />
         </div>
       </div>
     </div>);
@@ -80,7 +88,7 @@ function LineRingkas({ line, onEdit, last }) {
             <Icon name="edit" size={14} color={t.primary} stroke={2} /> Edit
           </button>
           <span style={{ display: 'inline-flex' }}>
-            <QtyStepper size="sm" value={line.qty} onChange={(v) => app.setLineQty(line.uid, v)} onRemove={() => app.askConfirm({ title: 'Hapus item?', message: 'Hapus "' + line.name + '" dari keranjang?', confirmLabel: 'Hapus', onConfirm: () => app.removeLine(line.uid) })} />
+            <QtyStepper size="sm" value={line.qty} onChange={(v) => app.setLineQty(line.uid, v)} onRemove={() => askRemoveLine(app, line)} />
           </span>
         </div>
       </div>
@@ -106,7 +114,7 @@ function LineBlok({ line, onEdit }) {
       </div>
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginTop: 12, paddingTop: 12, borderTop: '1px solid ' + t.line }}>
         <Money value={line.unit * line.qty} style={{ fontSize: 15, fontWeight: 800, color: t.ink }} />
-        <PickerStepper value={line.qty} onDec={() => app.setLineQty(line.uid, line.qty - 1)} onInc={() => app.setLineQty(line.uid, line.qty + 1)} />
+        <PickerStepper value={line.qty} onDec={() => line.qty <= 1 ? askRemoveLine(app, line) : app.setLineQty(line.uid, line.qty - 1)} onInc={() => app.setLineQty(line.uid, line.qty + 1)} />
       </div>
     </div>);
 }
@@ -118,7 +126,6 @@ function ItemPickerSheet({ params }) {
   const item = itemById(params.id);
   if (!item) return null;
   const style = app.pickerStyle || 'kartu';
-  const hasMods = (item.mods || []).length > 0;
 
   // baris keranjang non-gratis utk item ini
   const lines = app.cart.filter((l) => l.itemId === item.id && !l.free);
@@ -133,7 +140,8 @@ function ItemPickerSheet({ params }) {
     style === 'blok' ? <LineBlok key={line.uid} line={line} onEdit={() => editLine(line)} /> :
     <LineKartu key={line.uid} line={line} onEdit={() => editLine(line)} />;
 
-  const ctaLabel = hasMods ? 'Buat kustomisasi baru' : 'Tambah Lagi';
+  // Figma ManageCustomizationSheet: label selalu "Buat kustomisasi baru", juga untuk barang tanpa modifier
+  const ctaLabel = 'Buat kustomisasi baru';
 
   if (lines.length === 0) return null; // sedang menutup; jangan flash empty state
 

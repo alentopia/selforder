@@ -162,75 +162,131 @@ const PKG_MINUMAN = {
   ],
 };
 
+// ── Paket Bundling — Nested Modifier (Figma 1952:53362) ──
+// Pilihan Ayam = grup OptionRow level-atas; tiap varian ayam punya sub-grup (`subs`) yang
+// baru tampil — sebagai ModifierChip bersarang — setelah varian itu dipilih.
+const PKG_AYAM_PORSI = {
+  id: 'pkg-ayam-porsi', label: 'Potongan', type: 'single', required: true,
+  options: [
+    { id: 'dada',  label: 'Dada',  price: 0 },
+    { id: 'paha',  label: 'Paha',  price: 0 },
+    { id: 'sayap', label: 'Sayap', price: 0 },
+  ],
+};
+const PKG_AYAM_PEDAS = {
+  id: 'pkg-ayam-pedas', label: 'Tingkat Kepedasan', type: 'single', required: true,
+  options: [
+    { id: 'tidak',  label: 'Tidak Pedas', price: 0 },
+    { id: 'sedang', label: 'Sedang',      price: 0 },
+    { id: 'pedas',  label: 'Pedas',       price: 0 },
+  ],
+};
+const PKG_AYAM_SAMBAL = {
+  id: 'pkg-ayam-sambal', label: 'Sambal', type: 'multi', required: false,
+  options: [
+    { id: 'terasi', label: 'Sambal Terasi', price: 0 },
+    { id: 'ijo',    label: 'Sambal Ijo',    price: 0 },
+    { id: 'matah',  label: 'Sambal Matah',  price: 2000 },
+  ],
+};
+const PKG_AYAM = {
+  id: 'pkg-ayam', label: 'Pilihan Ayam', type: 'single', required: true,
+  options: [
+    { id: 'kremes',   label: 'Ayam Goreng Kremes',     price: 0,    subs: [PKG_AYAM_PORSI, PKG_AYAM_PEDAS, PKG_AYAM_SAMBAL] },
+    { id: 'lengkuas', label: 'Ayam Goreng Lengkuas',   price: 0,    subs: [PKG_AYAM_PORSI, PKG_AYAM_PEDAS, PKG_AYAM_SAMBAL] },
+    // penyet sudah bersambal ijo → tanpa sub-grup Sambal
+    { id: 'penyet',   label: 'Ayam Penyet Sambal Ijo', price: 3000, subs: [PKG_AYAM_PORSI, PKG_AYAM_PEDAS] },
+  ],
+};
+const PKG_NASI = {
+  id: 'pkg-nasi', label: 'Pilihan Nasi', type: 'single', required: true,
+  options: [
+    { id: 'putih', label: 'Nasi Putih',         price: 8000 },
+    { id: 'bakar', label: 'Nasi Bakar Komplit', price: 6000 },
+  ],
+};
+const PKG_MINUM = {
+  id: 'pkg-minum', label: 'Pilihan Minuman', type: 'single', required: true,
+  options: [
+    { id: 'esteh',   label: 'Es Teh Manis',   price: 0 },
+    { id: 'esjeruk', label: 'Es Jeruk Peras', price: 4000 },
+    { id: 'kopi',    label: 'Kopi Susu Saji', price: 8000 },
+  ],
+};
+
 const UP = 'https://images.unsplash.com/';
 const MENU = [
   { id: 'nasi-ayam-bakar', cat: 'signature', name: 'Nasi Ayam Bakar Madu', price: 45000, tag: 'Terlaris',
-    desc: 'Ayam bakar bumbu madu, sambal terasi, lalapan & nasi hangat.', mods: [SPICE, ADDON], stock: 12,
+    desc: 'Ayam bakar bumbu madu, sambal terasi, lalapan & nasi hangat.', mods: [SPICE, ADDON],
     photo: UP + 'photo-1532550907401-a500c9a57435?w=320&h=320&fit=crop&auto=format&q=75' },
   { id: 'nasi-bakar', cat: 'signature', name: 'Nasi Bakar Komplit', price: 42000,
-    desc: 'Nasi bakar daun pisang isi ayam suwir, teri & kemangi.', mods: [SPICE], stock: 8,
+    desc: 'Nasi bakar daun pisang isi ayam suwir, teri & kemangi.', mods: [SPICE],
     photo: UP + 'photo-1512058564366-18510be2db19?w=320&h=320&fit=crop&auto=format&q=75' },
   { id: 'iga-bakar', cat: 'signature', name: 'Iga Bakar Saji', price: 78000,
-    desc: 'Iga sapi empuk, glaze kecap manis, acar segar.', mods: [ADDON], stock: 4,
+    desc: 'Iga sapi empuk, glaze kecap manis, acar segar.', mods: [ADDON],
     photo: UP + 'photo-1544025162-d76694265947?w=320&h=320&fit=crop&auto=format&q=75' },
 
   { id: 'burger-combo', cat: 'signature', name: 'Burger Combo Deluxe', price: 105000, tag: 'Hemat',
     desc: 'Sepuluh burger untuk ramai-ramai — tinggal pilih snack dan minumannya.',
-    // isi tetap: tampil di Detail Menu, Konfirmasi & Struk — disembunyikan di Keranjang
+    // isi tetap: tampil di Detail Menu, Keranjang, Konfirmasi & Struk
     contents: [{ qty: 5, name: 'Burger Bangor Sapi' }, { qty: 5, name: 'Burger Bangor Ayam' }],
-    mods: [PKG_SNACK, PKG_MINUMAN], stock: 10,
+    mods: [PKG_SNACK, PKG_MINUMAN],
     photo: 'assets/burger-combo.png' },
+  { id: 'paket-berdua', cat: 'signature', name: 'Paket Komplit Berdua', price: 95000, tag: 'Hemat',
+    desc: 'Hemat untuk berdua — pilih ayam, nasi, dan minuman favoritmu',
+    mods: [PKG_AYAM, PKG_NASI, PKG_MINUM],
+    photo: 'assets/paket-komplit-berdua.jpg' },
 
   { id: 'ayam-goreng-kremes', cat: 'ayam', name: 'Ayam Goreng Kremes', price: 38000,
-    desc: 'Ayam kampung goreng, taburan kremes renyah.', mods: [SPICE], stock: 20,
+    desc: 'Ayam kampung goreng, taburan kremes renyah.', mods: [SPICE],
     photo: UP + 'photo-1562967914-608f82629710?w=320&h=320&fit=crop&auto=format&q=75' },
   { id: 'ayam-goreng-lengkuas', cat: 'ayam', name: 'Ayam Goreng Lengkuas', price: 38000,
-    desc: 'Ayam berbalut serundeng lengkuas gurih.', mods: [SPICE], stock: 0,
+    desc: 'Ayam berbalut serundeng lengkuas gurih.', mods: [SPICE],
     photo: UP + 'photo-1569058242253-92a9c755a0ec?w=320&h=320&fit=crop&auto=format&q=75' },
   { id: 'ayam-penyet', cat: 'ayam', name: 'Ayam Penyet Sambal Ijo', price: 40000,
-    desc: 'Ayam penyet dengan sambal ijo khas.', mods: [SPICE], stock: 6,
+    desc: 'Ayam penyet dengan sambal ijo khas.', mods: [SPICE],
     photo: UP + 'photo-1455619452474-d2be8b1e70cd?w=320&h=320&fit=crop&auto=format&q=75' },
   { id: 'sate-ayam-madu', cat: 'ayam', name: 'Sate Ayam Madu', price: 42000, tag: 'Promo',
-    desc: 'Sepuluh tusuk sate ayam, bumbu kacang & kecap madu.', mods: [SPICE], stock: 16,
+    desc: 'Sepuluh tusuk sate ayam, bumbu kacang & kecap madu.', mods: [SPICE],
     photo: UP + 'photo-1529692236671-f1f6cf9683ba?w=320&h=320&fit=crop&auto=format&q=75' },
 
   { id: 'nasgor', cat: 'nasi', name: 'Nasi Goreng Kampung', price: 35000, oldPrice: 50000,
-    desc: 'Nasi goreng teri medan, telur mata sapi.', mods: [SPICE, ADDON], stock: 15,
+    desc: 'Nasi goreng teri medan, telur mata sapi.', mods: [SPICE, ADDON],
     photo: UP + 'photo-1603133872878-684f208fb84b?w=320&h=320&fit=crop&auto=format&q=75' },
   // Case nama kepanjangan (84 karakter): terpotong "…" di kartu menu, tampil penuh di
   // Detail Menu, Keranjang, Konfirmasi Pesanan & Pembayaran berhasil.
   { id: 'nasgor-seafood', cat: 'nasi', name: 'Nasi Goreng Seafood Spesial Udang Cumi Kerang dengan Telur Mata Sapi & Kerupuk Udang', price: 58000,
-    desc: 'Nasi goreng bumbu rempah dengan udang, cumi, kerang, telur mata sapi & kerupuk udang.', mods: [SPICE, ADDON], stock: 12,
+    desc: 'Nasi goreng bumbu rempah dengan udang, cumi, kerang, telur mata sapi & kerupuk udang.', mods: [SPICE, ADDON],
     photo: UP + 'photo-1603133872878-684f208fb84b?w=320&h=320&fit=crop&auto=format&q=75' },
   { id: 'nasi-putih', cat: 'nasi', name: 'Nasi Putih', price: 8000,
-    desc: 'Sepiring nasi putih pulen.', mods: [], stock: 99,
+    desc: 'Sepiring nasi putih pulen.', mods: [],
     photo: UP + 'photo-1586201375761-83865001e31c?w=320&h=320&fit=crop&auto=format&q=75' },
 
   { id: 'tahu-tempe', cat: 'pembuka', name: 'Tahu Tempe Krispi', price: 18000,
-    desc: 'Tahu & tempe krispi, sambal kecap.', mods: [], stock: 18,
+    desc: 'Tahu & tempe krispi, sambal kecap.', mods: [],
     photo: UP + 'photo-1546069901-ba9599a7e63c?w=320&h=320&fit=crop&auto=format&q=75' },
   { id: 'sup-buntut', cat: 'pembuka', name: 'Sup Buntut Bening', price: 65000, tag: 'Premium',
-    desc: 'Buntut sapi, kuah bening rempah, emping.', mods: [], stock: 5,
+    desc: 'Buntut sapi, kuah bening rempah, emping.', mods: [],
     photo: UP + 'photo-1547592166-23ac45744acd?w=320&h=320&fit=crop&auto=format&q=75' },
 
   { id: 'es-teh', cat: 'minuman', name: 'Es Teh Manis', price: 8000,
-    desc: 'Teh manis dingin menyegarkan.', mods: [], stock: 99,
+    desc: 'Teh manis dingin menyegarkan.', mods: [],
     photo: UP + 'photo-1556679343-c7306c1976bc?w=320&h=320&fit=crop&auto=format&q=75' },
   { id: 'es-jeruk', cat: 'minuman', name: 'Es Jeruk Peras', price: 15000,
-    desc: 'Jeruk peras segar tanpa pemanis buatan.', mods: [], stock: 30,
+    desc: 'Jeruk peras segar tanpa pemanis buatan.', mods: [],
     photo: UP + 'photo-1600271886742-f049cd451bba?w=320&h=320&fit=crop&auto=format&q=75' },
   { id: 'teh-talua', cat: 'minuman', name: 'Teh Talua', price: 22000,
-    desc: 'Teh telur khas Minang, hangat & creamy.', mods: [], stock: 10,
+    desc: 'Teh telur khas Minang, hangat & creamy.', mods: [],
     photo: UP + 'photo-1564890369478-c89ca6d9cde9?w=320&h=320&fit=crop&auto=format&q=75' },
   { id: 'kopi-susu', cat: 'minuman', name: 'Kopi Susu Saji', price: 25000, tag: 'Favorit',
-    desc: 'Espresso, gula aren, susu segar.', mods: [], stock: 24,
+    desc: 'Espresso, gula aren, susu segar.', mods: [],
     photo: UP + 'photo-1461023058943-07fcbe16d735?w=320&h=320&fit=crop&auto=format&q=75' },
 
   { id: 'cendol', cat: 'manis', name: 'Es Cendol Durian', price: 28000, oldPrice: 40000,
-    desc: 'Cendol, santan, gula merah & durian.', mods: [], stock: 9,
+    desc: 'Cendol, santan, gula merah & durian.', mods: [],
     photo: UP + 'photo-1551024506-0bccd828d307?w=320&h=320&fit=crop&auto=format&q=75' },
   { id: 'pisang-goreng', cat: 'manis', name: 'Pisang Goreng Madu', price: 20000,
-    desc: 'Pisang goreng madu, taburan keju.', mods: [], stock: 14,
+    desc: 'Pisang goreng madu, taburan keju.', mods: [],
     photo: UP + 'photo-1567620905732-2d1ec7ab7445?w=320&h=320&fit=crop&auto=format&q=75' },
 ];
 

@@ -42,6 +42,33 @@
     .om-success-circle, .om-success-ring { animation: om-fade .2s ease both !important; }
     .om-success-check { animation: none !important; stroke-dashoffset: 0; }
   }
+  /* QRIS kedaluwarsa — illustration/qris-expired, timeline Figma 4,17 dtk (loop):
+     lingkaran → kartu QR → lencana jam muncul berurutan, dua kilau berdenyut */
+  @keyframes om-qx-bg    { 0% { opacity: 0; transform: scale(.7); animation-timing-function: ease-out; } 6%, 100% { opacity: 1; transform: scale(1); } }
+  @keyframes om-qx-qr    { 0%, 1.92% { opacity: 0; transform: scale(.8); animation-timing-function: ease-out; } 7.91%, 100% { opacity: 1; transform: scale(1); } }
+  @keyframes om-qx-badge { 0%, 4.8% { opacity: 0; transform: scale(0); animation-timing-function: ease-out; } 10.79%, 100% { opacity: 1; transform: scale(1); } }
+  @keyframes om-qx-spark1 {
+    0%, 8.39% { opacity: 0; transform: scale(0); animation-timing-function: ease-out; }
+    13.19% { opacity: 1; transform: scale(1); animation-timing-function: ease-in-out; }
+    32.37%, 51.56%, 70.74% { opacity: 1; transform: scale(1.15); animation-timing-function: ease-in-out; }
+    22.78%, 41.97%, 61.15%, 80.34% { opacity: .35; transform: scale(.8); animation-timing-function: ease-in-out; }
+    89.93%, 100% { opacity: 1; transform: scale(1.15); }
+  }
+  @keyframes om-qx-spark2 {
+    0%, 10.07% { opacity: 0; transform: scale(0); animation-timing-function: ease-out; }
+    14.87% { opacity: 1; transform: scale(1); animation-timing-function: ease-in-out; }
+    40.05%, 59.23%, 78.42% { opacity: 1; transform: scale(1.15); animation-timing-function: ease-in-out; }
+    30.46%, 49.64%, 68.82%, 88.01% { opacity: .35; transform: scale(.8); animation-timing-function: ease-in-out; }
+    97.6%, 100% { opacity: 1; transform: scale(1.15); }
+  }
+  .om-qx { transform-origin: center; animation-duration: 4.17s; animation-iteration-count: infinite; animation-fill-mode: both; }
+  .om-qx-bg { animation-name: om-qx-bg; }
+  .om-qx-qr { animation-name: om-qx-qr; }
+  .om-qx-badge { animation-name: om-qx-badge; }
+  .om-qx-spark1 { animation-name: om-qx-spark1; }
+  .om-qx-spark2 { animation-name: om-qx-spark2; }
+  /* reduced motion: ilustrasi diam di bentuk akhirnya */
+  @media (prefers-reduced-motion: reduce) { .om-qx { animation: none !important; } }
 
   /* tactile press — shrink while held/clicked */
   .om-press { transition: transform .12s cubic-bezier(.3,.7,.4,1); }

@@ -76,7 +76,6 @@ function OrderTypeSheet({ params }) {
 }
 
 // ── Search — halaman penuh, saran + hasil ─────────────────
-const POPULAR_IDS = ['nasi-ayam-bakar', 'iga-bakar', 'ayam-goreng-kremes', 'nasgor', 'kopi-susu', 'es-teh', 'sup-buntut', 'cendol'];
 
 function SearchScreen() {
   const t = useTheme();
@@ -91,7 +90,6 @@ function SearchScreen() {
   }, []);
 
   const qtyInCart = (id) => app.cart.filter((l) => l.itemId === id && !l.free).reduce((s, l) => s + l.qty, 0);
-  const popular = POPULAR_IDS.map(itemById).filter(Boolean);
   const results = q.trim() ? MENU.filter((m) => m.name.toLowerCase().includes(q.trim().toLowerCase())) : null;
 
   const cardRow = (items) =>
@@ -121,8 +119,10 @@ function SearchScreen() {
       <div style={{ flex: 1, overflow: 'auto', WebkitOverflowScrolling: 'touch', padding: grid ? '14px 14px 130px' : '14px 16px 130px' }}>
         {results === null ?
         <>
-            <h3 style={{ margin: '2px 2px 12px', fontFamily: t.fontDisplay, fontStyle: t.displayItalic ? 'italic' : 'normal', fontWeight: t.displayWeight, fontSize: 19, color: t.ink }}>Paling Dicari</h3>
-            {cardRow(popular)}
+            {/* Figma Search (531:384): sebelum mengetik tampil "Menu" — semua menu, bukan saran
+                "Paling Dicari" (belum ada data pesanan untuk menentukan yang paling dicari) */}
+            <h3 style={{ margin: '2px 2px 12px', fontFamily: t.fontDisplay, fontStyle: t.displayItalic ? 'italic' : 'normal', fontWeight: t.displayWeight, fontSize: 19, color: t.ink }}>Menu</h3>
+            {cardRow(MENU)}
           </> :
         results.length === 0 ?
         <div style={{ textAlign: 'center', padding: '60px 24px', color: t.faint }}>
@@ -713,7 +713,7 @@ function MenuClassicScreen({ params = {} }) {
         {/* banner — scroll bersama konten; saat lewat, compact header muncul */}
         {!isNewHero && !q &&
         <div style={{ position: 'relative', height: BANNER_H, overflow: 'hidden' }}>
-            <image-slot id="menu-banner" shape="rect" placeholder="Drop foto restoran" style={{ display: 'block', width: '100%', height: '100%' }}></image-slot>
+            <image-slot id="menu-banner" shape="rect" placeholder="Drop foto restoran" src="assets/menu-banner.png" style={{ display: 'block', width: '100%', height: '100%' }}></image-slot>
             {/* scrim atas — status bar tetap terbaca */}
             <div style={{ position: 'absolute', top: 0, left: 0, right: 0, height: 64, background: 'linear-gradient(rgba(0,0,0,0.36), rgba(0,0,0,0))', pointerEvents: 'none' }}></div>
             {menyatu &&
@@ -773,7 +773,7 @@ function MenuClassicScreen({ params = {} }) {
         {isNewHero && !q && app.menuHeader === 'hero-search' &&
         <div style={{ marginBottom: 4 }}>
           <div style={{ position: 'relative', height: 210, overflow: 'hidden' }}>
-            <image-slot id="menu-banner" shape="rect" placeholder="Drop foto restoran" style={{ display: 'block', width: '100%', height: '100%' }}></image-slot>
+            <image-slot id="menu-banner" shape="rect" placeholder="Drop foto restoran" src="assets/menu-banner.png" style={{ display: 'block', width: '100%', height: '100%' }}></image-slot>
             <div style={{ position: 'absolute', top: 0, left: 0, right: 0, height: 68, background: 'linear-gradient(rgba(0,0,0,0.4),transparent)', pointerEvents: 'none' }}></div>
             <div style={{ position: 'absolute', inset: 0, background: 'linear-gradient(to top, rgba(0,0,0,0.7) 0%, rgba(0,0,0,0) 50%)', pointerEvents: 'none' }}></div>
             <div style={{ position: 'absolute', left: 16, right: 16, bottom: 60 }}>
@@ -870,7 +870,7 @@ function MenuClassicScreen({ params = {} }) {
         {isNewHero && !q && app.menuHeader === 'cat-visual' &&
         <div style={{ marginBottom: 12 }}>
           <div style={{ position: 'relative', height: 150, overflow: 'hidden' }}>
-            <image-slot id="menu-banner" shape="rect" placeholder="Drop foto restoran" style={{ display: 'block', width: '100%', height: '100%' }}></image-slot>
+            <image-slot id="menu-banner" shape="rect" placeholder="Drop foto restoran" src="assets/menu-banner.png" style={{ display: 'block', width: '100%', height: '100%' }}></image-slot>
             <div style={{ position: 'absolute', top: 0, left: 0, right: 0, height: 60, background: 'linear-gradient(rgba(0,0,0,0.35),transparent)', pointerEvents: 'none' }}></div>
             <div style={{ position: 'absolute', inset: 0, background: 'linear-gradient(to top, rgba(0,0,0,0.65) 0%, rgba(0,0,0,0) 55%)', pointerEvents: 'none' }}></div>
             <div style={{ position: 'absolute', left: 16, bottom: 52 }}>
@@ -998,18 +998,11 @@ function MenuClassicScreen({ params = {} }) {
     </div>);
 
 }
-function StockNote({ item }) {
-  const t = useTheme();
-  if (item.stock === 0) return <Pill tone="danger">Habis</Pill>;
-  if (item.stock <= 5) return <Pill tone="promo" icon="fire">Sisa {item.stock}</Pill>;
-  return null;
-}
 
 function MenuCardList({ item, qty, onOpen, hidePromo }) {
   const t = useTheme();
-  const out = item.stock === 0;
   return (
-    <div onClick={out ? undefined : onOpen} style={{ display: 'flex', gap: 14, background: t.surface, border: '1px solid ' + t.line, borderRadius: t.radius, padding: 12, boxShadow: t.shadow, cursor: out ? 'default' : 'pointer', opacity: out ? 0.6 : 1, position: 'relative' }}>
+    <div onClick={onOpen} style={{ display: 'flex', gap: 14, background: t.surface, border: '1px solid ' + t.line, borderRadius: t.radius, padding: 12, boxShadow: t.shadow, cursor: 'pointer', position: 'relative' }}>
       <FoodImg label={item.name.toLowerCase()} h={92} style={{ width: 92 }} src={item.photo} />
       <div style={{ flex: 1, minWidth: 0, display: 'flex', flexDirection: 'column' }}>
         <div style={{ display: 'flex', alignItems: 'flex-start', gap: 6 }}>
@@ -1022,7 +1015,7 @@ function MenuCardList({ item, qty, onOpen, hidePromo }) {
             <Money value={item.price} style={{ fontWeight: 700, fontSize: 15, color: t.ink }} />
             {item.oldPrice && <Money value={item.oldPrice} strike style={{ fontWeight: 600, fontSize: 12, color: t.faint }} />}
           </div>
-          {out ? <StockNote item={item} /> : qty > 0 ?
+          {qty > 0 ?
           <div style={{ minWidth: 24, height: 24, padding: '0 7px', borderRadius: 999, background: t.primary, color: t.onPrimary, display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 800 }}>{qty}</div> :
           <div style={{ width: 24, height: 24, borderRadius: 999, background: t.primary, color: t.onPrimary, display: 'flex', alignItems: 'center', justifyContent: 'center' }}><Icon name="plus" size={14} stroke={3} color={t.onPrimary} /></div>}
         </div>
@@ -1033,32 +1026,30 @@ function MenuCardList({ item, qty, onOpen, hidePromo }) {
 
 function MenuCardGrid({ item, qty, onOpen }) {
   const t = useTheme();
-  const out = item.stock === 0;
   return (
-    <div onClick={out ? undefined : onOpen} style={{
+    <div onClick={onOpen} style={{
       // minWidth 0: item grid tidak boleh melebar mengikuti nama panjang (nama dipotong "…")
-      minWidth: 0, cursor: out ? 'default' : 'pointer', opacity: out ? 0.55 : 1, display: 'flex', flexDirection: 'column',
+      minWidth: 0, cursor: 'pointer', display: 'flex', flexDirection: 'column',
       background: t.surface, border: '1px solid ' + t.line, borderRadius: t.radius, padding: '8px 8px 10px', gap: 10,
       boxShadow: t.shadow
     }}>
       <div style={{ position: 'relative', height: 146 }}>
         <FoodImg label={item.name.toLowerCase()} h={146} radius={t.radiusSm} src={item.photo} style={{ width: '100%', display: 'block', borderRadius: t.radiusSm, objectFit: 'cover' }} />
-        {!out && (qty > 0 ?
+        {qty > 0 ?
         <div style={{ position: 'absolute', right: 8, bottom: 8, minWidth: 24, height: 24, padding: '0 6px', borderRadius: 999, background: t.primary, color: t.onPrimary, display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 800, fontSize: 12.5, boxShadow: '0 4px 12px ' + hexA(t.primary, 0.4) }}>{qty}</div> :
         <div style={{ position: 'absolute', right: 8, bottom: 8, width: 24, height: 24, borderRadius: 999, background: t.primary, color: t.onPrimary, display: 'flex', alignItems: 'center', justifyContent: 'center', boxShadow: '0 4px 12px ' + hexA(t.primary, 0.4) }}>
           <Icon name="plus" size={14} stroke={3} color={t.onPrimary} />
-        </div>)
+        </div>
         }
       </div>
-      <div style={{ display: 'flex', flexDirection: 'column', padding: '0 2px' }}>
+      {/* Figma MenuCard grid: teks selebar isi kartu (tanpa padding samping tambahan) */}
+      <div style={{ display: 'flex', flexDirection: 'column' }}>
         <h3 style={{ margin: '0', fontSize: 14.5, color: t.ink, lineHeight: 1.25, fontWeight: 400, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{item.name}</h3>
         <div style={{ margin: '6px 0 0' }}>
-          {out ? <StockNote item={item} /> :
           <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
               <Money value={item.price} style={{ fontWeight: 800, fontSize: 15, color: t.ink }} />
               {item.oldPrice && <Money value={item.oldPrice} strike style={{ fontWeight: 600, fontSize: 12.5, color: t.faint }} />}
             </div>
-          }
         </div>
       </div>
     </div>);
@@ -1241,26 +1232,41 @@ function ItemScreen({ params }) {
   const [sel, setSel] = useStateM(() => {
     const init = {};
     const matchOpt = (o) => (editLine.options || []).some((s) => s === o.label || s.indexOf(o.label + ' (+') === 0);
-    mods.forEach((m) => {
+    const initGroup = (m) => {
       if (m.type === 'single') {
         const found = editLine && m.options.find((o) => matchOpt(o));
         init[m.id] = found ? found.id : isFixedGroup(m) ? m.options[0].id : undefined;
       } else if (m.type === 'multi') {
         init[m.id] = editLine ? m.options.filter((o) => matchOpt(o)).map((o) => o.id) : [];
       }
-    });
+    };
+    // sub-grup bersarang (o.subs) disimpan di sel yang sama, dengan id grupnya sendiri
+    mods.forEach((m) => {initGroup(m);m.options.forEach((o) => (o.subs || []).forEach(initGroup));});
     return init;
   });
+  // grup bersarang yang sedang dibuka lagi daftarnya (untuk ganti pilihan utama)
+  const [openGroups, setOpenGroups] = useStateM({});
   const [notes, setNotes] = useStateM(editLine ? editLine.notes || '' : '');
 
   const chosen = (m) => m.type === 'single' ? m.options.filter((o) => o.id === sel[m.id]) : m.options.filter((o) => (sel[m.id] || []).includes(o.id));
-  const modPrice = mods.reduce((sum, m) => sum + chosen(m).reduce((s2, o) => s2 + o.price, 0), 0);
+  // sub-grup aktif = milik opsi yang terpilih di grup pilih-1 (mis. Potongan dst. setelah pilih ayam)
+  const subsOf = (m) => m.type === 'single' && chosen(m)[0] && chosen(m)[0].subs || [];
+  const groupPrice = (m) => chosen(m).reduce((s2, o) => s2 + o.price, 0);
+  const modPrice = mods.reduce((sum, m) => sum + groupPrice(m) + subsOf(m).reduce((s2, sg) => s2 + groupPrice(sg), 0), 0);
   const unit = item.price + modPrice;
-  // semua grup wajib harus terisi sebelum bisa ditambahkan
-  const requiredOk = mods.every((m) => !m.required || chosen(m).length > 0);
+  // semua grup wajib (termasuk sub-grup bersarang) harus terisi sebelum bisa ditambahkan
+  const filled = (m) => !m.required || chosen(m).length > 0;
+  const subsFilled = (m) => subsOf(m).every(filled);
+  const requiredOk = mods.every((m) => filled(m) && subsFilled(m));
 
   const pick = (m, o) => setSel((s) => {
-    if (m.type === 'single') return { ...s, [m.id]: o.id };
+    if (m.type === 'single') {
+      if (s[m.id] === o.id) return s;
+      // ganti pilihan utama → sub-grup pilihan lama dikosongkan
+      const next = { ...s, [m.id]: o.id };
+      m.options.forEach((x) => (x.subs || []).forEach((sg) => {next[sg.id] = sg.type === 'single' ? undefined : [];}));
+      return next;
+    }
     const cur = s[m.id] || [];
     return { ...s, [m.id]: cur.includes(o.id) ? cur.filter((x) => x !== o.id) : [...cur, o.id] };
   });
@@ -1269,10 +1275,10 @@ function ItemScreen({ params }) {
     const contentLabels = (item.contents || []).map((c) => c.qty + '× ' + c.name);
     // sertakan biaya tambahan di label opsi (mis. "Telur Dadar (+Rp7.000)") biar user paham kenapa harganya beda
     const fmt = (o) => o.price > 0 ? o.label + ' (+' + rupiah(o.price) + ')' : o.label;
-    const optLabels = mods.flatMap((m) => chosen(m).map(fmt));
+    const optLabels = mods.flatMap((m) => [...chosen(m), ...subsOf(m).flatMap(chosen)].map(fmt));
     if (editLine) app.removeLine(editLine.uid);
-    // isi tetap paket ikut disimpan di options (tampil di Konfirmasi & Struk) dan ditandai
-    // lewat `contents` supaya Keranjang bisa menyembunyikannya.
+    // isi tetap paket ikut disimpan di options (tampil di Keranjang, Konfirmasi & Struk) dan
+    // ditandai lewat `contents` supaya bisa dirender sebagai PaketDetail.
     app.addToCart({ itemId: item.id, name: item.name, unit, qty, options: [...contentLabels, ...optLabels], contents: contentLabels, notes });
     // Promo terkait item (mis. item gratis) dihitung otomatis di keranjang dari barang yang ditambah tamu.
     app.back();
@@ -1297,6 +1303,34 @@ function ItemScreen({ params }) {
     </span>;
   const fixedRow = (label, key) =>
   <div key={key} style={rowStyle}><span style={labelStyle(true)}>{label}</span><span style={{ width: 24, height: 21, flexShrink: 0 }} /></div>;
+  const priceTag = (o) => o.price > 0 && <span style={{ flexShrink: 0, fontSize: 13, fontWeight: 600, lineHeight: '21px', color: t.muted, whiteSpace: 'nowrap' }}>+{rupiah(o.price)}</span>;
+  // ModifierChip (Figma 1952:136) — opsi sub-grup bersarang. Terpilih: latar surface, garis primary
+  // 1.5px, teks primary (padding dikurangi 0.5px supaya ukuran chip tidak bergeser).
+  const chip = (sg, o) => {
+    const on = chosen(sg).includes(o);
+    return (
+      <button key={o.id} onClick={() => pick(sg, o)} style={{ display: 'inline-flex', alignItems: 'center', gap: 6, padding: on ? '9.5px 15.5px' : '10px 16px', borderRadius: 999, border: on ? '1.5px solid ' + t.primary : '1px solid ' + t.line, background: on ? t.surface : t.surface2, color: on ? t.primary : t.ink, fontFamily: t.fontBody, fontSize: 13.5, fontWeight: 600, lineHeight: 'normal', whiteSpace: 'nowrap', cursor: 'pointer', WebkitTapHighlightColor: 'transparent' }}>
+        {o.label}
+        {o.price > 0 && <span style={{ color: t.primary }}>+{rupiah(o.price)}</span>}
+      </button>);
+  };
+  // sub-grup bersarang di bawah pilihan utama: garis penghubung teal 3px + grup chip.
+  // Pill "PILIH 1" hanya tampil selama grup wajibnya belum diisi (Figma 1948:56053 vs 1948:69731).
+  const nested = (m) =>
+  <div style={{ display: 'flex', gap: 12 }}>
+      <div style={{ width: 3, borderRadius: 2, background: t.primary, flexShrink: 0 }} />
+      <div style={{ flex: 1, minWidth: 0, display: 'flex', flexDirection: 'column', gap: 8 }}>
+        {subsOf(m).map((sg) =>
+      <div key={sg.id} style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+              <span style={{ fontSize: 13, fontWeight: 800, letterSpacing: 0.6, textTransform: 'uppercase', color: t.faint }}>{sg.label}</span>
+              {!filled(sg) && <Pill tone="primary" style={{ fontSize: 8, border: 'none' }}>{sg.type === 'single' ? 'Pilih 1' : 'Wajib'}</Pill>}
+            </div>
+            <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8 }}>{sg.options.map((o) => chip(sg, o))}</div>
+          </div>
+      )}
+      </div>
+    </div>;
 
   return (
     <div style={{ height: '100%', display: 'flex', flexDirection: 'column', background: t.bg }}>
@@ -1305,7 +1339,6 @@ function ItemScreen({ params }) {
         <FoodImg label={item.name.toLowerCase()} h={210} radius={t.radius} src={item.photo} />
         <h2 style={{ margin: '16px 0 0', fontFamily: t.fontDisplay, fontStyle: t.displayItalic ? 'italic' : 'normal', fontWeight: t.displayWeight, fontSize: 26, color: t.ink, lineHeight: 1.1, overflowWrap: 'anywhere' }}>{item.name}</h2>
         <p style={{ color: t.muted, fontSize: 14, lineHeight: 1.55, margin: '8px 0 4px' }}>{item.desc}</p>
-        {item.stock <= 5 && item.stock > 0 && <Pill tone="promo" icon="fire" style={{ marginTop: 6 }}>Stok terbatas · sisa {item.stock}</Pill>}
 
         {/* isi tetap paket — tanpa kontrol & tanpa harga: tidak ada yang perlu diputuskan */}
         {(item.contents || []).length > 0 &&
@@ -1316,6 +1349,21 @@ function ItemScreen({ params }) {
         }
 
         {mods.map((m) => {
+          // Paket Bundling (Figma 1952:53362): setelah pilihan utama ber-sub-grup dipilih, judul grup
+          // & opsi lain disembunyikan — tinggal opsi terpilih + sub-grupnya. Prefiks "1x" muncul begitu
+          // semua sub-grup wajib terisi. Ketuk baris itu untuk membuka daftar lagi (ganti pilihan).
+          if (subsOf(m).length && !openGroups[m.id]) {
+            const o = chosen(m)[0];
+            return group(m.id,
+            <div>
+                <button onClick={() => setOpenGroups((g) => ({ ...g, [m.id]: true }))} style={{ ...rowStyle, cursor: 'pointer' }}>
+                  <span style={labelStyle(true)}>{(subsFilled(m) ? '1x ' : '') + o.label}</span>
+                  {priceTag(o)}
+                  <span style={{ width: 24, height: 21, flexShrink: 0 }} />
+                </button>
+                {nested(m)}
+              </div>);
+          }
           const fixed = isFixedGroup(m);
           const subtitle = fixed ? null : m.required ?
           m.type === 'single' ? 'Wajib dipilih · maks. 1' : 'Wajib dipilih' :
@@ -1328,9 +1376,9 @@ function ItemScreen({ params }) {
                 m.options.map((o) => {
                   const on = chosen(m).includes(o);
                   return (
-                    <button key={o.id} onClick={() => pick(m, o)} style={{ ...rowStyle, cursor: 'pointer' }}>
+                    <button key={o.id} onClick={() => {pick(m, o);if (o.subs) setOpenGroups((g) => ({ ...g, [m.id]: false }));}} style={{ ...rowStyle, cursor: 'pointer' }}>
                       <span style={labelStyle(on)}>{o.label}</span>
-                      {o.price > 0 && <span style={{ flexShrink: 0, fontSize: 13, fontWeight: 600, lineHeight: '21px', color: t.muted, whiteSpace: 'nowrap' }}>+{rupiah(o.price)}</span>}
+                      {priceTag(o)}
                       {check(on)}
                     </button>);
                 })}
@@ -1358,4 +1406,4 @@ function MenuScreen(props) {
   return app.menuShell === 'klasik' ? <MenuClassicScreen {...props} /> : <MenuSidebarScreen {...props} />;
 }
 
-Object.assign(window, { MenuScreen, MenuClassicScreen, BillStrip, PromoToday, MenuCardList, MenuCardGrid, StockNote, SearchScreen, OffersScreen, VouchersScreen, VoucherSheet, ItemScreen, OrderTypeSheet, CartDock, DineToggle, StaticNavBar, RiwayatPesanan });
+Object.assign(window, { MenuScreen, MenuClassicScreen, BillStrip, PromoToday, MenuCardList, MenuCardGrid, SearchScreen, OffersScreen, VouchersScreen, VoucherSheet, ItemScreen, OrderTypeSheet, CartDock, DineToggle, StaticNavBar, RiwayatPesanan });

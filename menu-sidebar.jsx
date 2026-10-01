@@ -9,10 +9,9 @@ const RAIL_W = 104;
 // foto 76px, nama maks 2 baris, harga + tombol tambah. Tanpa deskripsi panjang.
 function SidebarMenuCard({ item, qty, onOpen }) {
   const t = useTheme();
-  const out = item.stock === 0;
   const triggerPromo = PROMOS.find((p) => p.scope === 'item' && p.requireItem === item.id);
   return (
-    <div onClick={out ? undefined : onOpen} style={{ display: 'flex', gap: 11, background: t.surface, border: '1px solid ' + t.line, borderRadius: t.radius, padding: 9, boxShadow: t.shadow, cursor: out ? 'default' : 'pointer', opacity: out ? 0.6 : 1 }}>
+    <div onClick={onOpen} style={{ display: 'flex', gap: 11, background: t.surface, border: '1px solid ' + t.line, borderRadius: t.radius, padding: 9, boxShadow: t.shadow, cursor: 'pointer' }}>
       <FoodImg label={item.name.toLowerCase()} h={76} radius={t.radiusSm} style={{ width: 76, flexShrink: 0 }} src={item.photo} />
       <div style={{ flex: 1, minWidth: 0, display: 'flex', flexDirection: 'column' }}>
         {triggerPromo &&
@@ -24,7 +23,7 @@ function SidebarMenuCard({ item, qty, onOpen }) {
             <Money value={item.price} style={{ fontWeight: 800, fontSize: 14, color: t.ink }} />
             {item.oldPrice && <Money value={item.oldPrice} strike style={{ fontWeight: 600, fontSize: 11, color: t.faint }} />}
           </div>
-          {out ? <StockNote item={item} /> : qty > 0 ?
+          {qty > 0 ?
           <div style={{ flexShrink: 0, minWidth: 30, height: 30, padding: '0 9px', borderRadius: 9, background: t.primary, color: t.onPrimary, display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 800, fontSize: 13.5 }}>{qty}</div> :
           <div style={{ flexShrink: 0, width: 30, height: 30, borderRadius: 9, background: t.primary, color: t.onPrimary, display: 'flex', alignItems: 'center', justifyContent: 'center' }}><Icon name="plus" size={17} stroke={2.6} color={t.onPrimary} /></div>}
         </div>
@@ -180,7 +179,7 @@ function MenuSidebarScreen({ params }) {
 
           {/* banner foto restoran */}
           <div style={{ position: 'relative', height: 150, overflow: 'hidden' }}>
-            <image-slot id="menu-banner" shape="rect" placeholder="Drop foto restoran" style={{ display: 'block', width: '100%', height: '100%' }}></image-slot>
+            <image-slot id="menu-banner" shape="rect" placeholder="Drop foto restoran" src="assets/menu-banner.png" style={{ display: 'block', width: '100%', height: '100%' }}></image-slot>
           </div>
 
           {/* tipe pesanan dipindah ke header */}

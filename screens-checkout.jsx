@@ -1,6 +1,9 @@
 // screens-checkout.jsx — Confirm (locked), Payment picker, Processing, Open Bill, Settle, Success.
 const { useState: useStateK, useEffect: useEffectK } = React;
 
+// Masa berlaku kode QRIS: 5 menit. Untuk QA bisa dipersingkat lewat URL, mis. ?qrisDetik=10
+const QRIS_SECONDS = Number(new URLSearchParams(window.location.search).get('qrisDetik')) || 300;
+
 function ReadLine({ line }) {
   const t = useTheme();
   return (
@@ -829,7 +832,7 @@ function ProcessingScreen({ params }) {
   const pay = paymentById(app.payment) || PAYMENTS[0];
   const amount = params && params.amount != null ? params.amount : app.orderTotal();
   const isQr = pay.kind === 'qr';
-  const [secs, setSecs] = useStateK(300);
+  const [secs, setSecs] = useStateK(QRIS_SECONDS);
   const target = params && params.settle || app.mode === 'dyn-openbill' ? 'paid' : 'success';
   const finish = () => app.go(target, { root: true, amount });
 
@@ -875,7 +878,7 @@ function ProcessingScreen({ params }) {
 
   return (
     <div style={{ height: '100%', display: 'flex', flexDirection: 'column', background: t.bg }}>
-      <TopBar title={isQr ? 'Pembayaran QRIS' : 'Memproses'} onBack={app.back} />
+      <TopBar title={isQr ? 'Pembayaran QRIS' : 'Memproses'} />
 
       {isQr ?
       <>
@@ -968,6 +971,9 @@ function ProcessingScreen({ params }) {
           </div>
         </>
       }
+      {/* Figma "Case: QRIS Kedaluwarsa" (860:572): timer habis & belum dibayar → modal.
+          Layar ini tanpa tombol back, jadi modal inilah satu-satunya jalan kembali. */}
+      {isQr && secs === 0 && !paid && <QrisExpiredDialog onBack={app.back} />}
     </div>);
 
 
@@ -990,6 +996,57 @@ function QrPlaceholder({ color, bg, size = 180 }) {
       {cells}
     </svg>);
 
+}
+
+// ── QrisExpiredDialog — Figma ExpiredDialog (4798:2701) ──
+// Tidak bisa ditutup dengan ketuk di luar kartu; satu aksi: kembali ke Konfirmasi Pesanan
+// (pesanan, nomor WA & metode QRIS tetap). Bayar lagi → kode QRIS & timer 5 menit baru.
+function QrisExpiredDialog({ onBack }) {
+  const t = useTheme();
+  return (
+    <div role="alertdialog" aria-modal="true" aria-labelledby="om-qris-expired-title" style={{ position: 'absolute', inset: 0, zIndex: 110, background: 'rgba(10,20,19,0.5)', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '0 28px', animation: 'om-fade .2s ease' }}>
+      <div style={{ width: '100%', background: t.surface, borderRadius: t.radiusLg, padding: '26px 22px 22px', boxShadow: '0 24px 60px rgba(0,0,0,0.3)', display: 'flex', flexDirection: 'column', gap: 20 }}>
+        <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 28, textAlign: 'center' }}>
+          <div style={{ width: 120, height: 120, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+            <QrisExpiredArt />
+          </div>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+            <h3 id="om-qris-expired-title" style={{ margin: 0, fontFamily: t.fontDisplay, fontWeight: 700, fontSize: 20, lineHeight: '25px', color: t.ink }}>Kode QRIS kedaluwarsa</h3>
+            <p style={{ margin: 0, fontSize: 14, lineHeight: '20px', color: t.muted }}>Kode QRIS hanya berlaku 5 menit. Pesananmu tetap tersimpan. Kembali ke konfirmasi untuk membuat kode baru.</p>
+          </div>
+        </div>
+        <Button full onClick={onBack}>Kembali ke konfirmasi pesanan</Button>
+      </div>
+    </div>);
+}
+
+// ── QrisExpiredArt — Figma illustration/qris-expired (176×176) ──
+// Keluarga illustration/warning-receipt: lingkaran krem, kartu QR, lencana jam merah, 2 kilau.
+// Animasi loop 4,17 dtk dari timeline Figma (CSS om-qx-* di Self Order.html).
+function QrisExpiredArt() {
+  const C = '#C9BBA0';
+  const finders = [[9, 9], [40, 9], [9, 40]];
+  const modules = [[29, 10], [29, 18], [10, 29], [18, 29], [29, 29], [37, 29], [49, 29], [29, 40], [41, 41], [49, 49], [37, 49], [29, 49]];
+  const img = (src, style, cls) => <img alt="" src={src} className={'om-qx ' + cls} style={{ position: 'absolute', display: 'block', ...style }} />;
+  return (
+    <div aria-hidden="true" style={{ position: 'relative', width: 176, height: 176, flexShrink: 0 }}>
+      {img('assets/qris-expired/bg.svg', { left: 16.29, top: 25.56, width: 78.857, height: 78.857 }, 'om-qx-bg')}
+      {/* kartu QR 64×64 di (50,70); stroke 1.5 di tengah garis, jadi kanvas SVG diberi ruang 1px */}
+      <svg className="om-qx om-qx-qr" width="66" height="66" viewBox="-1 -1 66 66" style={{ position: 'absolute', left: 49, top: 69, display: 'block' }}>
+        <rect x="0" y="0" width="64" height="64" rx="10" fill="#FFFFFF" stroke="#E4D7BE" strokeWidth="1.5" />
+        {finders.map(([x, y]) =>
+        <g key={x + '-' + y}>
+            <rect x={x} y={y} width="15" height="15" rx="4" fill={C} />
+            <rect x={x + 3} y={y + 3} width="9" height="9" rx="2.2" fill="#FFFFFF" />
+            <rect x={x + 5} y={y + 5} width="5" height="5" rx="1.4" fill={C} />
+          </g>
+        )}
+        {modules.map(([x, y]) => <rect key={x + '-' + y} x={x} y={y} width="5" height="5" rx="1.3" fill={C} />)}
+      </svg>
+      {img('assets/qris-expired/clock-badge.svg', { left: '60.39%', top: '24.59%', width: 53.4286, height: 53.4286 }, 'om-qx-badge')}
+      {img('assets/qris-expired/sparkle-teal.svg', { left: '19.14%', top: '29.05%', width: 16.3429, height: 16.3429 }, 'om-qx-spark1')}
+      {img('assets/qris-expired/sparkle-gold.svg', { left: '83.07%', top: '79.05%', width: 11.3143, height: 11.3143 }, 'om-qx-spark2')}
+    </div>);
 }
 
 // ── Open Bill running view ─────────────────────────────────
@@ -1266,7 +1323,8 @@ function OrderItemRow({ line, border }) {
             <span style={{ flex: 1, minWidth: 0, fontSize: 13.5, fontWeight: 600, color: t.ink }}>{line.name}</span>
             <span style={{ flexShrink: 0, display: 'flex', gap: 5, whiteSpace: 'nowrap' }}>
               {price.orig !== price.final && <Money value={price.orig} strike style={{ fontSize: 12, fontWeight: 600, color: t.faint }} />}
-              <Money value={price.final} style={{ fontSize: 13, fontWeight: 700, color: line.free ? t.primary : t.ink }} />
+              {/* barang gratis (Rp0) teal — Figma "Penanda Promo Produk (Selesai)" (4440:834) */}
+              <Money value={price.final} style={{ fontSize: 13, fontWeight: 700, color: price.final === 0 ? t.primary : t.ink }} />
             </span>
           </div>
           {price.promo &&
@@ -1300,6 +1358,7 @@ function SuccessScreen({ params }) {
   String(paidAt.getHours()).padStart(2, '0') + '.' + String(paidAt.getMinutes()).padStart(2, '0');
   const txId = 'S.' + String(app.orderRef * 48291 % 1000000000).padStart(9, '0');
   const [copied, setCopied] = useStateK(false);
+  const [scrolled, setScrolled] = useStateK(false);
   const copyId = () => {
     try {navigator.clipboard && navigator.clipboard.writeText(txId);} catch (_) {}
     setCopied(true);setTimeout(() => setCopied(false), 1500);
@@ -1330,8 +1389,10 @@ function SuccessScreen({ params }) {
   };
 
   return (
-    <div style={{ height: '100%', display: 'flex', flexDirection: 'column', background: t.surface }}>
-      <div style={{ flex: 1, overflow: 'auto', WebkitOverflowScrolling: 'touch' }}>
+    <div style={{ position: 'relative', height: '100%', display: 'flex', flexDirection: 'column', background: t.surface }}>
+      {/* latar status bar — muncul begitu layar digulir, supaya hero tidak lewat di bawah jam & notch */}
+      <div aria-hidden="true" style={{ position: 'absolute', left: 0, right: 0, top: 0, height: 50, zIndex: 5, pointerEvents: 'none', background: t.primary, opacity: scrolled ? 1 : 0, transition: 'opacity .2s ease' }} />
+      <div onScroll={(e) => setScrolled(e.currentTarget.scrollTop > 8)} style={{ flex: 1, overflow: 'auto', WebkitOverflowScrolling: 'touch' }}>
         {/* hero — gradasi dari warna utama merchant */}
         <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 16, padding: '58px 24px 52px', marginBottom: -20, background: 'linear-gradient(139.2deg, ' + shade(t.primary, 28) + ' 0%, ' + t.primary + ' 45.455%, ' + shade(t.primary, -28) + ' 90.909%)' }}>
           {/* animasi sekali saat layar tampil: lingkaran muncul → centang tergambar → ring menyusul (CSS om-success-*) */}

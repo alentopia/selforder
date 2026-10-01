@@ -9,55 +9,6 @@ function fmtDateID(d) {
   return `${d.getDate()} ${ID_MONTHS[d.getMonth()]} ${d.getFullYear()}, ${hh}.${mm}`;
 }
 
-// ── Jam pasir CSS beranimasi ───────────────────────────────
-function Hourglass({ color, sand }) {
-  return (
-    <div style={{ display: 'inline-block' }}>
-      <style>{`
-        @keyframes om-hg-flip {
-          0%, 34% { transform: rotate(0deg); }
-          50%, 84% { transform: rotate(180deg); }
-          100% { transform: rotate(360deg); }
-        }
-        @keyframes om-hg-stream {
-          0%, 30% { opacity: 0; }
-          40%, 78% { opacity: 1; }
-          88%, 100% { opacity: 0; }
-        }
-        @keyframes om-hg-top {
-          0%, 30% { transform: scaleY(1); }
-          80%, 100% { transform: scaleY(0.12); }
-        }
-        @keyframes om-hg-bot {
-          0%, 30% { transform: scaleY(0.12); }
-          80%, 100% { transform: scaleY(1); }
-        }
-        .om-hg { animation: om-hg-flip 3s cubic-bezier(.7,0,.3,1) infinite; transform-origin: 50% 50%; }
-        .om-hg-stream { animation: om-hg-stream 3s linear infinite; }
-        .om-hg-top { transform-origin: 50% 0%;  animation: om-hg-top 3s ease-in infinite; }
-        .om-hg-bot { transform-origin: 50% 100%; animation: om-hg-bot 3s ease-out infinite; }
-      `}</style>
-      <svg className="om-hg" width="64" height="80" viewBox="0 0 48 60" aria-hidden="true">
-        {/* pelat atas & bawah */}
-        <path d="M9 4h30M9 56h30" stroke={color} strokeWidth="3" strokeLinecap="round" fill="none" />
-        {/* badan kaca */}
-        <path d="M12 5 L36 5 L26 28 Q24 30 24 30 Q24 30 22 28 Z" fill="none" stroke={color} strokeWidth="2" strokeLinejoin="round" />
-        <path d="M12 55 L36 55 L26 32 Q24 30 24 30 Q24 30 22 32 Z" fill="none" stroke={color} strokeWidth="2" strokeLinejoin="round" />
-        {/* pasir atas (menyusut) */}
-        <g className="om-hg-top">
-          <path d="M14.5 9 L33.5 9 L25.5 27.5 Q24 29 24 29 Q24 29 22.5 27.5 Z" fill={sand} />
-        </g>
-        {/* aliran pasir */}
-        <line className="om-hg-stream" x1="24" y1="30" x2="24" y2="44" stroke={sand} strokeWidth="2" strokeLinecap="round" />
-        {/* timbunan pasir bawah (tumbuh) */}
-        <g className="om-hg-bot">
-          <path d="M14.5 51 L33.5 51 L25.5 32.5 Q24 31 24 31 Q24 31 22.5 32.5 Z" fill={sand} />
-        </g>
-      </svg>
-    </div>);
-
-}
-
 function CashStatusScreen({ params }) {
   const t = useTheme();
   const app = useApp();
@@ -147,29 +98,31 @@ function CashStatusScreen({ params }) {
 
   return (
     <div style={{ height: '100%', display: 'flex', flexDirection: 'column', background: t.bg }}>
-      <TopBar title="Status Pesanan" onBack={app.back} />
+      {/* layar setelah memilih bayar tidak punya tombol back (Figma TopBar Show Back=false) */}
+      <TopBar title="Status Pesanan" />
 
       <div style={{ flex: 1, overflow: 'auto', WebkitOverflowScrolling: 'touch', padding: '8px 18px 120px' }}>
 
         {/* ── HERO: ikon status + judul ── */}
         <div style={{ textAlign: 'center', paddingTop: 18 }}>
+          {/* Figma CashStatus (1223:2553): fase menunggu = Illustration/WaitingPayment 104px, tanpa lingkaran */}
+          {phase === 0 ?
+          <img src="assets/waiting-payment.gif" alt="" width="104" height="104" style={{ display: 'block', margin: '0 auto' }} /> :
           <div style={{
             width: 104, height: 104, borderRadius: 999, margin: '0 auto',
             background: ph.tintSoft, display: 'flex', alignItems: 'center', justifyContent: 'center',
             transition: 'background .4s ease',
           }}>
-            {phase === 0
-              ? <Hourglass color={t.accent} sand={t.accent} />
-              : <div style={{
+            <div style={{
                   width: 72, height: 72, borderRadius: 999, background: t.primary,
                   display: 'flex', alignItems: 'center', justifyContent: 'center',
                   animation: 'om-pop .5s cubic-bezier(.2,1.3,.4,1)',
                 }} key={phase}>
                   <Icon name={phase === 1 ? 'check' : 'fire'} size={36} color={t.onPrimary} stroke={2.6} />
-                </div>}
-          </div>
+                </div>
+          </div>}
 
-          <h1 style={{ margin: '18px 0 6px', fontFamily: t.fontDisplay, fontStyle: t.displayItalic ? 'italic' : 'normal', fontWeight: t.displayWeight, fontSize: 26, color: t.ink, lineHeight: 1.15 }}>
+          <h1 style={{ margin: '24px 0 6px', fontFamily: t.fontDisplay, fontStyle: t.displayItalic ? 'italic' : 'normal', fontWeight: t.displayWeight, fontSize: 26, color: t.ink, lineHeight: 1.15 }}>
             {ph.title}
           </h1>
           <p style={{ margin: '0 auto', maxWidth: 280, color: t.muted, fontSize: 13.5, lineHeight: 1.55, textWrap: 'pretty' }}>
@@ -179,10 +132,10 @@ function CashStatusScreen({ params }) {
 
         {/* ── KODE REF — elemen utama untuk kasir ── */}
         <div style={{
-          marginTop: 22, borderRadius: t.radius, padding: '16px 18px', textAlign: 'center',
-          background: t.primarySoft, border: '1.5px dashed ' + hexA(t.primary, 0.45),
+          marginTop: 14, borderRadius: t.radius, padding: '16px 18px', textAlign: 'center',
+          background: t.primarySoft,
         }}>
-          <div style={{ ...labelStyle, color: hexA(t.primary, 0.85) }}>Tunjukkan kode ini ke kasir</div>
+          <div style={{ ...labelStyle, color: t.primary }}>Tunjukkan kode ini ke kasir</div>
           <div style={{ fontSize: 32, fontWeight: 800, color: t.primary, letterSpacing: 2, fontVariantNumeric: 'tabular-nums', lineHeight: 1.25, marginTop: 4 }}>
             {ref}
           </div>
@@ -196,13 +149,13 @@ function CashStatusScreen({ params }) {
             {typeRows.map((r) =>
             <div key={r.type} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 10 }}>
                 <span style={{ display: 'inline-flex', alignItems: 'center', gap: 7, fontSize: 13.5, fontWeight: 700, color: t.ink, minWidth: 0 }}>
-                  <Icon name={r.type === 'takeaway' ? 'takeaway' : 'dineIn'} size={16} color={t.muted} stroke={1.8} style={{ flexShrink: 0 }} />
+                  <Icon name={r.type === 'takeaway' ? 'takeaway' : 'dineIn'} size={16} color={t.primary} style={{ flexShrink: 0 }} />
                   {r.label}
                   {mixedType && <span style={{ fontSize: 12, color: t.faint, fontWeight: 600 }}>&middot; {r.n} item</span>}
                 </span>
                 {r.table && app.table &&
                 <span style={{ display: 'inline-flex', alignItems: 'center', gap: 5, background: t.primarySoft, color: t.primary, borderRadius: 999, padding: '5px 11px', fontSize: 12.5, fontWeight: 800, flexShrink: 0 }}>
-                  <Icon name="table" size={13} color={t.primary} /> {String(app.table).replace(/^Meja\s*/i, 'Meja ')}
+                  <Icon name="table" size={17} color={t.primary} /> {String(app.table).replace(/^Meja\s*/i, 'Meja ')}
                 </span>}
               </div>
             )}
@@ -230,10 +183,15 @@ function CashStatusScreen({ params }) {
                     <span style={{ flex: 1, fontSize: 13.5, fontWeight: 600, color: t.ink, lineHeight: 1.3 }}>{l.name}</span>
                     {l.free
                       ? <span style={{ fontSize: 12.5, fontWeight: 800, color: t.primary, flexShrink: 0 }}>Gratis</span>
-                      : <Money value={isOpenBill ? l.unit * l.qty : app.linePrice(l).final} style={{ fontSize: 13, fontWeight: 700, color: t.ink, flexShrink: 0 }} />}
+                      : isOpenBill ? <Money value={l.unit * l.qty} style={{ fontSize: 13, fontWeight: 700, color: t.ink, flexShrink: 0 }} /> :
+                      <span style={{ display: 'inline-flex', alignItems: 'baseline', gap: 5, flexShrink: 0 }}>
+                        {app.linePrice(l).orig !== app.linePrice(l).final && <Money value={app.linePrice(l).orig} strike style={{ fontSize: 12, fontWeight: 600, color: t.faint }} />}
+                        {/* barang gratis (Rp0) teal — sama dengan Keranjang & Pembayaran berhasil */}
+                        <Money value={app.linePrice(l).final} style={{ fontSize: 13, fontWeight: 700, color: app.linePrice(l).final === 0 ? t.primary : t.ink }} />
+                      </span>}
                   </div>
                   {isPaketLine(l) ? <div style={{ marginTop: 3 }}><PaketDetail line={l} withContents /></div> : l.options && l.options.length > 0 && <div style={{ fontSize: 12, color: t.muted, marginTop: 3 }}>{l.options.join(' · ')}</div>}
-                  {l.notes && <div style={{ fontSize: 12, color: t.faint, marginTop: 2, fontStyle: 'italic' }}>"{l.notes}"</div>}
+                  {l.notes && <div style={{ fontSize: 12, color: t.faint, marginTop: 2 }}>{l.notes}</div>}
                   {mixedType &&
                   <div style={{ marginTop: 4, display: 'inline-flex', alignItems: 'center', gap: 4, fontSize: 11, fontWeight: 700, color: t.muted }}>
                     <Icon name={l.type === 'takeaway' ? 'takeaway' : 'dineIn'} size={12} color={t.muted} stroke={1.8} />
@@ -286,7 +244,7 @@ function CashStatusScreen({ params }) {
           )}
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', marginTop: 2, paddingTop: 10, borderTop: '1px solid ' + t.line }}>
             <span style={{ fontSize: 14.5, fontWeight: 700, color: t.ink }}>Total Pesanan</span>
-            <Money value={total} style={{ fontSize: 18, fontWeight: 800, color: t.primary }} />
+            <Money value={total} style={{ fontSize: 18, fontWeight: 800, color: t.ink }} />
           </div>
         </div>
 

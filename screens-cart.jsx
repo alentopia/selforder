@@ -52,7 +52,7 @@ function LineRow({ line, editable, noSep }) {
       <div style={{ flex: 1, minWidth: 0, display: 'flex', flexDirection: 'column', gap: 4, paddingRight: 32 }}>
         <h4 style={{ margin: 0, fontSize: 14, fontWeight: 700, color: t.ink, lineHeight: 1.3, overflowWrap: 'anywhere' }}>{line.name}</h4>
         <PromoLine promo={price.promo} />
-        {isPaketLine(line) ? <PaketDetail line={line} max={3} /> : <LineOptions options={line.options} />}
+        {isPaketLine(line) ? <PaketDetail line={line} withContents /> : <LineOptions options={line.options} />}
         <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
           {price.orig !== price.final && <Money value={price.orig} strike style={{ fontSize: 12, fontWeight: 600, color: t.faint }} />}
           <Money value={price.final} style={{ fontSize: 14, fontWeight: 700, color: t.ink }} />
@@ -117,7 +117,7 @@ function UpsellRail() {
   const t = useTheme();
   const app = useApp();
   const inCart = new Set(app.cart.map((l) => l.itemId));
-  const avail = (m) => m.stock > 0 && !inCart.has(m.id);
+  const avail = (m) => !inCart.has(m.id);
   const isBest = (m) => m.cat === 'signature' || m.tag === 'Terlaris' || m.tag === 'Favorit';
   // mulai dari best-seller; kalau menipis, isi dengan pelengkap (minuman/pembuka) lalu item lain
   const order = (m) => isBest(m) ? 0 : m.cat === 'minuman' || m.cat === 'pembuka' ? 1 : 2;
@@ -647,14 +647,13 @@ function FreeItemSheet({ params }) {
       <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
         {choices.map((c) => {
           const on = pick === c.id;
-          const out = c.stock === 0;
           return (
-            <button key={c.id} onClick={() => !out && setPick(c.id)} style={{
+            <button key={c.id} onClick={() => setPick(c.id)} style={{
               display: 'flex', alignItems: 'center', gap: 12, padding: 10,
-              cursor: out ? 'not-allowed' : 'pointer',
+              cursor: 'pointer',
               background: on ? t.primarySoft : t.surface2,
               border: '1.5px solid ' + (on ? t.primary : t.line),
-              borderRadius: t.radius, opacity: out ? 0.5 : 1
+              borderRadius: t.radius
             }}>
               <FoodImg label={c.name.toLowerCase()} h={56} radius={10} style={{ width: 56 }} src={c.photo} />
               <div style={{ flex: 1, textAlign: 'left' }}>
@@ -664,14 +663,12 @@ function FreeItemSheet({ params }) {
                   <Money value={0} style={{ fontWeight: 700, color: t.primary, marginLeft: 4 }} />
                 </div>
               </div>
-              {out ?
-              <Pill tone="danger">Habis</Pill> :
               <div style={{ width: 22, height: 22, borderRadius: 999, flexShrink: 0,
                 border: '2px solid ' + (on ? t.primary : t.faint),
                 background: on ? t.primary : 'transparent',
                 display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
                     {on && <Icon name="check" size={13} color={t.onPrimary} stroke={3} />}
-                  </div>}
+                  </div>
             </button>);
 
         })}

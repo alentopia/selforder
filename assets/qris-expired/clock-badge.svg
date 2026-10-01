@@ -1,0 +1,7 @@
+<svg preserveAspectRatio="none" overflow="visible" style="display: block;" width="53.4286" height="53.4286" viewBox="0 0 53.4286 53.4286" fill="none" xmlns="http://www.w3.org/2000/svg">
+<g id="clock-badge">
+<path id="Vector" d="M26.7143 53.4286C41.4682 53.4286 53.4286 41.4682 53.4286 26.7143C53.4286 11.9604 41.4682 0 26.7143 0C11.9605 0 6.10352e-05 11.9604 6.10352e-05 26.7143C6.10352e-05 41.4682 11.9605 53.4286 26.7143 53.4286Z" fill="#C0392E"/>
+<circle id="clock-face" cx="26.7143" cy="26.7143" r="13.5" stroke="white" stroke-width="3.6"/>
+<path id="clock-hands" d="M26.7143 19.2143V26.7143L32.2143 30.2143" stroke="white" stroke-width="3.6" stroke-linecap="round" stroke-linejoin="round"/>
+</g>
+</svg>
