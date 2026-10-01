@@ -1353,20 +1353,29 @@ function ItemScreen({ params }) {
         }
 
         {mods.map((m) => {
-          // Paket Bundling (Figma 1952:53362): setelah pilihan utama ber-sub-grup dipilih, judul grup
-          // & opsi lain disembunyikan — tinggal "1x <opsi terpilih>" + sub-grupnya (prefiks "1x" langsung
-          // tampil, juga selama sub-grup belum terisi). Ketuk baris itu untuk membuka daftar lagi (ganti pilihan).
+          // Paket Bundling (Figma 1952:53362): opsi ber-sub-grup tampil sebagai "1x <opsi>" + sub-grupnya
+          // (prefiks "1x" langsung tampil, juga selama sub-grup belum terisi).
+          // · grup satu opsi (Paket Komplit Berdua: "Isi paket" → 1x Ayam Goreng Kremes) = isi tetap:
+          //   judul "Isi paket" tanpa subtitle, baris tidak bisa diketuk.
+          // · grup banyak opsi: setelah dipilih, judul & opsi lain disembunyikan; ketuk baris untuk
+          //   membuka daftar lagi (ganti pilihan).
           if (subsOf(m).length && !openGroups[m.id]) {
             const o = chosen(m)[0];
-            return group(m.id,
-            <div>
-                <button onClick={() => setOpenGroups((g) => ({ ...g, [m.id]: true }))} style={{ ...rowStyle, cursor: 'pointer' }}>
-                  <span style={labelStyle(true)}>{'1x ' + o.label}</span>
-                  {priceTag(o)}
-                  <span style={{ width: 24, height: 21, flexShrink: 0 }} />
-                </button>
+            const fixed = isFixedGroup(m);
+            const rowContent = <>
+                <span style={labelStyle(true)}>{'1x ' + o.label}</span>
+                {priceTag(o)}
+                <span style={{ width: 24, height: 21, flexShrink: 0 }} />
+              </>;
+            return group(m.id, <>
+              {fixed && groupLabel(m.label)}
+              <div>
+                {fixed ?
+                <div style={rowStyle}>{rowContent}</div> :
+                <button onClick={() => setOpenGroups((g) => ({ ...g, [m.id]: true }))} style={{ ...rowStyle, cursor: 'pointer' }}>{rowContent}</button>}
                 {nested(m)}
-              </div>);
+              </div>
+            </>);
           }
           const fixed = isFixedGroup(m);
           const subtitle = fixed ? null : m.required ?

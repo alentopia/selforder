@@ -163,8 +163,8 @@ const PKG_MINUMAN = {
 };
 
 // ── Paket Bundling — Nested Modifier (Figma 1952:53362) ──
-// Pilihan Ayam = grup OptionRow level-atas; tiap varian ayam punya sub-grup (`subs`) yang
-// baru tampil — sebagai ModifierChip bersarang — setelah varian itu dipilih.
+// Ayam = isi paket tetap (grup "Isi paket", satu opsi → OptionRow State=Fixed, tanpa pilihan);
+// sub-grupnya (`subs`) langsung tampil di bawahnya sebagai ModifierChip bersarang.
 const PKG_AYAM_PORSI = {
   id: 'pkg-ayam-porsi', label: 'Potongan', type: 'single', required: true,
   options: [
@@ -190,12 +190,9 @@ const PKG_AYAM_SAMBAL = {
   ],
 };
 const PKG_AYAM = {
-  id: 'pkg-ayam', label: 'Pilihan Ayam', type: 'single', required: true,
+  id: 'pkg-ayam', label: 'Isi paket', type: 'single', required: true,
   options: [
-    { id: 'kremes',   label: 'Ayam Goreng Kremes',     price: 0,    subs: [PKG_AYAM_PORSI, PKG_AYAM_PEDAS, PKG_AYAM_SAMBAL] },
-    { id: 'lengkuas', label: 'Ayam Goreng Lengkuas',   price: 0,    subs: [PKG_AYAM_PORSI, PKG_AYAM_PEDAS, PKG_AYAM_SAMBAL] },
-    // penyet sudah bersambal ijo → tanpa sub-grup Sambal
-    { id: 'penyet',   label: 'Ayam Penyet Sambal Ijo', price: 3000, subs: [PKG_AYAM_PORSI, PKG_AYAM_PEDAS] },
+    { id: 'kremes', label: 'Ayam Goreng Kremes', price: 0, subs: [PKG_AYAM_PORSI, PKG_AYAM_PEDAS, PKG_AYAM_SAMBAL] },
   ],
 };
 const PKG_NASI = {
