@@ -229,7 +229,7 @@ function BreakdownRows({ subtotal, tax, rounding, itemDiscLines }) {
           <Money value={bill.service} style={{ fontSize: 13, fontWeight: 600, color: t.ink }} />
         </div>}
       <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-        <span style={{ fontSize: 13, color: t.muted }}>Pajak ({Math.round(app.TAX_RATE * 100)}%){bill.taxInclusive ? ' · termasuk' : ''}</span>
+        <span style={{ fontSize: 13, color: t.muted }}>Pajak{bill.taxInclusive ? ' · termasuk' : ''}</span>
         <Money value={bill.tax} style={{ fontSize: 13, fontWeight: 600, color: t.ink }} />
       </div>
       {bill.rounding !== 0 &&
@@ -1284,7 +1284,7 @@ function SettleScreen() {
             {itemDiscTotal > 0 && <Row label="Diskon produk" value={'−' + rupiah(itemDiscTotal)} accent />}
             {discount > 0 && <Row label="Diskon transaksi" value={'−' + rupiah(discount)} accent />}
             {settle.service > 0 && <Row label={'Service ' + Math.round(settle.serviceRate * 100) + '%'} value={rupiah(settle.service)} />}
-            <Row label={(settle.taxInclusive ? 'Termasuk PPN ' : 'PPN ') + Math.round(settle.taxRate * 100) + '%'} value={rupiah(settle.tax)} />
+            <Row label={'Pajak' + (settle.taxInclusive ? ' · termasuk' : '')} value={rupiah(settle.tax)} />
             {settle.rounding !== 0 && <Row label="Pembulatan" value={(settle.rounding > 0 ? '' : '−') + rupiah(Math.abs(settle.rounding))} />}
           </div>
 
@@ -1401,7 +1401,7 @@ function SuccessScreen({ params }) {
     const html = '<!doctype html><meta charset="utf-8"><title>Struk ' + txId + '</title><style>body{font:14px/1.45 Inter,system-ui,sans-serif;max-width:360px;margin:24px auto;padding:0 16px;color:#13201f}h1{font-size:18px;margin:0 0 4px}td{padding:4px 0;vertical-align:top}small{color:#5c6b6a}table{width:100%;border-collapse:collapse}hr{border:0;border-top:1px dashed #ccc;margin:12px 0}</style>' +
     '<h1>' + BRAND.name + '</h1><div>' + BRAND.location + ' · ' + typeLabel + (app.table ? ' · ' + app.table : '') + '</div><div>' + dateText + ' · ' + txId + '</div><hr><table>' + items + '</table><hr><table>' +
     row('Subtotal', rupiah(bill.subtotal)) + (bill.discount > 0 ? row('Diskon transaksi' + (txPromo ? ' (' + txPromo.title + ')' : ''), '−' + rupiah(bill.discount)) : '') +
-    (bill.service > 0 ? row('Service', rupiah(bill.service)) : '') + row('Pajak (' + Math.round(bill.taxRate * 100) + '%)', rupiah(bill.tax)) +
+    (bill.service > 0 ? row('Service', rupiah(bill.service)) : '') + row('Pajak', rupiah(bill.tax)) +
     (bill.rounding ? row('Pembulatan', rupiah(bill.rounding)) : '') + '<tr><td><b>Total</b></td><td style="text-align:right"><b>' + rupiah(total) + '</b></td></tr></table><hr><div>Metode: ' + pay.label + '</div><p style="color:#5c6b6a">Powered by Accurate POS</p>';
     window.open(URL.createObjectURL(new Blob([html], { type: 'text/html' })), '_blank');
   };
@@ -1440,7 +1440,7 @@ function SuccessScreen({ params }) {
             {sumRow('Subtotal', rupiah(bill.subtotal))}
             {bill.discount > 0 && sumRow('Diskon transaksi' + (txPromo ? ' · ' + txPromo.title : ''), '– ' + rupiah(bill.discount), true)}
             {bill.service > 0 && sumRow('Service (' + Math.round(bill.serviceRate * 100) + '%)', rupiah(bill.service))}
-            {sumRow('Pajak (' + Math.round(bill.taxRate * 100) + '%)' + (bill.taxInclusive ? ' · termasuk' : ''), rupiah(bill.tax))}
+            {sumRow('Pajak' + (bill.taxInclusive ? ' · termasuk' : ''), rupiah(bill.tax))}
             {bill.rounding !== 0 && sumRow('Pembulatan', (bill.rounding > 0 ? '' : '– ') + rupiah(Math.abs(bill.rounding)))}
           </div>
 

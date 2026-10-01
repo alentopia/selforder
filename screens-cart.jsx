@@ -273,7 +273,7 @@ function CartScreen() {
           {bill.discount > 0 && <Row label="Diskon transaksi" value={'−' + rupiah(bill.discount)} accent />}
           {bill.discount > 0 && <PromoLine promo={txPromo} />}
           {bill.service > 0 && <Row label={'Service ' + Math.round(bill.serviceRate * 100) + '%'} value={rupiah(bill.service)} />}
-          <Row label={(bill.taxInclusive ? 'Termasuk PPN ' : 'PPN ') + Math.round(bill.taxRate * 100) + '%'} value={rupiah(bill.tax)} />
+          <Row label={'Pajak' + (bill.taxInclusive ? ' · termasuk' : '')} value={rupiah(bill.tax)} />
           {bill.rounding !== 0 && <Row label="Pembulatan" value={(bill.rounding > 0 ? '' : '−') + rupiah(Math.abs(bill.rounding))} />}
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', paddingTop: 12, borderTop: '1px solid ' + t.line }}>
             <span style={{ fontWeight: 800, fontSize: 16, color: t.ink }}>Total</span>

@@ -233,7 +233,7 @@ function CashStatusScreen({ params }) {
             </div>
           )}
           <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-            <span style={{ fontSize: 13, color: t.muted }}>Pajak ({Math.round(app.TAX_RATE * 100)}%){bill.taxInclusive ? ' · termasuk' : ''}</span>
+            <span style={{ fontSize: 13, color: t.muted }}>Pajak{bill.taxInclusive ? ' · termasuk' : ''}</span>
             <Money value={tax} style={{ fontSize: 13, fontWeight: 600, color: t.ink }} />
           </div>
           {rounding !== 0 && (
