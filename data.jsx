@@ -201,7 +201,9 @@ const PKG_AYAM = {
 const PKG_NASI = {
   id: 'pkg-nasi', label: 'Pilihan Nasi', type: 'single', required: true,
   options: [
-    { id: 'putih', label: 'Nasi Putih',         price: 8000 },
+    // Figma frame 3 (1948:69722): Nasi Putih terpilih tanpa harga & total Rp107.000 = 101.000 + Es Jeruk 4.000
+    // + Sambal Matah 2.000 → Nasi Putih Rp0. (Frame 1 masih menulis +Rp8.000.)
+    { id: 'putih', label: 'Nasi Putih',         price: 0 },
     { id: 'bakar', label: 'Nasi Bakar Komplit', price: 6000 },
   ],
 };
@@ -232,7 +234,7 @@ const MENU = [
     contents: [{ qty: 5, name: 'Burger Bangor Sapi' }, { qty: 5, name: 'Burger Bangor Ayam' }],
     mods: [PKG_SNACK, PKG_MINUMAN],
     photo: 'assets/burger-combo.png' },
-  { id: 'paket-berdua', cat: 'signature', name: 'Paket Komplit Berdua', price: 95000, tag: 'Hemat',
+  { id: 'paket-berdua', cat: 'signature', name: 'Paket Komplit Berdua', price: 101000, tag: 'Hemat',
     desc: 'Hemat untuk berdua — pilih ayam, nasi, dan minuman favoritmu',
     mods: [PKG_AYAM, PKG_NASI, PKG_MINUM],
     photo: 'assets/paket-komplit-berdua.jpg' },

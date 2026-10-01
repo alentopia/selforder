@@ -77,6 +77,9 @@ function OrderTypeSheet({ params }) {
 
 // ── Search — halaman penuh, saran + hasil ─────────────────
 
+// Daftar awal Search (sebelum mengetik): maks. 8 menu, urutan mengikuti Figma Search (531:384).
+const SEARCH_DEFAULT_IDS = ['nasi-ayam-bakar', 'iga-bakar', 'ayam-goreng-kremes', 'nasgor', 'kopi-susu', 'es-teh', 'sup-buntut', 'cendol'];
+
 function SearchScreen() {
   const t = useTheme();
   const app = useApp();
@@ -119,10 +122,11 @@ function SearchScreen() {
       <div style={{ flex: 1, overflow: 'auto', WebkitOverflowScrolling: 'touch', padding: grid ? '14px 14px 130px' : '14px 16px 130px' }}>
         {results === null ?
         <>
-            {/* Figma Search (531:384): sebelum mengetik tampil "Menu" — semua menu, bukan saran
-                "Paling Dicari" (belum ada data pesanan untuk menentukan yang paling dicari) */}
+            {/* Figma Search (531:384): sebelum mengetik tampil judul "Menu" + 8 menu (bukan "Paling
+                Dicari" — belum ada data pesanan untuk menentukan yang paling dicari). Hasil ketikan tetap
+                menampilkan semua yang cocok. */}
             <h3 style={{ margin: '2px 2px 12px', fontFamily: t.fontDisplay, fontStyle: t.displayItalic ? 'italic' : 'normal', fontWeight: t.displayWeight, fontSize: 19, color: t.ink }}>Menu</h3>
-            {cardRow(MENU)}
+            {cardRow(SEARCH_DEFAULT_IDS.map(itemById).filter(Boolean))}
           </> :
         results.length === 0 ?
         <div style={{ textAlign: 'center', padding: '60px 24px', color: t.faint }}>
@@ -1350,14 +1354,14 @@ function ItemScreen({ params }) {
 
         {mods.map((m) => {
           // Paket Bundling (Figma 1952:53362): setelah pilihan utama ber-sub-grup dipilih, judul grup
-          // & opsi lain disembunyikan — tinggal opsi terpilih + sub-grupnya. Prefiks "1x" muncul begitu
-          // semua sub-grup wajib terisi. Ketuk baris itu untuk membuka daftar lagi (ganti pilihan).
+          // & opsi lain disembunyikan — tinggal "1x <opsi terpilih>" + sub-grupnya (prefiks "1x" langsung
+          // tampil, juga selama sub-grup belum terisi). Ketuk baris itu untuk membuka daftar lagi (ganti pilihan).
           if (subsOf(m).length && !openGroups[m.id]) {
             const o = chosen(m)[0];
             return group(m.id,
             <div>
                 <button onClick={() => setOpenGroups((g) => ({ ...g, [m.id]: true }))} style={{ ...rowStyle, cursor: 'pointer' }}>
-                  <span style={labelStyle(true)}>{(subsFilled(m) ? '1x ' : '') + o.label}</span>
+                  <span style={labelStyle(true)}>{'1x ' + o.label}</span>
                   {priceTag(o)}
                   <span style={{ width: 24, height: 21, flexShrink: 0 }} />
                 </button>
