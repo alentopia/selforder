@@ -188,6 +188,19 @@ function FreePrice({ line, size = 13 }) {
 
 }
 
+// ── PromoMark — penanda Promo Produk di baris item (Konfirmasi & Pembayaran berhasil) ──
+// Bentuk sama dengan PromoLine di Keranjang (ikon tag 12 + nama promo, teal, 1 baris + elipsis),
+// tapi hanya informasi — tidak bisa diketuk. Figma 4444:79902 & 4440:834.
+function PromoMark({ promo }) {
+  const t = useTheme();
+  if (!promo) return null;
+  return (
+    <div style={{ display: 'flex', alignItems: 'center', gap: 4, minWidth: 0 }}>
+      <Icon name="tag" size={12} color={t.primary} style={{ flexShrink: 0 }} />
+      <span style={{ fontSize: 12, color: t.primary, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{promo.title}</span>
+    </div>);
+}
+
 // ── Order summary — baris rincian harga (dipakai ulang 3 gaya) ──
 function BreakdownRows({ subtotal, tax, rounding, itemDiscLines }) {
   const t = useTheme();
@@ -254,7 +267,10 @@ function OrderSummary({ subtotal, tax, total, rounding, itemDiscLines, expanded,
   const app = useApp();
   const variant = app.checkoutSummary || 'flat';
   const qtyTotal = app.cart.reduce((s, l) => s + l.qty, 0);
-  const items = expanded ? app.cart : app.cart.slice(0, 1);
+  // Figma 4444:79902: daftar tertutup menampilkan item ber-Promo Produk sebagai item pertama.
+  // Urutan yang sama dipakai saat dibuka, jadi item pertama tidak melompat.
+  const ordered = [...app.cart.filter((l) => app.linePrice(l).promo), ...app.cart.filter((l) => !app.linePrice(l).promo)];
+  const items = expanded ? ordered : ordered.slice(0, 1);
   const moreCount = app.cart.length - 1;
   const mixedType = new Set(app.cart.map((l) => l.type === 'takeaway' ? 'takeaway' : 'dinein')).size > 1;
   const typeTag = (l) => mixedType ?
@@ -389,22 +405,28 @@ function OrderSummary({ subtotal, tax, total, rounding, itemDiscLines, expanded,
         </div>
         <div style={{ background: t.surface, borderRadius: 18, boxShadow: '0px 2px 12px 0px rgba(0,0,0,0.06)', padding: 16 }}>
           <div style={{ display: 'flex', flexDirection: 'column' }}>
-            {items.map((l, i) =>
-            <div key={l.uid} style={{ display: 'flex', gap: 12, alignItems: 'flex-start', paddingBottom: 11, marginBottom: 11, borderBottom: i === items.length - 1 && app.cart.length === 1 ? 'none' : 'none' }}>
+            {items.map((l) => {
+              const price = app.linePrice(l);
+              return (
+              <div key={l.uid} style={{ display: 'flex', gap: 12, alignItems: 'flex-start', paddingBottom: 11, marginBottom: 11 }}>
                 <FoodImg label={l.name.toLowerCase()} h={60} radius={12} style={{ width: 60, flexShrink: 0 }} src={itemById(l.itemId)?.photo} />
                 <div style={{ flex: 1, minWidth: 0, display: 'flex', flexDirection: 'column', gap: 3 }}>
                   <div style={{ display: 'flex', alignItems: 'baseline', justifyContent: 'space-between' }}>
                     <span style={{ fontSize: 14, fontWeight: 600, color: t.ink, flex: 1, lineHeight: 1.3 }}>{l.name}</span>
                     <span style={{ fontSize: 12.5, color: t.faint, flexShrink: 0, whiteSpace: 'nowrap' }}>{l.qty} pcs</span>
                   </div>
+                  {/* Figma "Case: Penanda Promo Produk (Konfirmasi)" (4444:79902): penanda tepat di bawah nama item */}
+                  <PromoMark promo={price.promo} />
                   {isPaketLine(l) ? <PaketDetail line={l} withContents gap={6} /> : l.options && l.options.length > 0 && <div style={{ fontSize: 12, color: t.faint }}>{l.options.join(' · ')}</div>}
                   {l.notes && <div style={{ fontSize: 12, color: t.faint, fontStyle: 'italic' }}>"{l.notes}"</div>}
-                  {l.free ?
-                    <FreePrice line={l} size={13.5} /> :
-                    <div style={{ display: 'flex', alignItems: 'baseline', gap: 6 }}>{app.linePrice(l).orig !== app.linePrice(l).final && <Money value={app.linePrice(l).orig} strike style={{ fontSize: 12, fontWeight: 600, color: t.faint }} />}<span style={{ fontSize: 13.5, fontWeight: 700, color: t.ink }}>{rupiah(app.linePrice(l).final)}</span></div>}
+                  <div style={{ display: 'flex', alignItems: 'baseline', gap: 6 }}>
+                    {price.orig !== price.final && <Money value={price.orig} strike style={{ fontSize: 12, fontWeight: 600, color: t.faint }} />}
+                    {/* barang gratis (Rp0) teal — sama dengan Keranjang & Pembayaran berhasil */}
+                    <Money value={price.final} style={{ fontSize: 13.5, fontWeight: 700, color: price.final === 0 ? t.primary : t.ink }} />
+                  </div>
                 </div>
-              </div>
-            )}
+              </div>);
+            })}
             {app.cart.length > 1 &&
             <div style={{ textAlign: 'center', marginBottom: 14 }}>
               <button onClick={() => setExpanded((x) => !x)} style={{ border: 'none', background: 'none', cursor: 'pointer', color: t.primary, fontFamily: t.fontBody, fontSize: 12.5, fontWeight: 700, padding: 0, WebkitTapHighlightColor: 'transparent' }}>
@@ -1327,11 +1349,7 @@ function OrderItemRow({ line, border }) {
               <Money value={price.final} style={{ fontSize: 13, fontWeight: 700, color: price.final === 0 ? t.primary : t.ink }} />
             </span>
           </div>
-          {price.promo &&
-          <div style={{ display: 'flex', alignItems: 'center', gap: 4, minWidth: 0 }}>
-              <Icon name="tag" size={12} color={t.primary} style={{ flexShrink: 0 }} />
-              <span style={{ fontSize: 12, color: t.primary, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{price.promo.title}</span>
-            </div>}
+          <PromoMark promo={price.promo} />
           {isPaketLine(line) ? <PaketDetail line={line} withContents /> :
           line.options && line.options.length > 0 && <div style={{ fontSize: 12, color: t.muted }}>{line.options.join(' · ')}</div>}
           {line.notes && <div style={{ fontSize: 12, color: t.faint }}>{line.notes}</div>}
