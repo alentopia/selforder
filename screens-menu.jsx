@@ -1280,10 +1280,19 @@ function ItemScreen({ params }) {
     // sertakan biaya tambahan di label opsi (mis. "Telur Dadar (+Rp7.000)") biar user paham kenapa harganya beda
     const fmt = (o) => o.price > 0 ? o.label + ' (+' + rupiah(o.price) + ')' : o.label;
     const optLabels = mods.flatMap((m) => [...chosen(m), ...subsOf(m).flatMap(chosen)].map(fmt));
+    // paket bersarang: simpan modifier milik tiap isi (mis. Paha · Pedas milik Ayam Goreng Kremes)
+    // supaya ringkasan bisa menampilkannya di bawah isinya, bukan dalam satu daftar datar.
+    const slots = mods.some((m) => subsOf(m).length) ?
+    mods.flatMap((m) => chosen(m).map((o) => ({
+      label: (o.subs ? '1x ' : '') + fmt(o),
+      // isi paket (grup "Isi paket" / opsi ber-sub-grup) ditulis tebal; pilihan lain = modifier
+      isi: isFixedGroup(m) || !!o.subs,
+      subs: (o.subs || []).flatMap(chosen).map(fmt) }))) :
+    null;
     if (editLine) app.removeLine(editLine.uid);
     // isi tetap paket ikut disimpan di options (tampil di Keranjang, Konfirmasi & Struk) dan
     // ditandai lewat `contents` supaya bisa dirender sebagai PaketDetail.
-    app.addToCart({ itemId: item.id, name: item.name, unit, qty, options: [...contentLabels, ...optLabels], contents: contentLabels, notes });
+    app.addToCart({ itemId: item.id, name: item.name, unit, qty, options: [...contentLabels, ...optLabels], contents: contentLabels, slots, notes });
     // Promo terkait item (mis. item gratis) dihitung otomatis di keranjang dari barang yang ditambah tamu.
     app.back();
   };

@@ -116,13 +116,13 @@ function App() {
   };
 
   // ── cart ──
-  const addToCart = ({ itemId, name, unit, qty, options, contents, notes }) => {
+  const addToCart = ({ itemId, name, unit, qty, options, contents, slots, notes }) => {
     setCart((c) => {
       const key = (l) => l.itemId + '|' + (l.options || []).join(',') + '|' + (l.notes || '');
       const cand = { itemId, options, notes };
       const idx = c.findIndex((l) => !l.free && key(l) === key(cand) && l.unit === unit);
       if (idx >= 0) {const n = [...c];n[idx] = { ...n[idx], qty: n[idx].qty + qty };return n;}
-      return [...c, { uid: uid.current++, itemId, name, unit, qty, options, contents: contents || [], notes, free: false, type: orderType }];
+      return [...c, { uid: uid.current++, itemId, name, unit, qty, options, contents: contents || [], slots: slots || null, notes, free: false, type: orderType }];
     });
   };
   const setLineQty = (u, v) => setCart((c) => v < 1 ? c.filter((l) => l.uid !== u) : c.map((l) => l.uid === u ? { ...l, qty: v } : l));

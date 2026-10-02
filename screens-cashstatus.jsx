@@ -190,7 +190,7 @@ function CashStatusScreen({ params }) {
                         <Money value={app.linePrice(l).final} style={{ fontSize: 13, fontWeight: 700, color: app.linePrice(l).final === 0 ? t.primary : t.ink }} />
                       </span>}
                   </div>
-                  {isPaketLine(l) ? <div style={{ marginTop: 3 }}><PaketDetail line={l} withContents /></div> : l.options && l.options.length > 0 && <div style={{ fontSize: 12, color: t.muted, marginTop: 3 }}>{l.options.join(' · ')}</div>}
+                  {isPaketLine(l) ? <div style={{ marginTop: 3 }}><PaketDetail line={l} /></div> : l.options && l.options.length > 0 && <div style={{ fontSize: 12, color: t.muted, marginTop: 3 }}>{l.options.join(' · ')}</div>}
                   {l.notes && <div style={{ fontSize: 12, color: t.faint, marginTop: 2 }}>{l.notes}</div>}
                   {mixedType &&
                   <div style={{ marginTop: 4, display: 'inline-flex', alignItems: 'center', gap: 4, fontSize: 11, fontWeight: 700, color: t.muted }}>

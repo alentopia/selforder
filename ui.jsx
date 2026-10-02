@@ -305,32 +305,46 @@ function FoodImg({ label, h = 120, radius, style, src }) {
 
 }
 
-// ── PaketDetail — rincian Barang Grup: rail teal 3px + satu baris per slot ──
-// Keranjang, Konfirmasi & Struk menampilkan SEMUA slot: isi tetap (mis. 5× Burger Bangor Sapi)
-// + pilihan. (Menimpa Figma "Case: Isi Paket & Pilihan" yang menyembunyikan isi tetap di
-// Keranjang — permintaan user 2026-09-29.) `max` opsional memotong jadi "+n lainnya".
-// Add-on berbayar "(+RpX)" ditulis Regular muted, sama seperti opsi biasa.
-const isPaketLine = (line) => (line.contents || []).length > 0;
-function PaketDetail({ line, withContents, max, gap = 7 }) {
+// ── PaketDetail — rincian Barang Grup: satu baris per isi/pilihan, TANPA garis di paling kiri ──
+// Keranjang, Konfirmasi, Status & Pembayaran berhasil menampilkan SEMUA baris: isi tetap
+// (mis. 5× Burger Bangor Sapi) + pilihan. (Menimpa Figma "Case: Isi Paket & Pilihan" yang
+// menyembunyikan isi tetap di Keranjang — permintaan user 2026-09-29.)
+// Paket bersarang (Paket Komplit Berdua): isi paket sudah pasti dari master barang, yang dipilih
+// tamu = modifier isi itu + modifier paket. Modifier milik isi (Paha · Pedas · Sambal Matah milik
+// 1x Ayam Goreng Kremes) dikelompokkan di bawah isinya dengan garis teal 3px, seperti sub-grup di
+// Detail Menu. (Diputuskan user 2026-10-02: gaya garis, bukan menjorok; Burger Combo ikut tanpa
+// garis paling kiri.) Add-on berbayar "(+RpX)" ditulis Regular muted, sama seperti opsi biasa.
+// Hanya ISI paket (5× Burger Bangor Sapi, 1x Ayam Goreng Kremes) yang tebal; pilihan paket (Nasi
+// Putih, Es Jeruk Peras, Kentang Goreng) adalah modifier → gaya & jarak sama dengan sub-modifier.
+// Antar-baris 2px; pemisah blok (`gap`) hanya di bawah kelompok sub-modifier. (User 2026-10-02.)
+const isPaketLine = (line) => (line.contents || []).length > 0 || !!line.slots;
+function PaketDetail({ line, gap = 7 }) {
   const t = useTheme();
-  const all = line.options || [];
-  const slots = withContents ? all : all.slice((line.contents || []).length);
+  const contents = line.contents || [];
+  const slots = line.slots || (line.options || []).map((label) => ({ label, isi: contents.includes(label), subs: [] }));
   if (!slots.length) return null;
-  const shown = max ? slots.slice(0, max) : slots;
-  const more = slots.length - shown.length;
+  const modStyle = { fontSize: 12, lineHeight: 1.42, color: t.muted };
+  const optText = (o) => {
+    const cut = o.indexOf(' (+');
+    return cut < 0 ? o : <>{o.slice(0, cut)}<span style={{ fontWeight: 400, color: t.muted }}>{o.slice(cut)}</span></>;
+  };
   return (
-    <div style={{ display: 'flex', gap: 10, alignItems: 'stretch' }}>
-      <div style={{ width: 3, borderRadius: 2, background: t.primary, flexShrink: 0 }} />
-      <div style={{ flex: 1, minWidth: 0, display: 'flex', flexDirection: 'column', gap }}>
-        {shown.map((o, i) => {
-          const cut = o.indexOf(' (+');
-          return (
-            <div key={i} style={{ fontSize: 12.5, lineHeight: 1.42, color: t.ink, fontWeight: 600 }}>
-              {cut < 0 ? o : <>{o.slice(0, cut)}<span style={{ fontWeight: 400, color: t.muted }}>{o.slice(cut)}</span></>}
-            </div>);
-        })}
-        {more > 0 && <div style={{ fontSize: 12, lineHeight: 1.42, color: t.muted }}>+{more} lainnya</div>}
-      </div>
+    <div style={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
+      {slots.map((s, i) =>
+      <div key={i} style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
+          {s.isi ?
+        <div style={{ fontSize: 12.5, lineHeight: 1.42, color: t.ink, fontWeight: 600 }}>{optText(s.label)}</div> :
+        <div style={modStyle}>{s.label}</div>}
+          {s.subs.length > 0 &&
+        <div style={{ display: 'flex', gap: 10, alignItems: 'stretch', paddingBottom: gap - 2 }}>
+              <div style={{ width: 3, borderRadius: 2, background: t.primary, flexShrink: 0 }} />
+              <div style={{ flex: 1, minWidth: 0, display: 'flex', flexDirection: 'column', gap: 2 }}>
+                {s.subs.map((o, j) => <div key={j} style={modStyle}>{o}</div>)}
+              </div>
+            </div>
+        }
+        </div>
+      )}
     </div>);
 }
 

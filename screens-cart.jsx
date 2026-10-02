@@ -52,7 +52,7 @@ function LineRow({ line, editable, noSep }) {
       <div style={{ flex: 1, minWidth: 0, display: 'flex', flexDirection: 'column', gap: 4, paddingRight: 32 }}>
         <h4 style={{ margin: 0, fontSize: 14, fontWeight: 700, color: t.ink, lineHeight: 1.3, overflowWrap: 'anywhere' }}>{line.name}</h4>
         <PromoLine promo={price.promo} />
-        {isPaketLine(line) ? <PaketDetail line={line} withContents /> : <LineOptions options={line.options} />}
+        {isPaketLine(line) ? <PaketDetail line={line} /> : <LineOptions options={line.options} />}
         <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
           {price.orig !== price.final && <Money value={price.orig} strike style={{ fontSize: 12, fontWeight: 600, color: t.faint }} />}
           <Money value={price.final} style={{ fontSize: 14, fontWeight: 700, color: t.ink }} />

@@ -417,7 +417,7 @@ function OrderSummary({ subtotal, tax, total, rounding, itemDiscLines, expanded,
                   </div>
                   {/* Figma "Case: Penanda Promo Produk (Konfirmasi)" (4444:79902): penanda tepat di bawah nama item */}
                   <PromoMark promo={price.promo} />
-                  {isPaketLine(l) ? <PaketDetail line={l} withContents gap={6} /> : l.options && l.options.length > 0 && <div style={{ fontSize: 12, color: t.faint }}>{l.options.join(' · ')}</div>}
+                  {isPaketLine(l) ? <PaketDetail line={l} gap={6} /> : l.options && l.options.length > 0 && <div style={{ fontSize: 12, color: t.faint }}>{l.options.join(' · ')}</div>}
                   {l.notes && <div style={{ fontSize: 12, color: t.faint, fontStyle: 'italic' }}>"{l.notes}"</div>}
                   <div style={{ display: 'flex', alignItems: 'baseline', gap: 6 }}>
                     {price.orig !== price.final && <Money value={price.orig} strike style={{ fontSize: 12, fontWeight: 600, color: t.faint }} />}
@@ -1350,7 +1350,7 @@ function OrderItemRow({ line, border }) {
             </span>
           </div>
           <PromoMark promo={price.promo} />
-          {isPaketLine(line) ? <PaketDetail line={line} withContents /> :
+          {isPaketLine(line) ? <PaketDetail line={line} /> :
           line.options && line.options.length > 0 && <div style={{ fontSize: 12, color: t.muted }}>{line.options.join(' · ')}</div>}
           {line.notes && <div style={{ fontSize: 12, color: t.faint }}>{line.notes}</div>}
         </div>
