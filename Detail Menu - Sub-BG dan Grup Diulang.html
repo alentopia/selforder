@@ -1,0 +1,660 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Detail Menu — Modifier Isi Dikali Qty (prototipe)</title>
+<!--
+  PROTOTIPE (dibuang setelah keputusan diambil) — tidak terhubung ke Self Order.html.
+  Aturan (user, 6 Okt 2026): barang di dalam BG nested punya qty > 1 dan modifier bertingkat. Modifier
+  dipilih sekali dan berlaku untuk semua unit isi itu, jadi harganya dikali qty isi; harga paket lalu
+  dikali qty paket.
+  Keputusan 7 Okt: penjelasan perkalian (baris teal "Harga pilihan dikali n ⓘ" + sheet Rincian harga)
+  HANYA di Detail Menu. Keranjang, Konfirmasi Pesanan, Pembayaran Berhasil menulis angka akhir yang
+  sudah dikali, tanpa ⓘ. Figma: section 5435:3212 (A = Paket Komplit Berdua, B = Paket Gelato Keluarga).
+  Gaya disalin dari ItemScreen (screens-menu.jsx) & PaketDetail (ui.jsx), pola Figma 1952:53362.
+  Opsi uji lewat URL: ?kasus=paket|gelato|uji &letak=chip|judul &ringkas=baris|ke
+-->
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Hanken+Grotesk:wght@600;700&family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --primary: #1799A5;
+    --primary-soft: rgba(23,153,165,0.10);
+    --on-primary: #FFFFFF;
+    --bg: #EEF2F2;
+    --surface: #FFFFFF;
+    --surface2: #F6F9F9;
+    --ink: #13201F;
+    --muted: #5C6B6A;
+    --faint: #9BAAA9;
+    --line: rgba(19,32,31,0.08);
+    --placeholder-ink: #9DB0AF;
+    --shadow: 0 1px 2px rgba(20,40,40,0.04), 0 10px 30px rgba(20,50,50,0.07);
+  }
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body { font-family: "Inter", system-ui, sans-serif; -webkit-font-smoothing: antialiased; background: #D9DFDF; color: var(--ink); min-height: 100vh; padding: 20px 32px 48px; }
+  button, textarea { font-family: inherit; }
+
+  .canvas { display: flex; gap: 48px; align-items: flex-start; flex-wrap: wrap; }
+  .col { display: flex; flex-direction: column; gap: 16px; }
+  .frame-label { font-size: 14px; font-weight: 700; max-width: 402px; }
+  .frame-label span { display: block; font-size: 12px; font-weight: 500; color: var(--muted); margin-top: 3px; }
+
+  /* ── ponsel 402×874 (sama dengan app.jsx) ── */
+  .phone { width: 402px; height: 874px; background: var(--bg); border-radius: 44px; overflow: hidden; display: flex; flex-direction: column; position: relative; box-shadow: 0 0 0 10px #0d0d0d, 0 24px 50px rgba(0,0,0,0.22); flex-shrink: 0; }
+  .status { position: absolute; top: 0; left: 0; right: 0; height: 50px; display: flex; align-items: center; padding: 0 32px; font-size: 15px; font-weight: 600; z-index: 40; pointer-events: none; }
+  .topbar { flex-shrink: 0; padding-top: 50px; background: var(--bg); border-bottom: 1px solid var(--line); }
+  .topbar-in { display: flex; align-items: center; gap: 10px; padding: 6px 16px 12px; min-height: 44px; }
+  .back { border: none; background: var(--surface); box-shadow: var(--shadow); width: 40px; height: 40px; border-radius: 999px; display: flex; align-items: center; justify-content: center; color: var(--ink); flex-shrink: 0; }
+  .topbar-title { font-size: 17px; font-weight: 700; }
+  .scroll { flex: 1; overflow: auto; padding: 12px 18px 24px; }
+
+  /* ── ItemScreen ── */
+  .food { height: 210px; border-radius: 18px; overflow: hidden; background: repeating-linear-gradient(135deg, #DDE6E6 0 12px, #D6E0E0 12px 24px); display: flex; align-items: flex-end; }
+  .food span { font-family: ui-monospace, "SF Mono", Menlo, monospace; font-size: 9.5px; color: var(--placeholder-ink); padding: 5px 7px; }
+  .food img { width: 100%; height: 100%; object-fit: cover; display: block; }
+  h2.name { font-family: "Hanken Grotesk", system-ui, sans-serif; font-weight: 600; font-size: 26px; line-height: 1.1; margin-top: 16px; overflow-wrap: anywhere; }
+  p.desc { color: var(--muted); font-size: 14px; line-height: 1.55; margin: 8px 0 4px; }
+  .group { margin-top: 16px; border-top: 1px solid var(--line); padding-top: 16px; display: flex; flex-direction: column; gap: 6px; }
+  .ghead { display: flex; flex-direction: column; gap: 2px; }
+  .glabel { font-size: 13px; font-weight: 800; letter-spacing: 0.6px; text-transform: uppercase; }
+  .gsub { font-size: 11.5px; color: var(--faint); }
+  /* OptionRow State=Fixed: isi tetap, tidak bisa diketuk */
+  .row { display: flex; align-items: flex-start; gap: 12px; padding: 14.5px 2px; }
+  .row-label { flex: 1; min-width: 0; font-size: 14.5px; font-weight: 600; line-height: 21px; color: var(--ink); }
+  .row-isi { display: block; font-size: 12.5px; font-weight: 500; line-height: 18px; color: var(--muted); margin-top: 2px; }
+  .row-isi.kali { color: var(--primary); }
+  /* sub-grup bersarang: garis teal 3px + grup chip (Figma 1952:53362) */
+  .nested { display: flex; gap: 12px; }
+  .rail { width: 3px; border-radius: 2px; background: var(--primary); flex-shrink: 0; }
+  .subs { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 8px; }
+  .sg { display: flex; flex-direction: column; gap: 8px; }
+  .sg-head { display: flex; align-items: center; gap: 8px; }
+  .sg-label { font-size: 13px; font-weight: 800; letter-spacing: 0.6px; text-transform: uppercase; color: var(--faint); }
+  .sg-max { font-size: 11.5px; color: var(--faint); }
+  .sg-top { display: flex; flex-direction: column; gap: 2px; }
+  .sg-prices { font-size: 12.5px; line-height: 1.45; color: var(--muted); }
+  .sg-prices b { font-weight: 600; color: var(--primary); }
+  .sg-inst { font-size: 12px; font-weight: 700; color: var(--muted); }
+  .pill { font-size: 8px; font-weight: 800; letter-spacing: 0.4px; text-transform: uppercase; color: var(--primary); background: var(--primary-soft); border-radius: 999px; padding: 3px 7px; }
+  .chips { display: flex; flex-wrap: wrap; gap: 8px; }
+  .chip { display: inline-flex; align-items: center; gap: 6px; padding: 10px 16px; border-radius: 999px; border: 1px solid var(--line); background: var(--surface2); color: var(--ink); font-size: 13.5px; font-weight: 600; white-space: nowrap; cursor: pointer; -webkit-tap-highlight-color: transparent; }
+  .chip.on { padding: 9.5px 15.5px; border: 1.5px solid var(--primary); background: var(--surface); color: var(--primary); }
+  .chip .pr { color: var(--primary); }
+  .chip:disabled { opacity: 0.4; cursor: not-allowed; }
+  /* OptionRow (modifier milik paket): label · harga · kotak centang 24 */
+  .opt { display: flex; align-items: flex-start; gap: 12px; padding: 14.5px 2px; width: 100%; border: none; background: transparent; text-align: left; cursor: pointer; -webkit-tap-highlight-color: transparent; }
+  .opt-label { flex: 1; min-width: 0; font-size: 14.5px; font-weight: 600; line-height: 21px; color: var(--muted); }
+  .opt.on .opt-label { color: var(--ink); }
+  .opt-price { flex-shrink: 0; font-size: 13px; font-weight: 600; line-height: 21px; color: var(--muted); white-space: nowrap; }
+  .box-wrap { height: 21px; display: flex; align-items: center; flex-shrink: 0; }
+  .box { width: 24px; height: 24px; border-radius: 8px; border: 1px solid var(--faint); display: flex; align-items: center; justify-content: center; }
+  .opt.on .box { background: var(--primary); border: none; }
+  .notes-label { font-size: 15px; font-weight: 700; margin: 22px 0 10px; }
+  textarea { width: 100%; resize: none; display: block; border: 1.5px solid var(--line); border-radius: 12px; background: var(--surface2); padding: 12px 12px 24px; font-size: 14px; color: var(--ink); outline: none; }
+  .dock { flex-shrink: 0; background: var(--surface); border-top: 1px solid var(--line); padding: 12px 18px 26px; display: flex; gap: 12px; align-items: center; }
+  .qty { display: inline-flex; align-items: center; gap: 2px; background: var(--surface2); border: 1px solid var(--line); border-radius: 999px; padding: 2px; flex-shrink: 0; }
+  .qty button { width: 34px; height: 34px; border: none; background: transparent; color: var(--primary); font-size: 18px; font-weight: 600; border-radius: 999px; cursor: pointer; }
+  .qty span { min-width: 20px; text-align: center; font-weight: 700; font-size: 14px; }
+  .cta { flex: 1; height: 50px; border: none; border-radius: 14px; background: var(--primary); color: var(--on-primary); font-size: 15px; font-weight: 700; box-shadow: 0 6px 18px rgba(23,153,165,0.28); cursor: pointer; }
+  .cta:disabled { background: rgba(23,153,165,0.42); box-shadow: none; cursor: not-allowed; }
+
+  /* keterangan isi yang bisa diketuk → sheet Rincian harga (area ketuk ≥ 40px lewat padding + margin negatif) */
+  .info-link { display: inline-flex; align-items: center; gap: 4px; border: none; background: transparent; color: var(--primary); font-size: 12.5px; font-weight: 600; line-height: 18px; padding: 11px 12px 11px 0; margin: -9px 0 -11px; cursor: pointer; -webkit-tap-highlight-color: transparent; }
+  .info-link svg { flex-shrink: 0; }
+  .row-label .info-link { display: flex; }
+  /* Sheet "Rincian harga" — bentuk Sheet di ui.jsx */
+  .sheet-wrap { position: absolute; inset: 0; z-index: 60; display: flex; flex-direction: column; justify-content: flex-end; }
+  .scrim { position: absolute; inset: 0; background: rgba(15,12,8,0.42); }
+  .sheet { position: relative; background: var(--surface); border-radius: 26px 26px 0 0; box-shadow: 0 -10px 40px rgba(0,0,0,0.25); padding-bottom: 30px; animation: sheet-up .28s cubic-bezier(.2,.9,.3,1); }
+  @keyframes sheet-up { from { transform: translateY(100%); } to { transform: none; } }
+  @media (prefers-reduced-motion: reduce) { .sheet { animation: none; } }
+  .handle { width: 40px; height: 4px; border-radius: 999px; background: #868686; margin: 10px auto 0; }
+  .sheet-head { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 14px 20px 2px; }
+  .sheet-head h3 { font-family: "Hanken Grotesk", system-ui, sans-serif; font-weight: 600; font-size: 24px; line-height: 1.15; }
+  .close { width: 34px; height: 34px; flex-shrink: 0; border-radius: 999px; border: none; background: var(--primary-soft); color: var(--primary); display: flex; align-items: center; justify-content: center; cursor: pointer; }
+  .sheet-body { padding: 0 20px; }
+  .r-sub { font-size: 13px; color: var(--muted); margin-bottom: 6px; }
+  .r-row { display: flex; gap: 12px; align-items: flex-start; padding: 10px 0; }
+  .r-row + .r-row { border-top: 1px solid var(--line); }
+  .r-left { flex: 1; min-width: 0; }
+  .r-label { font-size: 14px; font-weight: 600; line-height: 1.35; }
+  .r-calc { font-size: 12.5px; color: var(--muted); margin-top: 2px; }
+  .r-num { font-size: 14px; font-weight: 600; white-space: nowrap; font-variant-numeric: tabular-nums; }
+  .r-total { display: flex; justify-content: space-between; border-top: 1.5px solid var(--ink); padding-top: 12px; margin-top: 2px; font-size: 16px; font-weight: 800; font-variant-numeric: tabular-nums; }
+  .r-foot { font-size: 12.5px; color: var(--muted); line-height: 1.5; margin-top: 12px; }
+
+  /* ── Keranjang: LineRow + PaketDetail ── */
+  .cart-card { background: var(--surface); border-radius: 18px; padding: 0 16px; box-shadow: var(--shadow); }
+  .line { position: relative; display: flex; gap: 12px; align-items: flex-start; padding: 14px 0; }
+  .thumb { width: 60px; height: 60px; border-radius: 12px; flex-shrink: 0; overflow: hidden; background: repeating-linear-gradient(135deg, #DDE6E6 0 8px, #D6E0E0 8px 16px); }
+  .thumb img { width: 100%; height: 100%; object-fit: cover; display: block; }
+  .line-body { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 4px; padding-right: 32px; }
+  .line-name { font-size: 14px; font-weight: 700; line-height: 1.3; overflow-wrap: anywhere; }
+  .pd { display: flex; flex-direction: column; gap: 2px; }
+  .pd-slot { display: flex; flex-direction: column; gap: 4px; }
+  .pd-isi { font-size: 12.5px; line-height: 1.42; font-weight: 600; }
+  .pd-mod { font-size: 12px; line-height: 1.42; color: var(--muted); }
+  .pd-group { display: flex; gap: 10px; align-items: stretch; padding-bottom: 5px; }
+  .pd-lines { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 2px; }
+  .money { font-size: 14px; font-weight: 700; }
+  .badge { position: absolute; right: 0; top: 14px; width: 24px; height: 24px; border-radius: 999px; background: var(--primary); color: var(--on-primary); display: flex; align-items: center; justify-content: center; font-weight: 800; font-size: 12.5px; }
+  /* ringkasan harga (Keranjang & Konfirmasi) */
+  .sum-card { background: var(--surface); border-radius: 18px; padding: 12px 16px 16px; box-shadow: var(--shadow); margin-top: 14px; }
+  .brk { display: flex; justify-content: space-between; font-size: 13.5px; color: var(--muted); padding: 4px 0; font-variant-numeric: tabular-nums; }
+  .brk b { color: var(--ink); font-weight: 700; }
+  .hair { height: 1px; background: var(--line); margin: 8px 0; }
+  .tot { display: flex; justify-content: space-between; align-items: baseline; padding-top: 4px; font-size: 15px; font-weight: 800; font-variant-numeric: tabular-nums; }
+  .tot .big { font-size: 22px; }
+
+  /* ── Konfirmasi Pesanan: OrderSummaryFlat ── */
+  .sec-label { display: flex; justify-content: space-between; font-size: 11.5px; font-weight: 800; letter-spacing: 0.6px; text-transform: uppercase; color: var(--faint); margin: 2px 2px 8px; }
+  .sec-label span + span { text-transform: none; letter-spacing: 0; font-weight: 600; }
+  .field { display: flex; align-items: center; gap: 10px; background: var(--surface); border-radius: 12px; padding: 12px 14px; font-size: 14px; color: var(--faint); margin-bottom: 18px; }
+  .field b { color: var(--ink); font-weight: 500; padding-right: 10px; border-right: 1px solid var(--line); }
+  .conf .line { padding: 0 0 4px; }
+  .conf .line-body { padding-right: 0; }
+  .conf .pd-mod { font-size: 11.5px; color: var(--faint); }
+  .name-row { display: flex; justify-content: space-between; align-items: baseline; gap: 8px; }
+  .pcs { font-size: 12.5px; color: var(--faint); flex-shrink: 0; }
+  .pay { display: flex; align-items: center; gap: 12px; background: var(--surface); border: 1.5px solid transparent; border-radius: 14px; padding: 12px 14px; margin-top: 8px; }
+  .pay.on { border-color: var(--primary); background: #E3F1F2; }
+  .pay-ic { width: 36px; height: 36px; border-radius: 10px; background: var(--primary-soft); color: var(--primary); display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
+  .pay.on .pay-ic { background: var(--primary); color: #fff; }
+  .pay-t { font-size: 14px; font-weight: 700; }
+  .pay-s { font-size: 12px; color: var(--muted); }
+  .radio { margin-left: auto; width: 22px; height: 22px; border-radius: 999px; border: 1.5px solid var(--faint); flex-shrink: 0; display: flex; align-items: center; justify-content: center; }
+  .pay.on .radio { background: var(--primary); border: none; }
+
+  /* ── Pembayaran Berhasil ── */
+  .scroll.flush { padding: 0; display: flex; flex-direction: column; }
+  .hero { background: linear-gradient(160deg, #2BB0BB 0%, #0F7A84 100%); color: #fff; text-align: center; padding: 74px 20px 58px; flex-shrink: 0; }
+  .ok { width: 72px; height: 72px; border-radius: 999px; background: #fff; margin: 0 auto 18px; display: flex; align-items: center; justify-content: center; box-shadow: 0 0 0 10px rgba(255,255,255,0.18), 0 0 0 20px rgba(255,255,255,0.08); }
+  .hero h3 { font-family: "Hanken Grotesk", system-ui, sans-serif; font-weight: 600; font-size: 20px; }
+  .hero .amt { font-family: "Hanken Grotesk", system-ui, sans-serif; font-weight: 600; font-size: 40px; margin-top: 10px; font-variant-numeric: tabular-nums; }
+  .receipt { flex: 1; background: var(--surface); border-radius: 24px 24px 0 0; margin-top: -24px; padding: 18px 20px 24px; }
+  .rc-head { display: flex; justify-content: space-between; font-size: 11.5px; font-weight: 800; letter-spacing: 0.6px; text-transform: uppercase; color: var(--faint); }
+  .rc-head span:last-child { text-transform: none; letter-spacing: 0; font-weight: 600; color: var(--muted); }
+  .rc-line { display: flex; gap: 12px; padding: 14px 0; border-bottom: 1px solid var(--line); }
+  .qbox { width: 24px; height: 24px; border-radius: 6px; background: var(--surface2); font-size: 12.5px; font-weight: 700; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
+  .rc-line .line-body { padding-right: 0; }
+  .rc-sec { font-size: 11.5px; font-weight: 800; letter-spacing: 0.6px; text-transform: uppercase; color: var(--faint); margin: 14px 0 4px; }
+  .phone.ok-phone .status { color: #fff; }
+
+  /* ── kartu catatan (konvensi Figma) & rincian hitungan ── */
+  .note { width: 384px; background: var(--surface); border-radius: 12px; overflow: hidden; box-shadow: var(--shadow); }
+  .note-head { background: var(--primary); color: #fff; font-size: 12px; font-weight: 700; padding: 8px 12px; }
+  .note-head.dark { background: #13201F; }
+  .note-body { padding: 12px; font-size: 12px; line-height: 1.45; color: var(--ink); }
+  .note-body h5 { font-size: 12px; font-weight: 700; margin: 10px 0 4px; }
+  .note-body h5:first-child { margin-top: 0; }
+  .note-body ol, .note-body ul { padding-left: 18px; }
+  .note-body li + li { margin-top: 4px; }
+  .formula { background: var(--surface2); border-radius: 8px; padding: 8px 10px; margin: 6px 0 2px; font-size: 12px; line-height: 1.5; }
+  .calc { width: 100%; border-collapse: collapse; font-variant-numeric: tabular-nums; }
+  .calc td { padding: 4px 0; vertical-align: top; }
+  .calc td.mid { color: var(--muted); padding: 4px 8px; white-space: nowrap; }
+  .calc td.num { text-align: right; white-space: nowrap; }
+  .calc tr.sum td { border-top: 1px solid var(--line); font-weight: 700; padding-top: 6px; }
+  .calc tr.total td { font-weight: 800; font-size: 13px; }
+  .calc tr.incl td { color: var(--muted); }
+  .calc-foot { margin-top: 8px; color: var(--muted); }
+
+  /* ── panel opsi uji (bukan bagian desain) ── */
+  .bar { position: sticky; top: 12px; margin: 0 auto 28px; z-index: 100; background: #0F1716; color: #fff; border-radius: 16px; padding: 10px 14px; display: flex; gap: 8px 16px; flex-wrap: wrap; align-items: center; justify-content: center; box-shadow: 0 10px 30px rgba(0,0,0,0.35); width: max-content; max-width: 100%; font-size: 12px; }
+  .bar .tag { font-size: 10px; font-weight: 800; letter-spacing: 0.6px; color: #0F1716; background: #F2C94C; border-radius: 6px; padding: 3px 6px; }
+  .seg { display: flex; align-items: center; gap: 4px; }
+  .seg > span { color: #9BAAA9; margin-right: 4px; }
+  .seg button { border: none; background: rgba(255,255,255,0.08); color: #fff; padding: 6px 10px; border-radius: 8px; font-size: 12px; cursor: pointer; }
+  .seg button.on { background: var(--primary); }
+  .bar .reset { border: 1px solid rgba(255,255,255,0.2); background: transparent; color: #fff; padding: 6px 10px; border-radius: 8px; font-size: 12px; cursor: pointer; }
+</style>
+</head>
+<body>
+<div class="bar" id="bar"></div>
+
+<div class="canvas">
+  <div class="col">
+    <div class="frame-label">Detail Menu<span>Ketuk chip & baris untuk memilih; ketuk “Harga pilihan dikali …” untuk Rincian harga.</span></div>
+    <div class="phone">
+      <div class="status"><span>9:41</span></div>
+      <div class="topbar"><div class="topbar-in">
+        <button class="back" aria-label="Kembali"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 18l-6-6 6-6"/></svg></button>
+        <div class="topbar-title">Detail Menu</div>
+      </div></div>
+      <div class="scroll" id="detail"></div>
+      <div class="dock">
+        <div class="qty"><button id="qmin" aria-label="Kurangi">−</button><span id="qval">1</span><button id="qplus" aria-label="Tambah">+</button></div>
+        <button class="cta" id="cta"></button>
+      </div>
+      <div id="sheet-detail"></div>
+    </div>
+  </div>
+
+  <div class="col">
+    <div class="frame-label">Keranjang<span>Angka akhir, sudah dikali qty isi & qty paket. Tanpa ⓘ.</span></div>
+    <div class="phone">
+      <div class="status"><span>9:41</span></div>
+      <div class="topbar"><div class="topbar-in">
+        <button class="back" aria-label="Kembali"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 18l-6-6 6-6"/></svg></button>
+        <div class="topbar-title">Keranjang</div>
+      </div></div>
+      <div class="scroll" id="cart"></div>
+      <div class="dock"><button class="cta">Konfirmasi Pesanan</button></div>
+    </div>
+  </div>
+
+  <div class="col">
+    <div class="frame-label">Konfirmasi Pesanan<span>Angka sama dengan Keranjang. Tanpa ⓘ.</span></div>
+    <div class="phone">
+      <div class="status"><span>9:41</span></div>
+      <div class="topbar"><div class="topbar-in">
+        <button class="back" aria-label="Kembali"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 18l-6-6 6-6"/></svg></button>
+        <div class="topbar-title">Konfirmasi Pesanan</div>
+      </div></div>
+      <div class="scroll conf" id="confirm"></div>
+      <div class="dock"><button class="cta">Bayar</button></div>
+    </div>
+  </div>
+
+  <div class="col">
+    <div class="frame-label">Pembayaran Berhasil<span>Angka sama dengan Keranjang. Tanpa ⓘ.</span></div>
+    <div class="phone ok-phone">
+      <div class="status"><span>9:41</span></div>
+      <div class="scroll flush" id="success"></div>
+      <div class="dock"><button class="cta">Kembali ke Menu</button></div>
+    </div>
+  </div>
+
+  <div class="col">
+    <div class="frame-label">Catatan & rincian<span>Aturan yang diuji, dan hitungan harga dari pilihan saat ini.</span></div>
+    <div class="note">
+      <div class="note-head dark">Rincian hitungan</div>
+      <div class="note-body" id="calc"></div>
+    </div>
+    <div class="note">
+      <div class="note-head">Catatan</div>
+      <div class="note-body">
+        <h5>Aturan harga (dari user, 6 Okt — hitungan dikonfirmasi benar)</h5>
+        <p>Modifier isi dipilih <b>sekali</b> dan berlaku untuk semua unit isi itu, jadi harganya dikali qty isi. Harga paket lalu dikali qty paket. Modifier milik paket (Nasi, Minuman) hanya dikali qty paket. Kalau paketnya 2, <b>semua modifier ikut dikali 2</b>.</p>
+        <div class="formula">harga 1 paket = harga dasar<br>&nbsp;&nbsp;+ Σ (modifier isi × qty isi)<br>&nbsp;&nbsp;+ Σ modifier paket<br>total = harga 1 paket × qty paket</div>
+        <h5>Penjelasan hanya di Detail Menu (diputuskan 7 Okt)</h5>
+        <ul>
+          <li><b>Detail Menu:</b> di bawah nama isi ada satu baris teal “Harga pilihan dikali 2 ⓘ”. Teks + ikon bisa diketuk (area ≥ 40px) → sheet <b>Rincian harga</b> berisi hitungannya (× 2 ayam × 2 paket).</li>
+          <li>Chip tetap menulis harga master (+Rp2.000).</li>
+          <li><b>Keranjang, Konfirmasi Pesanan, Pembayaran Berhasil:</b> semua angka = hasil akhir, sudah dikali qty isi & qty paket, termasuk harga modifier (Sambal Matah +Rp8.000). Tanpa ⓘ / sheet: tamu dianggap sudah membaca keterangan di Detail Menu.</li>
+        </ul>
+        <h5>Tetap dari sebelumnya</h5>
+        <ul>
+          <li>Garis teal hanya satu tingkat.</li>
+          <li>Ringkasan ikut aturan 2 Okt: tanpa garis paling kiri, isi Semi Bold, modifier isi di bawah garis teal; ×1 tidak ditulis.</li>
+          <li><b>Grup diulang:</b> pilihan yang sama di ulangan lain tampil lagi sebagai baris baru di bawahnya, urut ulangan — tidak digabung jadi “×2”.</li>
+        </ul>
+        <h5>Belum dipastikan</h5>
+        <ul>
+          <li>Dengan aturan ini tamu tidak bisa memilih beda per unit (mis. ayam 1 Paha, ayam 2 Dada). Benar begitu?</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+const HP = [{ id: 'honey', label: 'Honeycomb', price: 10000 }, { id: 'pist', label: 'Pistachio', price: 15000 }];
+const CASES = {
+  // A — data dari item paket-berdua (data.jsx), isi diubah jadi 2x supaya aturan qty isi terlihat
+  paket: {
+    name: 'Paket Komplit Berdua',
+    desc: 'Dua ayam goreng kremes, nasi, dan minuman untuk berdua.',
+    photo: 'assets/paket-komplit-berdua.jpg',
+    base: 101000,
+    isi: { name: 'Ayam Goreng Kremes', short: 'ayam', qty: 2 },
+    isiGroups: [
+      { id: 'porsi', label: 'Potongan', required: true, max: 1, options: [{ id: 'dada', label: 'Dada', price: 0 }, { id: 'paha', label: 'Paha', price: 0 }, { id: 'sayap', label: 'Sayap', price: 0 }] },
+      { id: 'pedas', label: 'Tingkat Kepedasan', required: true, max: 1, options: [{ id: 'tidak', label: 'Tidak Pedas', price: 0 }, { id: 'sedang', label: 'Sedang', price: 0 }, { id: 'pedas', label: 'Pedas', price: 0 }] },
+      { id: 'sambal', label: 'Sambal', required: false, max: 3, options: [{ id: 'terasi', label: 'Sambal Terasi', price: 0 }, { id: 'ijo', label: 'Sambal Ijo', price: 0 }, { id: 'matah', label: 'Sambal Matah', price: 2000 }] },
+    ],
+    paketGroups: [
+      { id: 'nasi', label: 'Pilihan Nasi', required: true, max: 1, options: [{ id: 'putih', label: 'Nasi Putih', price: 0 }, { id: 'bakar', label: 'Nasi Bakar Komplit', price: 6000 }] },
+      { id: 'minum', label: 'Pilihan Minuman', required: true, max: 1, options: [{ id: 'esteh', label: 'Es Teh Manis', price: 0 }, { id: 'esjeruk', label: 'Es Jeruk Peras', price: 4000 }, { id: 'kopi', label: 'Kopi Susu Saji', price: 8000 }] },
+    ],
+    // pilihan frame Figma 5435:3213 → Rp218.000 untuk 2 paket
+    figma: { qty: 2, sel: { 'i:porsi:0': ['paha'], 'i:pedas:0': ['sedang'], 'i:sambal:0': ['terasi', 'matah'], 'p:nasi': ['putih'], 'p:minum': ['esjeruk'] } },
+  },
+  // B — grup topping ditampilkan 5 kali (data nyata dari user, Figma 5435:3364)
+  gelato: {
+    name: 'Paket Gelato Keluarga',
+    desc: '5 cup gelato besar, masing-masing 5 scoop vanila. Tiap scoop bisa ditambah topping.',
+    photo: 'assets/paket-gelato-keluarga.jpg',
+    base: 99000,
+    isi: { name: 'Gelato Cup Besar Vanila', short: 'cup', qty: 5 },
+    isiGroups: [{ id: 'top', label: 'Topping', required: false, max: 2, repeat: 5, options: [{ id: 'honey', label: 'Honeycomb', price: 5000 }, { id: 'pist', label: 'Pistachio', price: 8000 }] }],
+    paketGroups: [],
+    // pilihan frame Figma: ke-1 Honeycomb, ke-2 Pistachio, ke-3 keduanya → Rp458.000 untuk 2 paket
+    figma: { qty: 2, sel: { 'i:top:0': ['honey'], 'i:top:1': ['pist'], 'i:top:2': ['honey', 'pist'] } },
+  },
+  uji: {
+    name: 'BG Nested',
+    desc: 'Data uji: Barang 1 berisi 2 kuantitas; tiap kuantitas punya 3 modifier bertingkat.',
+    base: 13029,
+    isi: { name: 'Barang 1', short: 'Barang 1', qty: 2 },
+    isiGroups: [
+      { id: 'm1', label: 'Mod 1', required: false, max: 2, options: HP },
+      { id: 'm2', label: 'Mod 2', required: false, max: 2, options: HP },
+      { id: 'm3', label: 'Mod 3', required: false, max: 2, options: HP },
+    ],
+    paketGroups: [],
+  },
+};
+const CHOICES = {
+  kasus: [['paket', 'A · Paket Komplit Berdua'], ['gelato', 'B · Paket Gelato (diulang ×5)'], ['uji', 'Data uji: Barang 1 ×2']],
+  letak: [['chip', 'Di chip'], ['judul', 'Sekali di judul']],
+  ringkas: [['baris', 'Satu baris per pilihan'], ['ke', '+ label ke-n']],
+};
+const LABELS = { kasus: 'Kasus', letak: 'Letak harga', ringkas: 'Ringkasan' };
+const ONLY_ULANG = ['letak', 'ringkas']; // hanya relevan untuk grup yang diulang
+const TAX = 0.1; // tarif pajak frame Figma (label tetap "Pajak" tanpa persen)
+
+const params = new URLSearchParams(location.search);
+const opt = {};
+Object.keys(CHOICES).forEach((k) => {
+  const v = params.get(k);
+  opt[k] = CHOICES[k].some(([id]) => id === v) ? v : CHOICES[k][0][0];
+});
+let sel = {};   // key slot → [id opsi]
+let qty = 1;    // qty paket
+let sheet = false; // sheet Rincian harga (hanya dibuka dari Detail Menu)
+
+const rupiah = (n) => 'Rp' + new Intl.NumberFormat('id-ID').format(Math.round(n || 0));
+const esc = (s) => String(s).replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
+const C = () => CASES[opt.kasus];
+const isiQty = () => C().isi.qty;
+const repeatOf = (g) => g.repeat || 1;
+
+// slot = satu tempat memilih: tiap ulangan grup isi, atau satu grup paket
+function isiSlots() {
+  const out = [];
+  C().isiGroups.forEach((g) => { for (let k = 0; k < repeatOf(g); k++) out.push({ g, k, key: `i:${g.id}:${k}` }); });
+  return out;
+}
+const paketSlots = () => C().paketGroups.map((g) => ({ g, k: 0, key: `p:${g.id}` }));
+const allSlots = () => [...isiSlots(), ...paketSlots()];
+const chosen = (sl) => sl.g.options.filter((o) => (sel[sl.key] || []).includes(o.id));
+const sumOf = (slots) => slots.reduce((s, sl) => s + chosen(sl).reduce((a, o) => a + o.price, 0), 0);
+const isiModPerUnit = () => sumOf(isiSlots());
+const paketMods = () => sumOf(paketSlots());
+const unitPaket = () => C().base + isiModPerUnit() * isiQty() + paketMods();
+const lineTotal = () => unitPaket() * qty;
+const taxOf = () => Math.round(lineTotal() * TAX);
+const hasRepeat = () => C().isiGroups.some((g) => repeatOf(g) > 1);
+const requiredOk = () => allSlots().every((sl) => !sl.g.required || chosen(sl).length > 0);
+// harga yang ditulis di chip modifier isi
+const chipPrice = (p) => p;
+
+function toggle(key, id) {
+  const sl = allSlots().find((s) => s.key === key);
+  const cur = sel[key] || [];
+  if (sl.g.max === 1) sel[key] = [id];                       // pilih-1: ganti, tidak bisa dikosongkan
+  else if (cur.includes(id)) sel[key] = cur.filter((x) => x !== id);
+  else if (cur.length < sl.g.max) sel[key] = [...cur, id];
+  render();
+}
+
+// ── Detail Menu ──
+function isiSubGroup(sl) {
+  const { g, k, key } = sl;
+  const cur = chosen(sl);
+  const rep = repeatOf(g) > 1;
+  const judul = rep && opt.letak === 'judul';
+  const full = g.max > 1 && cur.length >= g.max;
+  const pill = g.required && !cur.length ? `<span class="pill">${g.max === 1 ? 'Pilih 1' : 'Wajib'}</span>` : '';
+  const hint = g.max > 1 && g.options.length > g.max ? `<span class="sg-max">maks. ${g.max}</span>` : '';
+  const label = judul ? `<span class="sg-inst">Ke-${k + 1}</span>` : `<span class="sg-label">${esc(g.label)}${rep ? ` · ke-${k + 1}` : ''}</span>`;
+  const chips = g.options.map((o) => {
+    const on = cur.includes(o);
+    const pr = o.price > 0 && !judul ? `<span class="pr">+${rupiah(chipPrice(o.price))}</span>` : '';
+    return `<button class="chip${on ? ' on' : ''}" data-key="${key}" data-id="${o.id}"${full && !on ? ' disabled' : ''}>${esc(o.label)}${pr}</button>`;
+  }).join('');
+  return `<div class="sg"><div class="sg-head">${label}${pill}${hint}</div><div class="chips">${chips}</div></div>`;
+}
+function repeatHeader(g) {
+  if (!(repeatOf(g) > 1 && opt.letak === 'judul')) return '';
+  const prices = g.options.map((o) => `${esc(o.label)} <b>+${rupiah(chipPrice(o.price))}</b>`).join(' · ');
+  return `<div class="sg-top"><span class="sg-label">${esc(g.label)}</span><div class="sg-prices">${prices}</div></div>`;
+}
+function isiGroupHTML() {
+  const i = C().isi;
+  // satu-satunya penjelasan perkalian (keputusan 7 Okt); hitungannya di sheet Rincian harga
+  const info = i.qty > 1 ? `<button class="info-link" data-info aria-haspopup="dialog">Harga pilihan dikali ${i.qty}${INFO}</button>` : '';
+  let subs = '';
+  C().isiGroups.forEach((g) => {
+    subs += repeatHeader(g);
+    isiSlots().filter((sl) => sl.g === g).forEach((sl) => { subs += isiSubGroup(sl); });
+  });
+  return `<div class="group"><h4 class="glabel">Isi paket</h4><div>
+    <div class="row"><div class="row-label">${i.qty}x ${esc(i.name)}${info}</div></div>
+    <div class="nested"><div class="rail"></div><div class="subs">${subs}</div></div>
+  </div></div>`;
+}
+const INFO = '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" aria-hidden="true"><circle cx="12" cy="12" r="9.5"/><path d="M12 11v5.5"/><circle cx="12" cy="7.6" r="0.6" fill="currentColor"/></svg>';
+const CHECK = '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg>';
+function paketGroupHTML(sl) {
+  const g = sl.g;
+  const cur = chosen(sl);
+  const sub = g.required ? (g.max === 1 ? 'Wajib dipilih · maks. 1' : 'Wajib dipilih') : (g.max === 1 ? 'Opsional · maks. 1' : 'Opsional · bisa lebih dari satu');
+  const rows = g.options.map((o) => {
+    const on = cur.includes(o);
+    return `<button class="opt${on ? ' on' : ''}" data-key="${sl.key}" data-id="${o.id}"><span class="opt-label">${esc(o.label)}</span>${o.price > 0 ? `<span class="opt-price">+${rupiah(o.price)}</span>` : ''}<span class="box-wrap"><span class="box">${on ? CHECK : ''}</span></span></button>`;
+  }).join('');
+  return `<div class="group"><div class="ghead"><h4 class="glabel">${esc(g.label)}</h4><div class="gsub">${sub}</div></div><div>${rows}</div></div>`;
+}
+function renderDetail() {
+  const c = C();
+  document.getElementById('detail').innerHTML = `
+    <div class="food">${c.photo ? `<img src="${c.photo}" alt="">` : `<span>foto · ${esc(c.name.toLowerCase())}</span>`}</div>
+    <h2 class="name">${esc(c.name)}</h2>
+    <p class="desc">${esc(c.desc)}</p>
+    ${isiGroupHTML()}
+    ${paketSlots().map(paketGroupHTML).join('')}
+    <h4 class="notes-label">Catatan untuk dapur</h4>
+    <textarea rows="2" placeholder="cth. tanpa bawang, sambal pisah"></textarea>`;
+  const cta = document.getElementById('cta');
+  cta.disabled = !requiredOk();
+  cta.textContent = 'Tambah · ' + rupiah(lineTotal());
+  document.getElementById('qval').textContent = qty;
+}
+
+// ── Keranjang, Konfirmasi Pesanan, Pembayaran Berhasil ──
+// Angka di baris = hasil akhir, sudah dikali qty isi & qty paket (aturan Figma 3767:2982).
+// Tanpa ⓘ / sheet (keputusan 7 Okt): penjelasannya hanya di Detail Menu.
+function priceTxt(p, isi) {
+  if (!p) return '';
+  return ` (+${rupiah(p * (isi ? isiQty() : 1) * qty)})`;
+}
+function isiLines() {
+  const lines = [];
+  C().isiGroups.forEach((g) => {
+    const slots = isiSlots().filter((sl) => sl.g === g);
+    if (repeatOf(g) === 1) { chosen(slots[0]).forEach((o) => lines.push(esc(o.label) + priceTxt(o.price, true))); return; }
+    // pilihan yang sama di ulangan lain TIDAK digabung jadi ×n (user, 6 Okt): tiap pilihan satu baris, urut ulangan
+    slots.forEach((sl) => chosen(sl).forEach((o) => {
+      lines.push((opt.ringkas === 'ke' ? `Ke-${sl.k + 1}: ` : '') + esc(o.label) + priceTxt(o.price, true));
+    }));
+  });
+  return lines;
+}
+// PaketDetail (ui.jsx) — dipakai sama persis di ketiga layar
+function paketDetailHTML() {
+  const i = C().isi;
+  const lines = isiLines();
+  const isiSlot = `<div class="pd-slot">
+    <div class="pd-isi">${i.qty}x ${esc(i.name)}</div>
+    ${lines.length ? `<div class="pd-group"><div class="rail"></div><div class="pd-lines">${lines.map((l) => `<div class="pd-mod">${l}</div>`).join('')}</div></div>` : ''}
+  </div>`;
+  const paketLines = paketSlots().flatMap((sl) => chosen(sl).map((o) => `<div class="pd-mod">${esc(o.label)}${priceTxt(o.price, false)}</div>`)).join('');
+  return `<div class="pd">${isiSlot}${paketLines}</div>`;
+}
+const thumbHTML = () => `<div class="thumb">${C().photo ? `<img src="${C().photo}" alt="">` : ''}</div>`;
+const breakdownHTML = () => `
+  <div class="brk"><span>Subtotal</span><b>${rupiah(lineTotal())}</b></div>
+  <div class="brk"><span>Pajak</span><b>${rupiah(taxOf())}</b></div>`;
+const totalHTML = () => `<div class="tot"><span>Total</span><span class="big">${rupiah(lineTotal() + taxOf())}</span></div>`;
+
+function renderCart() {
+  const c = C();
+  document.getElementById('cart').innerHTML = `
+    <div class="cart-card">
+      <div class="line">
+        ${thumbHTML()}
+        <div class="line-body">
+          <h4 class="line-name">${esc(c.name)}</h4>
+          ${paketDetailHTML()}
+          <span class="money">${rupiah(lineTotal())}</span>
+        </div>
+        <div class="badge">${qty}</div>
+      </div>
+    </div>
+    <div class="sum-card">${breakdownHTML()}<div class="hair"></div>${totalHTML()}</div>`;
+}
+
+const ICON_QRIS = '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"><rect x="3.5" y="3.5" width="6.5" height="6.5" rx="1"/><rect x="14" y="3.5" width="6.5" height="6.5" rx="1"/><rect x="3.5" y="14" width="6.5" height="6.5" rx="1"/><path d="M14 14h2.5v2.5H14zM18 18h2.5v2.5H18zM14 18.5v2M18.5 14h2"/></svg>';
+const ICON_STORE = '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"><path d="M4 9.5V20h16V9.5M3 9.5l2-5.5h14l2 5.5H3zM9.5 20v-5h5v5"/></svg>';
+function renderConfirm() {
+  const c = C();
+  document.getElementById('confirm').innerHTML = `
+    <div class="sec-label"><span>Data pelanggan · opsional</span></div>
+    <div class="field"><b>+62</b>813 8001 2025</div>
+    <div class="sec-label"><span>Ringkasan pesanan</span><span>${qty} item</span></div>
+    <div class="sum-card" style="margin-top:0">
+      <div class="line">
+        ${thumbHTML()}
+        <div class="line-body">
+          <div class="name-row"><h4 class="line-name">${esc(c.name)}</h4><span class="pcs">${qty} pcs</span></div>
+          ${paketDetailHTML()}
+          <span class="money">${rupiah(lineTotal())}</span>
+        </div>
+      </div>
+      <div class="hair"></div>${breakdownHTML()}${totalHTML()}
+    </div>
+    <div class="sec-label" style="margin-top:18px"><span>Metode pembayaran</span></div>
+    <div class="pay on"><span class="pay-ic">${ICON_QRIS}</span><span><div class="pay-t">QRIS</div><div class="pay-s">Semua e-wallet & m-banking</div></span><span class="radio">${CHECK}</span></div>
+    <div class="pay"><span class="pay-ic">${ICON_STORE}</span><span><div class="pay-t">Bayar di Kasir</div><div class="pay-s">Tunai atau kartu di kasir</div></span><span class="radio"></span></div>`;
+}
+function renderSuccess() {
+  const c = C();
+  document.getElementById('success').innerHTML = `
+    <div class="hero">
+      <div class="ok"><svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="#1E9E57" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg></div>
+      <h3>Pembayaran berhasil</h3>
+      <div class="amt">${rupiah(lineTotal() + taxOf())}</div>
+    </div>
+    <div class="receipt">
+      <div class="rc-head"><span>Pesananmu</span><span>Dine In · Meja 5</span></div>
+      <div class="rc-line">
+        <span class="qbox">${qty}</span>
+        <div class="line-body">
+          <div class="name-row"><h4 class="line-name">${esc(c.name)}</h4><span class="money">${rupiah(lineTotal())}</span></div>
+          ${paketDetailHTML()}
+        </div>
+      </div>
+      <div class="rc-sec">Rincian pembayaran</div>
+      ${breakdownHTML()}
+    </div>`;
+}
+
+// ── sheet Rincian harga (hanya dibuka dari Detail Menu) ──
+function rincianRows() {
+  const c = C();
+  const pk = qty > 1 ? ` × ${qty} paket` : '';
+  const rows = [['Harga paket', qty > 1 ? rupiah(c.base) + pk : '', c.base * qty]];
+  isiSlots().forEach((sl) => chosen(sl).forEach((o) => {
+    if (o.price) rows.push([o.label + (repeatOf(sl.g) > 1 ? ` (ke-${sl.k + 1})` : ''), `${rupiah(o.price)} × ${isiQty()} ${c.isi.short}${pk}`, o.price * isiQty() * qty]);
+  }));
+  paketSlots().forEach((sl) => chosen(sl).forEach((o) => {
+    if (o.price) rows.push([o.label, qty > 1 ? rupiah(o.price) + pk : 'per paket', o.price * qty]);
+  }));
+  return rows;
+}
+function sheetHTML() {
+  const c = C();
+  return `<div class="sheet-wrap"><div class="scrim" data-close></div>
+    <div class="sheet" role="dialog" aria-modal="true" aria-labelledby="rh-detail">
+      <div class="handle"></div>
+      <div class="sheet-head"><h3 id="rh-detail">Rincian harga</h3><button class="close" data-close aria-label="Tutup"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M6 6l12 12M18 6L6 18"/></svg></button></div>
+      <div class="sheet-body">
+        <div class="r-sub">${esc(c.name)}</div>
+        ${rincianRows().map((r) => `<div class="r-row"><div class="r-left"><div class="r-label">${esc(r[0])}</div>${r[1] ? `<div class="r-calc">${esc(r[1])}</div>` : ''}</div><div class="r-num">${rupiah(r[2])}</div></div>`).join('')}
+        <div class="r-total"><span>Total</span><span>${rupiah(lineTotal())}</span></div>
+        <p class="r-foot">Pilihan untuk isi berlaku untuk ${c.isi.qty} ${esc(c.isi.short)} di setiap paket, jadi harganya dikali ${c.isi.qty}. Pilihan tanpa biaya tidak ditulis.</p>
+      </div>
+    </div></div>`;
+}
+
+// ── rincian hitungan & panel ──
+function renderCalc() {
+  const c = C();
+  const pk = qty > 1 ? ` × ${qty} paket` : '';
+  const rows = [['Harga dasar paket', qty > 1 ? rupiah(c.base) + pk : '', c.base * qty]];
+  isiSlots().forEach((sl) => chosen(sl).forEach((o) => {
+    if (o.price) rows.push([o.label + (repeatOf(sl.g) > 1 ? ` (ke-${sl.k + 1})` : ` (${sl.g.label})`), `${rupiah(o.price)} × ${isiQty()} isi${pk}`, o.price * isiQty() * qty]);
+  }));
+  paketSlots().forEach((sl) => chosen(sl).forEach((o) => {
+    if (o.price) rows.push([o.label, qty > 1 ? rupiah(o.price) + pk : 'per paket', o.price * qty]);
+  }));
+  const tr = (r, cls = '') => `<tr class="${cls}"><td>${esc(r[0])}</td><td class="mid">${esc(r[1])}</td><td class="num">${rupiah(r[2])}</td></tr>`;
+  document.getElementById('calc').innerHTML = `<table class="calc">
+    ${rows.map((r) => tr(r)).join('')}
+    ${tr(['Total', '', unitPaket() * qty], 'sum total')}
+    ${tr(['termasuk modifier', '', (unitPaket() - c.base) * qty], 'incl')}
+  </table>
+  <div class="calc-foot">Harga 1 paket ${rupiah(unitPaket())}. Pilihan Rp0 tidak ditulis. Tombol Tambah: <b>${requiredOk() ? 'aktif' : 'nonaktif — ada grup wajib kosong'}</b>.</div>`;
+}
+function renderBar() {
+  const keys = Object.keys(CHOICES).filter((k) => hasRepeat() || !ONLY_ULANG.includes(k));
+  document.getElementById('bar').innerHTML = '<span class="tag">PROTOTIPE</span>' +
+    keys.map((k) => `<div class="seg"><span>${LABELS[k]}</span>${CHOICES[k].map(([id, label]) =>
+      `<button class="${opt[k] === id ? 'on' : ''}" data-opt="${k}" data-val="${id}">${label}</button>`).join('')}</div>`).join('') +
+    (C().figma ? '<button class="reset" data-figma>Isi seperti Figma</button>' : '') +
+    '<button class="reset" data-reset>Kosongkan pilihan</button>';
+}
+function render() {
+  renderDetail(); renderCart(); renderConfirm(); renderSuccess(); renderCalc(); renderBar();
+  document.getElementById('sheet-detail').innerHTML = sheet ? sheetHTML() : '';
+  if (sheet) document.querySelector('#sheet-detail .close').focus();
+}
+// pilihan & qty paket yang sama dengan frame Figma, supaya keempat layar bisa dicocokkan
+function applyFigma() {
+  const f = C().figma;
+  sel = f ? JSON.parse(JSON.stringify(f.sel)) : {};
+  qty = f ? f.qty : 1;
+  sheet = false;
+}
+
+document.getElementById('detail').addEventListener('click', (e) => {
+  if (e.target.closest('[data-info]')) { sheet = true; render(); return; }
+  const b = e.target.closest('[data-key]');
+  if (b && !b.disabled) toggle(b.dataset.key, b.dataset.id);
+});
+document.getElementById('sheet-detail').addEventListener('click', (e) => {
+  if (e.target.closest('[data-close]')) { sheet = false; render(); }
+});
+document.addEventListener('keydown', (e) => { if (e.key === 'Escape' && sheet) { sheet = false; render(); } });
+document.getElementById('qmin').addEventListener('click', () => { qty = Math.max(1, qty - 1); render(); });
+document.getElementById('qplus').addEventListener('click', () => { qty += 1; render(); });
+document.getElementById('bar').addEventListener('click', (e) => {
+  if (e.target.closest('[data-reset]')) { sel = {}; qty = 1; sheet = false; render(); return; }
+  if (e.target.closest('[data-figma]')) { applyFigma(); render(); return; }
+  const b = e.target.closest('[data-opt]');
+  if (!b) return;
+  opt[b.dataset.opt] = b.dataset.val;
+  if (b.dataset.opt === 'kasus') applyFigma();
+  history.replaceState(null, '', '?' + new URLSearchParams(opt).toString());
+  render();
+});
+applyFigma();
+render();
+</script>
+</body>
+</html>
