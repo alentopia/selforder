@@ -135,7 +135,7 @@ function App() {
   const removeLine = (u) => setCart((c) => c.filter((l) => l.uid !== u));
 
   const cartSubtotal = () => cart.filter((l) => !l.free).reduce((s, l) => s + l.unit * l.qty, 0);
-  // Subtotal SETELAH Promo Produk: item gratis Rp0, harga coret sudah di harga menu,
+  // Subtotal SETELAH Promo Produk: item gratis Rp0, harga SPA sudah di harga menu,
   // diskon beli-N dipotong. Ini dasar syarat min. belanja & Diskon Transaksi.
   const productSubtotal = () => Math.max(0, cartSubtotal() - itemDiscount());
   const promoDiscount = () => {
@@ -234,7 +234,7 @@ function App() {
   // ── MVP: semua promo otomatis (Figma "Case: Diskon Transaksi Otomatis") ──
   // Tamu tidak memilih promo, dan sistem TIDAK PERNAH menambah/membuang barang di keranjang —
   // semua barang (termasuk barang hadiah promo) diinput tamu sendiri. Promo hanya menghitung:
-  // · item gratis (free-item), beli-N (bulk) & harga coret (price) → dari isi keranjang
+  // · item gratis (free-item) & beli-N (bulk) → dari isi keranjang
   //   (itemDiscountLines / linePrice), tidak perlu dipasang
   // · Diskon Transaksi → maks. 1 aktif. Kalau >1 memenuhi syarat, dipilih potongan
   //   TERBESAR (asumsi prototipe — di Figma ditandai "BELUM DIPUTUSKAN").
@@ -247,14 +247,11 @@ function App() {
 
   // harga per baris untuk tampilan: asal (dicoret) vs akhir + promo produk yang berlaku
   const linePrice = (line) => {
-    const it = itemById(line.itemId) || {};
     const disc = itemDiscountLines();
     const free = disc.find((d) => d.uid === line.uid);
     if (free) {const orig = line.unit * line.qty;return { orig, final: orig - free.amount, promo: promoById(free.id) };}
     const bulk = disc.find((d) => {const p = promoById(d.id);return p.kind === 'bulk' && p.requireItem === line.itemId;});
     if (bulk) {const p = promoById(bulk.id);const orig = line.unit * line.qty;return { orig, final: orig - Math.round(orig * p.value), promo: p };}
-    const strike = strikePromoFor(line.itemId);
-    if (strike && it.oldPrice) return { orig: (line.unit + it.oldPrice - it.price) * line.qty, final: line.unit * line.qty, promo: strike };
     return { orig: line.unit * line.qty, final: line.unit * line.qty, promo: null };
   };
 
