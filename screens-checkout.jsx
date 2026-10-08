@@ -1,8 +1,8 @@
 // screens-checkout.jsx — Confirm (locked), Payment picker, Processing, Open Bill, Settle, Success.
 const { useState: useStateK, useEffect: useEffectK } = React;
 
-// Masa berlaku kode QRIS: 5 menit. Untuk QA bisa dipersingkat lewat URL, mis. ?qrisDetik=10
-const QRIS_SECONDS = Number(new URLSearchParams(window.location.search).get('qrisDetik')) || 300;
+// Masa berlaku kode QRIS: 10 menit. Untuk QA bisa dipersingkat lewat URL, mis. ?qrisDetik=10
+const QRIS_SECONDS = Number(new URLSearchParams(window.location.search).get('qrisDetik')) || 600;
 
 function ReadLine({ line }) {
   const t = useTheme();
@@ -935,7 +935,7 @@ function ProcessingScreen({ params }) {
                       <span style={{ fontSize: 13, color: t.muted, fontWeight: 500 }}>Menunggu pembayaran…</span>
                     </>}
                 </div>
-                {/* timer masa berlaku QR — 5 menit */}
+                {/* timer masa berlaku QR — 10 menit */}
                 {!paid &&
               <div style={{ marginTop: 12, display: 'inline-flex', alignItems: 'center', gap: 6, background: secs <= 30 ? 'rgba(226,104,14,0.12)' : t.surface2, borderRadius: 999, padding: '5px 13px' }}>
                   <Icon name="clock" size={14} color={secs <= 30 ? '#E2680E' : t.muted} />
@@ -1042,7 +1042,7 @@ const askLeavePayment = (app, codeLabel) => app.askConfirm({
 
 // ── QrisExpiredDialog — Figma ExpiredDialog (4798:2701) ──
 // Tidak bisa ditutup dengan ketuk di luar kartu; satu aksi: kembali ke Konfirmasi Pesanan
-// (pesanan, nomor WA & metode QRIS tetap). Bayar lagi → kode QRIS & timer 5 menit baru.
+// (pesanan, nomor WA & metode QRIS tetap). Bayar lagi → kode QRIS & timer 10 menit baru.
 function QrisExpiredDialog({ onBack }) {
   const t = useTheme();
   return (
@@ -1054,7 +1054,7 @@ function QrisExpiredDialog({ onBack }) {
           </div>
           <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
             <h3 id="om-qris-expired-title" style={{ margin: 0, fontFamily: t.fontDisplay, fontWeight: 700, fontSize: 20, lineHeight: '25px', color: t.ink }}>Kode QRIS kedaluwarsa</h3>
-            <p style={{ margin: 0, fontSize: 14, lineHeight: '20px', color: t.muted }}>Kode QRIS hanya berlaku 5 menit. Pesananmu tetap tersimpan. Kembali ke konfirmasi untuk membuat kode baru.</p>
+            <p style={{ margin: 0, fontSize: 14, lineHeight: '20px', color: t.muted }}>Kode QRIS hanya berlaku 10 menit. Pesananmu tetap tersimpan. Kembali ke konfirmasi untuk membuat kode baru.</p>
           </div>
         </div>
         <Button full onClick={onBack}>Kembali ke konfirmasi pesanan</Button>
