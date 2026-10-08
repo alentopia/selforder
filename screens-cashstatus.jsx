@@ -58,7 +58,7 @@ function CashStatusScreen({ params }) {
   [{ type: isDine ? 'dinein' : 'takeaway', label: isDine ? 'Dine In' : 'Take Away', n: qtyTotal, table: isDine }];
   const bill = app.computeBill();
   const freeLines = lines.filter((l) => l.free);
-  const txPromoName = (app.applied.map((a) => promoById(a.id)).find((p) => p && isVoucher(p)) || {}).title;
+  const txPromo = app.applied.map((a) => promoById(a.id)).find((p) => p && isVoucher(p));
   // Open Bill: rincian dihitung dari settleBill (PPN sekali untuk seluruh tagihan)
   const obDiscount = (params && params.discount) || 0;
   const sb = isOpenBill ? app.settleBill(obDiscount) : null;
@@ -213,9 +213,20 @@ function CashStatusScreen({ params }) {
             <span style={{ fontSize: 13, color: t.muted }}>Subtotal</span>
             <Money value={subtotal} style={{ fontSize: 13, fontWeight: 600, color: t.ink }} />
           </div>
-          {discount > 0 && (
+          {/* MVP (QR Statis): baris "Promo Transaksi" + nama promo di bawahnya, sama dengan
+              Konfirmasi & Pembayaran berhasil. Open Bill (di luar MVP) dibiarkan. */}
+          {discount > 0 && !isOpenBill && (
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', gap: 8 }}>
+                <span style={{ fontSize: 13, color: t.muted }}>Promo Transaksi</span>
+                <span style={{ fontSize: 13, fontWeight: 700, color: t.primary, flexShrink: 0 }}>{'−' + rupiah(discount)}</span>
+              </div>
+              <PromoMark promo={txPromo} />
+            </div>
+          )}
+          {discount > 0 && isOpenBill && (
             <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-              <span style={{ fontSize: 13, color: t.primary, fontWeight: 600 }}>{(!isOpenBill && txPromoName) || 'Diskon'}</span>
+              <span style={{ fontSize: 13, color: t.primary, fontWeight: 600 }}>Diskon</span>
               <span style={{ fontSize: 13, fontWeight: 700, color: t.primary }}>– {rupiah(discount)}</span>
             </div>
           )}

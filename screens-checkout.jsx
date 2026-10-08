@@ -1717,4 +1717,4 @@ function BillRiwayat({ orders }) {
   );
 }
 
-Object.assign(window, { ConfirmScreen, ProcessingScreen, BillScreen, BillRiwayat, SettleScreen, SuccessScreen, ShareReceiptSheet, ShareReceiptScreen, PaymentPicker, ReadLine });
+Object.assign(window, { ConfirmScreen, ProcessingScreen, BillScreen, BillRiwayat, SettleScreen, SuccessScreen, ShareReceiptSheet, ShareReceiptScreen, PaymentPicker, ReadLine, PromoMark });
