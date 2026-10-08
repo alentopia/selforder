@@ -215,13 +215,14 @@ function BreakdownRows({ subtotal, tax, rounding, itemDiscLines }) {
         <span style={{ fontSize: 13, color: t.muted }}>Subtotal</span>
         <Money value={subtotal} style={{ fontSize: 13, fontWeight: 600, color: t.ink }} />
       </div>
+      {/* Figma 5270:2693: baris "Promo Transaksi" + nama promo menempel di bawahnya (tidak bisa diketuk) */}
       {txPromo && bill.discount > 0 &&
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 8 }}>
-          <span style={{ display: 'inline-flex', alignItems: 'center', gap: 6, fontSize: 13, color: t.primary, fontWeight: 600, minWidth: 0 }}>
-            <Icon name="tag" size={13} color={t.primary} />
-            <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{txPromo.title}</span>
-          </span>
-          <span style={{ fontSize: 13, fontWeight: 700, color: t.primary, flexShrink: 0 }}>– {rupiah(bill.discount)}</span>
+      <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', gap: 8 }}>
+            <span style={{ fontSize: 13, color: t.muted }}>Promo Transaksi</span>
+            <span style={{ fontSize: 13, fontWeight: 700, color: t.primary, flexShrink: 0 }}>{'−' + rupiah(bill.discount)}</span>
+          </div>
+          <PromoMark promo={txPromo} />
         </div>}
       {bill.service > 0 &&
       <div style={{ display: 'flex', justifyContent: 'space-between' }}>
@@ -1282,7 +1283,7 @@ function SettleScreen() {
           <div style={{ padding: '11px 16px 12px', borderTop: '1px solid ' + t.line }}>
             <Row label="Subtotal" value={rupiah(grandSub)} />
             {itemDiscTotal > 0 && <Row label="Diskon produk" value={'−' + rupiah(itemDiscTotal)} accent />}
-            {discount > 0 && <Row label="Diskon transaksi" value={'−' + rupiah(discount)} accent />}
+            {discount > 0 && <Row label="Promo Transaksi" value={'−' + rupiah(discount)} accent />}
             {settle.service > 0 && <Row label={'Service ' + Math.round(settle.serviceRate * 100) + '%'} value={rupiah(settle.service)} />}
             <Row label={'Pajak' + (settle.taxInclusive ? ' · termasuk' : '')} value={rupiah(settle.tax)} />
             {settle.rounding !== 0 && <Row label="Pembulatan" value={(settle.rounding > 0 ? '' : '−') + rupiah(Math.abs(settle.rounding))} />}
@@ -1400,7 +1401,7 @@ function SuccessScreen({ params }) {
     const items = lines.map((l) => {const pr = app.linePrice(l);return row(l.qty + '× ' + l.name + (l.options && l.options.length ? '<br><small>' + l.options.join(' · ') + '</small>' : ''), rupiah(pr.final));}).join('');
     const html = '<!doctype html><meta charset="utf-8"><title>Struk ' + txId + '</title><style>body{font:14px/1.45 Inter,system-ui,sans-serif;max-width:360px;margin:24px auto;padding:0 16px;color:#13201f}h1{font-size:18px;margin:0 0 4px}td{padding:4px 0;vertical-align:top}small{color:#5c6b6a}table{width:100%;border-collapse:collapse}hr{border:0;border-top:1px dashed #ccc;margin:12px 0}</style>' +
     '<h1>' + BRAND.name + '</h1><div>' + BRAND.location + ' · ' + typeLabel + (app.table ? ' · ' + app.table : '') + '</div><div>' + dateText + ' · ' + txId + '</div><hr><table>' + items + '</table><hr><table>' +
-    row('Subtotal', rupiah(bill.subtotal)) + (bill.discount > 0 ? row('Diskon transaksi' + (txPromo ? ' (' + txPromo.title + ')' : ''), '−' + rupiah(bill.discount)) : '') +
+    row('Subtotal', rupiah(bill.subtotal)) + (bill.discount > 0 ? row('Promo Transaksi' + (txPromo ? ' (' + txPromo.title + ')' : ''), '−' + rupiah(bill.discount)) : '') +
     (bill.service > 0 ? row('Service', rupiah(bill.service)) : '') + row('Pajak', rupiah(bill.tax)) +
     (bill.rounding ? row('Pembulatan', rupiah(bill.rounding)) : '') + '<tr><td><b>Total</b></td><td style="text-align:right"><b>' + rupiah(total) + '</b></td></tr></table><hr><div>Metode: ' + pay.label + '</div><p style="color:#5c6b6a">Powered by Accurate POS</p>';
     window.open(URL.createObjectURL(new Blob([html], { type: 'text/html' })), '_blank');
@@ -1438,7 +1439,15 @@ function SuccessScreen({ params }) {
           <div style={{ marginTop: 14, borderTop: '1px solid ' + t.line, paddingTop: 14, display: 'flex', flexDirection: 'column', gap: 11 }}>
             <span style={label}>Rincian Pembayaran</span>
             {sumRow('Subtotal', rupiah(bill.subtotal))}
-            {bill.discount > 0 && sumRow('Diskon transaksi' + (txPromo ? ' · ' + txPromo.title : ''), '– ' + rupiah(bill.discount), true)}
+            {/* Figma 5255:911: baris "Promo Transaksi" + nama promo menempel di bawahnya */}
+            {bill.discount > 0 &&
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
+                <div style={{ display: 'flex', alignItems: 'flex-start' }}>
+                  <span style={{ flex: 1, fontSize: 13, color: t.muted }}>Promo Transaksi</span>
+                  <span style={{ fontSize: 13.5, fontWeight: 700, color: t.primary, whiteSpace: 'nowrap' }}>{'−' + rupiah(bill.discount)}</span>
+                </div>
+                <PromoMark promo={txPromo} />
+              </div>}
             {bill.service > 0 && sumRow('Service (' + Math.round(bill.serviceRate * 100) + '%)', rupiah(bill.service))}
             {sumRow('Pajak' + (bill.taxInclusive ? ' · termasuk' : ''), rupiah(bill.tax))}
             {bill.rounding !== 0 && sumRow('Pembulatan', (bill.rounding > 0 ? '' : '– ') + rupiah(Math.abs(bill.rounding)))}

@@ -162,7 +162,7 @@ function CartScreen() {
   const [checking, setChecking] = useStateC(false);
   const lines = app.cart;
   const bill = app.computeBill();
-  // Diskon Transaksi otomatis (maks. 1) — namanya tampil di bawah baris "Diskon transaksi"
+  // Diskon Transaksi otomatis (maks. 1) — namanya tampil di bawah baris "Promo Transaksi"
   const txPromo = app.applied.map((a) => promoById(a.id)).find((p) => p && isVoucher(p));
 
   const isOpenBill = app.mode === 'dyn-openbill';
@@ -270,7 +270,7 @@ function CartScreen() {
           <>
           {/* Subtotal sudah setelah Promo Produk — tidak ada baris diskon produk terpisah */}
           <Row label="Subtotal" value={rupiah(bill.subtotal)} />
-          {bill.discount > 0 && <Row label="Diskon transaksi" value={'−' + rupiah(bill.discount)} accent />}
+          {bill.discount > 0 && <Row label="Promo Transaksi" value={'−' + rupiah(bill.discount)} accent />}
           {bill.discount > 0 && <PromoLine promo={txPromo} />}
           {bill.service > 0 && <Row label={'Service ' + Math.round(bill.serviceRate * 100) + '%'} value={rupiah(bill.service)} />}
           <Row label={'Pajak' + (bill.taxInclusive ? ' · termasuk' : '')} value={rupiah(bill.tax)} />
