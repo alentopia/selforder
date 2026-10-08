@@ -36,8 +36,9 @@ function QtyBadge({ qty, top }) {
 }
 
 // ── LineRow — baris item keranjang ─────────────────────────
-// Figma: LineRow (Tanpa Promo / PromoProduk). Promo Produk (harga coret, beli-N,
-// item gratis yang ditambah tamu sendiri) → penanda promo + harga asal dicoret + harga akhir.
+// Figma: LineRow (Tanpa Promo / PromoProduk). Promo Produk (beli-N, item gratis yang
+// ditambah tamu sendiri) → penanda promo + harga asal dicoret + harga akhir.
+// SPA → harga normal dicoret + harga SPA, tanpa penanda promo.
 function LineRow({ line, editable, noSep }) {
   const t = useTheme();
   const app = useApp();

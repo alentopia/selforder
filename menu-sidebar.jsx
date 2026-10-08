@@ -21,7 +21,7 @@ function SidebarMenuCard({ item, qty, onOpen }) {
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginTop: 7, gap: 6 }}>
           <div style={{ display: 'flex', alignItems: 'baseline', gap: 5, minWidth: 0, flexWrap: 'wrap' }}>
             <Money value={item.price} style={{ fontWeight: 800, fontSize: 14, color: t.ink }} />
-            {item.oldPrice && <Money value={item.oldPrice} strike style={{ fontWeight: 600, fontSize: 11, color: t.faint }} />}
+            {spaGap(item.id) > 0 && <Money value={item.oldPrice} strike style={{ fontWeight: 600, fontSize: 11, color: t.faint }} />}
           </div>
           {qty > 0 ?
           <div style={{ flexShrink: 0, minWidth: 30, height: 30, padding: '0 9px', borderRadius: 9, background: t.primary, color: t.onPrimary, display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 800, fontSize: 13.5 }}>{qty}</div> :

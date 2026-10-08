@@ -249,9 +249,12 @@ const MENU = [
     desc: 'Sepuluh tusuk sate ayam, bumbu kacang & kecap madu.', mods: [SPICE],
     photo: UP + 'photo-1529692236671-f1f6cf9683ba?w=320&h=320&fit=crop&auto=format&q=75' },
 
-  // oldPrice = harga normal sebelum SPA (Penyesuaian Harga Jual), BUKAN promo: harga SPA
-  // sudah dipotong sejak di menu, jadi tanpa nama/penanda promo di Keranjang dst.
-  // (Promo Produk baru terlihat potongannya di Keranjang.)
+  // oldPrice = harga normal (Umum) sebelum SPA (Penyesuaian Harga/Diskon), BUKAN promo: harga
+  // SPA sudah dipotong sejak di menu. Harga normal dicoret di Menu, Detail Menu, Keranjang,
+  // Konfirmasi, Pembayaran berhasil & struk, tanpa nama/penanda promo (keputusan 2026-10-08).
+  // · oldPrice ≤ price (SPA lebih mahal) → tanpa coret (spaGap = 0).
+  // · Barang kena Promo Produk → promo menang, SPA tidak berlaku: potongan dari harga normal
+  //   (contoh: Es Cendol Durian × promo bulk-cendol). (Promo Produk baru terlihat di Keranjang.)
   { id: 'nasgor', cat: 'nasi', name: 'Nasi Goreng Kampung', price: 35000, oldPrice: 50000,
     desc: 'Nasi goreng teri medan, telur mata sapi.', mods: [SPICE, ADDON],
     photo: UP + 'photo-1603133872878-684f208fb84b?w=320&h=320&fit=crop&auto=format&q=75' },
@@ -298,6 +301,9 @@ if (typeof window !== 'undefined' && window.__resources) {
 }
 
 const itemById = (id) => MENU.find((m) => m.id === id);
+// Selisih harga normal (Umum) − harga SPA per pcs. 0 bila bukan SPA, atau bila harga SPA
+// justru lebih mahal dari harga normal (keputusan 2026-10-08: SPA lebih mahal → tanpa coret).
+const spaGap = (id) => {const it = itemById(id);return it && it.oldPrice > it.price ? it.oldPrice - it.price : 0;};
 
 // ── Promo: taksonomi syarat (selaras dengan backend) ───────
 // req  = tipe syarat: 'transaksi' (min. belanja) · 'kuantitas' (beli item) · 'lainnya' (follow IG dll)
@@ -398,6 +404,27 @@ const PROMOS = [
     badge: 'Promo Item',
     tagline: 'Beli 2, diskon 20%',
     period: { dates: ['2025-06-01', '2025-06-30'], days: [1, 2, 3, 4, 5], hours: [['11.00', '14.00']] },
+  },
+  {
+    // Contoh SPA × Promo Produk (keputusan 2026-10-08): Es Cendol Durian ber-SPA (Rp40.000 →
+    // Rp28.000). Saat promo ini berlaku, promo menang dan SPA tidak berlaku — potongan
+    // dihitung dari harga normal: 2 × Rp40.000 − 40% = Rp48.000 (bukan dari 2 × Rp28.000).
+    id: 'bulk-cendol',
+    scope: 'item',
+    kind: 'bulk',
+    req: 'kuantitas',
+    reqText: 'Beli 2 Es Cendol Durian',
+    conds: ['Beli min. 2 porsi', 'Diskon 40% otomatis di keranjang'],
+    activation: 'claim',
+    title: 'Beli 2 Diskon 40%',
+    sub: 'Khusus Es Cendol Durian',
+    detail: 'Beli 2 porsi Es Cendol Durian atau lebih, langsung dapat potongan 40% dari harga normal untuk item ini. Diskon otomatis terhitung di keranjang — tanpa perlu klaim.',
+    requireItem: 'cendol',
+    minQty: 2,
+    value: 0.4,
+    badge: 'Promo Item',
+    tagline: 'Beli 2, diskon 40%',
+    period: { dates: ['2025-06-01', '2025-06-30'], days: 'all', hours: [['00.00', '23.59']] },
   },
 ];
 const promoById = (id) => PROMOS.find((p) => p.id === id);
@@ -502,6 +529,6 @@ const paymentById = (id) => PAYMENTS.find((p) => p.id === id);
 
 Object.assign(window, {
   rupiah, makeTheme, FONT_SETS, BRAND, QR_TABLE,
-  CATEGORIES, MENU, itemById,
+  CATEGORIES, MENU, itemById, spaGap,
   PROMOS, PROMO_REQ, promoById, promoReward, promoConds, promoSummary, promoTerms, promoPeriod, isVoucher, txPromoAmount, bestTxPromo, freeItemTargets, PAYMENTS, paymentById,
 });

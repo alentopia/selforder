@@ -300,7 +300,10 @@ function OrderSummary({ subtotal, tax, total, rounding, itemDiscLines, expanded,
                       <span style={{ fontWeight: 700, fontSize: 14, color: t.ink, flex: 1, lineHeight: 1.3 }}>{l.name}</span>
                       {l.free ?
                     <FreePrice line={l} size={13.5} /> :
-                    <Money value={app.linePrice(l).final} style={{ fontWeight: 700, fontSize: 13.5, color: t.ink, flexShrink: 0 }} />}
+                    <span style={{ display: 'flex', alignItems: 'baseline', gap: 6, flexShrink: 0 }}>
+                      {app.linePrice(l).orig !== app.linePrice(l).final && <Money value={app.linePrice(l).orig} strike style={{ fontSize: 12, fontWeight: 600, color: t.faint }} />}
+                      <Money value={app.linePrice(l).final} style={{ fontWeight: 700, fontSize: 13.5, color: t.ink }} />
+                    </span>}
                     </div>
                     {l.options && l.options.length > 0 && <OptLines options={l.options} size={12} style={{ marginTop: 2 }} />}
                     {l.notes && <div style={{ fontSize: 12, color: t.faint, marginTop: 2, fontStyle: 'italic' }}>"{l.notes}"</div>}
@@ -468,7 +471,10 @@ function OrderSummary({ subtotal, tax, total, rounding, itemDiscLines, expanded,
                 <span style={{ fontWeight: 600, fontSize: 14, color: t.ink, flex: 1, lineHeight: 1.3 }}>{l.name}</span>
                 {l.free ?
               <FreePrice line={l} size={13.5} /> :
-              <Money value={app.linePrice(l).final} style={{ fontWeight: 700, fontSize: 13.5, color: t.ink, flexShrink: 0 }} />}
+              <span style={{ display: 'flex', alignItems: 'baseline', gap: 6, flexShrink: 0 }}>
+                {app.linePrice(l).orig !== app.linePrice(l).final && <Money value={app.linePrice(l).orig} strike style={{ fontSize: 12, fontWeight: 600, color: t.faint }} />}
+                <Money value={app.linePrice(l).final} style={{ fontWeight: 700, fontSize: 13.5, color: t.ink }} />
+              </span>}
               </div>
               {l.options && l.options.length > 0 && <div style={{ fontSize: 12, color: t.muted, marginTop: 3 }}>{l.options.join(' · ')}</div>}
               {l.notes && <div style={{ fontSize: 12, color: t.faint, marginTop: 2, fontStyle: 'italic' }}>"{l.notes}"</div>}
@@ -1398,7 +1404,7 @@ function SuccessScreen({ params }) {
   // "Download struk" → struk sederhana di tab baru
   const downloadReceipt = () => {
     const row = (a, b) => '<tr><td>' + a + '</td><td style="text-align:right">' + b + '</td></tr>';
-    const items = lines.map((l) => {const pr = app.linePrice(l);return row(l.qty + '× ' + l.name + (l.options && l.options.length ? '<br><small>' + l.options.join(' · ') + '</small>' : ''), rupiah(pr.final));}).join('');
+    const items = lines.map((l) => {const pr = app.linePrice(l);return row(l.qty + '× ' + l.name + (l.options && l.options.length ? '<br><small>' + l.options.join(' · ') + '</small>' : ''), (pr.orig !== pr.final ? '<s style="color:#8a9a99">' + rupiah(pr.orig) + '</s> ' : '') + rupiah(pr.final));}).join('');
     const html = '<!doctype html><meta charset="utf-8"><title>Struk ' + txId + '</title><style>body{font:14px/1.45 Inter,system-ui,sans-serif;max-width:360px;margin:24px auto;padding:0 16px;color:#13201f}h1{font-size:18px;margin:0 0 4px}td{padding:4px 0;vertical-align:top}small{color:#5c6b6a}table{width:100%;border-collapse:collapse}hr{border:0;border-top:1px dashed #ccc;margin:12px 0}</style>' +
     '<h1>' + BRAND.name + '</h1><div>' + BRAND.location + ' · ' + typeLabel + (app.table ? ' · ' + app.table : '') + '</div><div>' + dateText + ' · ' + txId + '</div><hr><table>' + items + '</table><hr><table>' +
     row('Subtotal', rupiah(bill.subtotal)) + (bill.discount > 0 ? row('Promo Transaksi' + (txPromo ? ' (' + txPromo.title + ')' : ''), '−' + rupiah(bill.discount)) : '') +

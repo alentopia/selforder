@@ -134,7 +134,15 @@ function App() {
   // tamu sendiri, jadi tetap di keranjang dan kembali ke harga normal.
   const removeLine = (u) => setCart((c) => c.filter((l) => l.uid !== u));
 
-  const cartSubtotal = () => cart.filter((l) => !l.free).reduce((s, l) => s + l.unit * l.qty, 0);
+  // jumlah harga menu (harga SPA untuk barang ber-SPA)
+  const spaSubtotal = () => cart.filter((l) => !l.free).reduce((s, l) => s + l.unit * l.qty, 0);
+  // Promo Produk menang atas SPA (keputusan 2026-10-08): baris yang kena Promo Produk dihitung
+  // dari harga normal (Umum), harga SPA tidak berlaku. spaLift = kenaikan dari harga SPA ke normal.
+  const spaLift = () => {
+    const uids = new Set(itemDiscountLines().flatMap((d) => d.uids));
+    return cart.filter((l) => !l.free && uids.has(l.uid)).reduce((s, l) => s + spaGap(l.itemId) * l.qty, 0);
+  };
+  const cartSubtotal = () => spaSubtotal() + spaLift();
   // Subtotal SETELAH Promo Produk: item gratis Rp0, harga SPA sudah di harga menu,
   // diskon beli-N dipotong. Ini dasar syarat min. belanja & Diskon Transaksi.
   const productSubtotal = () => Math.max(0, cartSubtotal() - itemDiscount());
@@ -157,9 +165,10 @@ function App() {
       const lines = cart.filter((l) => !l.free && l.itemId === p.requireItem);
       const qty = lines.reduce((s, l) => s + l.qty, 0);
       if (qty < minQ) return null;
-      const base = lines.reduce((s, l) => s + l.unit * l.qty, 0);
+      // promo menang atas SPA: potongan dihitung dari harga normal (Umum)
+      const base = lines.reduce((s, l) => s + (l.unit + spaGap(l.itemId)) * l.qty, 0);
       const amount = Math.round(base * p.value);
-      return amount > 0 ? { id: p.id, title: p.title, item: (itemById(p.requireItem) || {}).name, pct: Math.round(p.value * 100), amount } : null;
+      return amount > 0 ? { id: p.id, title: p.title, item: (itemById(p.requireItem) || {}).name, uids: lines.map((l) => l.uid), pct: Math.round(p.value * 100), amount } : null;
     }).
     filter(Boolean);
     // item gratis (free-item): barang hadiah TIDAK disisipkan sistem — tamu menambahkannya
@@ -168,22 +177,26 @@ function App() {
     // modifier berbayar tetap ditagih. Dua pilihan hadiah ada → yang termahal (seri: yang duluan).
     // Syarat min. belanja dihitung dari subtotal setelah Promo Produk lain & tanpa porsi yang
     // digratiskan → promo berpemicu barang dihitung dulu, baru yang bersyarat min. belanja.
-    let base = cartSubtotal() - bulk.reduce((s, x) => s + x.amount, 0);
+    // (spaSubtotal, bukan cartSubtotal: cartSubtotal bergantung pada fungsi ini.) Baris ber-beli-N
+    // sudah memakai harga normal, jadi selisih SPA-nya ikut ditambahkan.
+    const bulkUids = new Set(bulk.flatMap((x) => x.uids));
+    let base = spaSubtotal() + cart.filter((l) => !l.free && bulkUids.has(l.uid)).reduce((s, l) => s + spaGap(l.itemId) * l.qty, 0) - bulk.reduce((s, x) => s + x.amount, 0);
     const free = PROMOS.
     filter((p) => p.kind === 'free-item').
     sort((a, b) => (a.min ? 1 : 0) - (b.min ? 1 : 0)).
     map((p) => {
       const ids = p.needsPick ? p.choices || [] : [p.fixedItem];
-      const priceOf = (l) => (itemById(l.itemId) || {}).price || 0;
+      // harga normal (Umum) — promo menang atas SPA
+      const priceOf = (l) => ((itemById(l.itemId) || {}).price || 0) + spaGap(l.itemId);
       const line = cart.
       filter((l) => ids.includes(l.itemId)).
       reduce((best, l) => !best || priceOf(l) > priceOf(best) ? l : best, null);
       if (!line) return null;
-      const amount = Math.min(priceOf(line), line.unit);
+      const amount = Math.min(priceOf(line), line.unit + spaGap(line.itemId));
       const ok = p.requireItem ? cart.some((l) => l.itemId === p.requireItem) : !p.min || base - amount >= p.min;
       if (!ok || amount <= 0) return null;
       base -= amount;
-      return { id: p.id, title: p.title, item: line.name, uid: line.uid, pct: 100, amount };
+      return { id: p.id, title: p.title, item: line.name, uid: line.uid, uids: [line.uid], pct: 100, amount };
     }).
     filter(Boolean);
     return [...bulk, ...free];
@@ -248,11 +261,17 @@ function App() {
   // harga per baris untuk tampilan: asal (dicoret) vs akhir + promo produk yang berlaku
   const linePrice = (line) => {
     const disc = itemDiscountLines();
+    // harga normal (Umum) baris = harga menu + selisih SPA (0 bila bukan SPA)
+    const normal = (line.unit + spaGap(line.itemId)) * line.qty;
+    // Promo Produk menang atas SPA: dicoret dari harga normal, SPA tidak berlaku
     const free = disc.find((d) => d.uid === line.uid);
-    if (free) {const orig = line.unit * line.qty;return { orig, final: orig - free.amount, promo: promoById(free.id) };}
+    if (free) return { orig: normal, final: normal - free.amount, promo: promoById(free.id) };
     const bulk = disc.find((d) => {const p = promoById(d.id);return p.kind === 'bulk' && p.requireItem === line.itemId;});
-    if (bulk) {const p = promoById(bulk.id);const orig = line.unit * line.qty;return { orig, final: orig - Math.round(orig * p.value), promo: p };}
-    return { orig: line.unit * line.qty, final: line.unit * line.qty, promo: null };
+    if (bulk) {const p = promoById(bulk.id);return { orig: normal, final: normal - Math.round(normal * p.value), promo: p };}
+    // SPA: harga menu sudah dipotong sejak di menu → harga normal tetap dicoret sampai
+    // Pembayaran berhasil & struk, tanpa penanda promo (SPA bukan promo). SPA lebih mahal
+    // dari harga normal → spaGap 0 → orig = final → tanpa coret.
+    return { orig: normal, final: line.unit * line.qty, promo: null };
   };
 
   // ── open bill ──

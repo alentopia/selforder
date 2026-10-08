@@ -1017,7 +1017,7 @@ function MenuCardList({ item, qty, onOpen, hidePromo }) {
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginTop: 8 }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
             <Money value={item.price} style={{ fontWeight: 700, fontSize: 15, color: t.ink }} />
-            {item.oldPrice && <Money value={item.oldPrice} strike style={{ fontWeight: 600, fontSize: 12, color: t.faint }} />}
+            {spaGap(item.id) > 0 && <Money value={item.oldPrice} strike style={{ fontWeight: 600, fontSize: 12, color: t.faint }} />}
           </div>
           {qty > 0 ?
           <div style={{ minWidth: 24, height: 24, padding: '0 7px', borderRadius: 999, background: t.primary, color: t.onPrimary, display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 800 }}>{qty}</div> :
@@ -1052,7 +1052,7 @@ function MenuCardGrid({ item, qty, onOpen }) {
         <div style={{ margin: '6px 0 0' }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
               <Money value={item.price} style={{ fontWeight: 800, fontSize: 15, color: t.ink }} />
-              {item.oldPrice && <Money value={item.oldPrice} strike style={{ fontWeight: 600, fontSize: 12.5, color: t.faint }} />}
+              {spaGap(item.id) > 0 && <Money value={item.oldPrice} strike style={{ fontWeight: 600, fontSize: 12.5, color: t.faint }} />}
             </div>
         </div>
       </div>
@@ -1352,6 +1352,12 @@ function ItemScreen({ params }) {
         <FoodImg label={item.name.toLowerCase()} h={210} radius={t.radius} src={item.photo} />
         <h2 style={{ margin: '16px 0 0', fontFamily: t.fontDisplay, fontStyle: t.displayItalic ? 'italic' : 'normal', fontWeight: t.displayWeight, fontSize: 26, color: t.ink, lineHeight: 1.1, overflowWrap: 'anywhere' }}>{item.name}</h2>
         <p style={{ color: t.muted, fontSize: 14, lineHeight: 1.55, margin: '8px 0 4px' }}>{item.desc}</p>
+        {/* harga dasar item (final-design PAGE-05: nama/deskripsi/harga), urutan sama dengan kartu menu.
+            SPA: harga normal dicoret (keputusan 2026-10-08); tombol "Tambah" tetap harga akhir. */}
+        <div style={{ display: 'flex', alignItems: 'baseline', gap: 6, margin: '2px 0 4px' }}>
+          <Money value={item.price} style={{ fontWeight: 800, fontSize: 17, color: t.ink }} />
+          {spaGap(item.id) > 0 && <Money value={item.oldPrice} strike style={{ fontWeight: 600, fontSize: 13, color: t.faint }} />}
+        </div>
 
         {/* isi tetap paket — tanpa kontrol & tanpa harga: tidak ada yang perlu diputuskan */}
         {(item.contents || []).length > 0 &&
