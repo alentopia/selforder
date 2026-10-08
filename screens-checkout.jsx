@@ -904,10 +904,12 @@ function ProcessingScreen({ params }) {
     const id = setInterval(() => setSecs((s) => Math.max(0, s - 1)), 1000);
     return () => clearInterval(id);
   }, []);
+  // Timer tetap berjalan di balik modal back; kalau habis, modal kedaluwarsa yang tampil.
+  useEffectK(() => {if (isQr && secs === 0 && !paid) app.closeConfirm();}, [secs]);
 
   return (
     <div style={{ height: '100%', display: 'flex', flexDirection: 'column', background: t.bg }}>
-      <TopBar title={isQr ? 'Pembayaran QRIS' : 'Memproses'} />
+      <TopBar title={isQr ? 'Pembayaran QRIS' : 'Memproses'} onBack={isQr ? () => askLeavePayment(app, 'Kode QRIS ini') : undefined} />
 
       {isQr ?
       <>
@@ -1001,7 +1003,7 @@ function ProcessingScreen({ params }) {
         </>
       }
       {/* Figma "Case: QRIS Kedaluwarsa" (860:572): timer habis & belum dibayar → modal.
-          Layar ini tanpa tombol back, jadi modal inilah satu-satunya jalan kembali. */}
+          Modal "Yakin mau kembali?" yang sedang terbuka ditutup dulu (efek di atas). */}
       {isQr && secs === 0 && !paid && <QrisExpiredDialog onBack={app.back} />}
     </div>);
 
@@ -1026,6 +1028,17 @@ function QrPlaceholder({ color, bg, size = 180 }) {
     </svg>);
 
 }
+
+// Figma "Case: Tombol Back di Layar Bayar" (5539:2802): back di Pembayaran QRIS & Status Pesanan
+// (Bayar di Kasir) tidak langsung pindah layar — ConfirmDialog dulu. Lanjut Bayar / ketuk di luar
+// kartu menutup modal. Ya, Kembali membatalkan kode lama (Bayar lagi → kode baru) lalu kembali ke
+// Konfirmasi Pesanan; di Open Bill ke Ringkasan Pembayaran (layar sebelumnya di stack).
+const askLeavePayment = (app, codeLabel) => app.askConfirm({
+  title: 'Yakin mau kembali?',
+  message: codeLabel + ' akan dibatalkan. Pesananmu tetap tersimpan, jadi kamu bisa pilih metode bayar lagi.',
+  cancelLabel: 'Lanjut Bayar', confirmLabel: 'Ya, Kembali',
+  onConfirm: () => {app.renewRef();app.back();}
+});
 
 // ── QrisExpiredDialog — Figma ExpiredDialog (4798:2701) ──
 // Tidak bisa ditutup dengan ketuk di luar kartu; satu aksi: kembali ke Konfirmasi Pesanan

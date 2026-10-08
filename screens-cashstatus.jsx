@@ -98,8 +98,8 @@ function CashStatusScreen({ params }) {
 
   return (
     <div style={{ height: '100%', display: 'flex', flexDirection: 'column', background: t.bg }}>
-      {/* layar setelah memilih bayar tidak punya tombol back (Figma TopBar Show Back=false) */}
-      <TopBar title="Status Pesanan" />
+      {/* back hanya selama Menunggu Pembayaran → modal "Yakin mau kembali?" (Figma 5539:2802) */}
+      <TopBar title="Status Pesanan" onBack={phase === 0 ? () => askLeavePayment(app, 'Kode pembayaran ' + ref) : undefined} />
 
       <div style={{ flex: 1, overflow: 'auto', WebkitOverflowScrolling: 'touch', padding: '8px 18px 120px' }}>
 

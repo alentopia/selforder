@@ -317,6 +317,7 @@ function App() {
     phone, loggedIn, login, logout,
     phoneHint: phone ? phone.slice(0, 3) + ' ' + phone.slice(3, 7) + ' ' + phone.slice(7) : '••• •••• ••••',
     orderRef, refCode: 'REF-' + String(orderRef).padStart(6, '0'), cart, applied, unlocked, orders, payment,
+    renewRef: () => setOrderRef(1000 + Math.floor(Math.random() * 9000)), // kode lama batal setelah back dari layar bayar
     confirm, askConfirm: (opts) => setConfirm(opts), closeConfirm: () => setConfirm(null),
     go, back, openSheet, closeSheet, openItem, reset, startSession,
     setPhone: setPhoneNum, addToCart, setLineQty, setLineType, applyOrderTypeAll, removeLine,
