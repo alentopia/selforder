@@ -1370,8 +1370,9 @@ function OrderItemRow({ line, border }) {
             </span>
           </div>
           <PromoMark promo={price.promo} />
+          {/* modifier satu per baris, sama dengan LineOptions di Keranjang (screens-cart.jsx) */}
           {isPaketLine(line) ? <PaketDetail line={line} /> :
-          line.options && line.options.length > 0 && <div style={{ fontSize: 12, color: t.muted }}>{line.options.join(' · ')}</div>}
+          line.options && line.options.length > 0 && <div style={{ fontSize: 12, color: t.muted, lineHeight: 1.25 }}>{line.options.map((o, i) => <div key={i}>{o}</div>)}</div>}
           {line.notes && <div style={{ fontSize: 12, color: t.faint }}>{line.notes}</div>}
         </div>
       </div>
@@ -1437,6 +1438,9 @@ function SuccessScreen({ params }) {
           <div style={{ position: 'relative', width: 116, height: 116, flexShrink: 0 }}>
             <div className="om-success-ring" style={{ position: 'absolute', left: 14, top: 14, width: 88, height: 88, boxSizing: 'border-box', borderRadius: 999, border: '1.5px solid rgba(255,255,255,0.38)' }} />
             <div className="om-success-ring outer" style={{ position: 'absolute', left: 6, top: 6, width: 104, height: 104, boxSizing: 'border-box', borderRadius: 999, border: '2px solid rgba(255,255,255,0.25)' }} />
+            {/* riak berulang: seukuran lingkaran, di belakangnya, lalu membesar keluar (CSS om-success-ripple).
+                Alpha 0,22 = kontras riak ≈ 0,55× ring statis, sama dengan rasio di video referensi. */}
+            <div className="om-success-ripple" aria-hidden="true" style={{ position: 'absolute', left: 21, top: 21, width: 74, height: 74, boxSizing: 'border-box', borderRadius: 999, border: '2px solid rgba(255,255,255,0.22)', pointerEvents: 'none' }} />
             <div className="om-success-circle" style={{ position: 'absolute', left: 21, top: 21, width: 74, height: 74, borderRadius: 999, background: '#fff', boxShadow: '0 10px 26px rgba(5,48,43,0.34)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
               {/* geometri = aset Figma "check" (543:747); di-inline supaya garisnya bisa digambar */}
               <svg width={40} height={40} viewBox="0 0 40 40" fill="none" aria-hidden="true" style={{ display: 'block' }}>

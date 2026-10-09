@@ -36,11 +36,18 @@
   .om-success-check  { stroke-dasharray: 1; stroke-dashoffset: 1; animation: om-success-draw .32s cubic-bezier(0.23, 1, 0.32, 1) .22s forwards; }
   .om-success-ring   { animation: om-success-in .5s cubic-bezier(0.23, 1, 0.32, 1) .12s both; }
   .om-success-ring.outer { animation-delay: .18s; }
+  /* riak dari tepi lingkaran (video referensi 2026-10-06): satu ring membesar 1,05× → 1,75× lingkaran
+     sambil memudar, linear (hasil ukur video), tiap 1,1 dtk. Mulai setelah animasi masuk selesai,
+     lalu terus-menerus selama halaman terbuka (permintaan user 2026-10-08; sebelumnya 4 kali).
+     Reduced motion tetap menghilangkannya (lihat di bawah). */
+  @keyframes om-success-ripple { 0% { opacity: 1; transform: scale(1.05); } 91%, 100% { opacity: 0; transform: scale(1.75); } }
+  .om-success-ripple { opacity: 0; animation: om-success-ripple 1.1s linear .7s infinite; }
   @media (prefers-reduced-motion: reduce) { * { animation-duration: .001ms !important; } }
-  /* reduced motion: centang & ring cukup memudar, tanpa gerak skala */
+  /* reduced motion: centang & ring cukup memudar, tanpa gerak skala; riak (murni gerak) dihilangkan */
   @media (prefers-reduced-motion: reduce) {
     .om-success-circle, .om-success-ring { animation: om-fade .2s ease both !important; }
     .om-success-check { animation: none !important; stroke-dashoffset: 0; }
+    .om-success-ripple { animation: none !important; }
   }
   /* QRIS kedaluwarsa — illustration/qris-expired, timeline Figma 4,17 dtk (loop):
      lingkaran → kartu QR → lencana jam muncul berurutan, dua kilau berdenyut */
