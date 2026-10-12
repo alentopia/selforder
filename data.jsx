@@ -427,6 +427,9 @@ const PROMOS = [
     period: { dates: ['2025-06-01', '2025-06-30'], days: 'all', hours: [['00.00', '23.59']] },
   },
 ];
+// Urutan promo = nama promo menurut ASCII (permintaan user 2026-10-12): angka < huruf besar <
+// huruf kecil, bukan urutan abjad lokal. Berlaku di rail (3 teratas), katalog & daftar voucher.
+PROMOS.sort((a, b) => a.title < b.title ? -1 : a.title > b.title ? 1 : 0);
 const promoById = (id) => PROMOS.find((p) => p.id === id);
 // voucher = promo yang mengurangi diskon transaksi (potongan %/nominal), BUKAN item gratis.
 const isVoucher = (p) => p.scope === 'transaction' && (p.kind === 'percent' || p.kind === 'fixed');
