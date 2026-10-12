@@ -193,9 +193,9 @@ function OffersScreen() {
 // ── Voucher transaksi — kupon horizontal + halaman + sheet ──
 function VoucherTicket({ p, onClick, full }) {
   const t = useTheme();
-  const r = promoReward(p);
-  const headline = r.free ? 'Gratis ' + r.label : r.value + ' off';
-  const sub = (p.min != null ? 'Min. belanja ' + rupiah(p.min) : promoConds(p)[0]) || 'Tanpa syarat';
+  const { headline, sub } = promoTicket(p);
+  // 1 baris; panjang teks sudah dibatasi promoTicket (20/26 karakter + "…")
+  const clip = { whiteSpace: 'nowrap' };
   return (
     <button onClick={onClick} style={{
       scrollSnapAlign: 'start', flexShrink: 0, width: full ? '100%' : 'auto', textAlign: 'left', cursor: 'pointer',
@@ -203,25 +203,26 @@ function VoucherTicket({ p, onClick, full }) {
       borderRadius: 14, padding: '7px 15px 7px 8px', boxShadow: t.shadow, fontFamily: t.fontBody, WebkitTapHighlightColor: 'transparent'
     }}>
       <div style={{ flexShrink: 0, width: 30, height: 30, borderRadius: 999, background: t.primarySoft, color: t.primary, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-        <Icon name={p.kind === 'free-item' ? 'gift' : 'tag'} size={16} color={t.primary} />
+        <Icon name="tag" size={16} color={t.primary} />
       </div>
       <div style={{ minWidth: 0 }}>
-        <div style={{ fontSize: 13, fontWeight: 800, color: t.ink, whiteSpace: 'nowrap' }}>{headline}</div>
-        <div style={{ fontSize: 10.5, color: t.muted, marginTop: 1, whiteSpace: 'nowrap' }}>{sub}</div>
+        <div style={{ fontSize: 13, fontWeight: 800, color: t.ink, ...clip }}>{headline}</div>
+        {sub && <div style={{ fontSize: 10.5, color: t.muted, marginTop: 1, ...clip }}>{sub}</div>}
       </div>
     </button>);
 
 }
 
-// Figma: PromoRail — tiket voucher transaksi saja; tap tiket → Detail Voucher (lihat saja).
+// Figma: PromoRail (case 5786:3849) — maks. 3 promo teratas katalog (Diskon Transaksi &
+// Promo Produk); sisanya lewat Lihat Semua. Tap tiket → Detail Promo (lihat saja).
+const RAIL_MAX = 3;
 function VoucherRail() {
   const t = useTheme();
   const app = useApp();
-  const vouchers = PROMOS.filter(isVoucher);
-  if (!vouchers.length) return null;
+  if (!PROMOS.length) return null;
   return (
     <div style={{ display: 'flex', gap: 10, overflowX: 'auto', padding: '0 18px 8px', scrollSnapType: 'x mandatory', scrollbarWidth: 'none', scrollPaddingLeft: 18, alignItems: 'flex-start' }}>
-      {vouchers.map((p) => <VoucherTicket key={p.id} p={p} onClick={() => app.openSheet('voucher', { id: p.id })} />)}
+      {PROMOS.slice(0, RAIL_MAX).map((p) => <VoucherTicket key={p.id} p={p} onClick={() => app.openSheet('voucher', { id: p.id })} />)}
       {app.offerSeeAll === 'card' &&
       <button onClick={() => app.go('vouchers')} aria-label="Lihat semua promo" style={{ scrollSnapAlign: 'start', flexShrink: 0, alignSelf: 'stretch', width: 46, border: '1px dashed ' + t.lineStrong, background: 'transparent', borderRadius: t.radiusSm, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', color: t.primary, WebkitTapHighlightColor: 'transparent' }}>
           <Icon name="chevron" size={18} color={t.primary} />

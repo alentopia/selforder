@@ -485,6 +485,17 @@ function promoSummary(p) {
   return 'Diskon ' + amount + ' pada ' + items + '.' + (maxQty ? ' Maksimum ' + maxQty + ' barang terdiskon dalam satuan pcs.' : '');
 }
 
+// ── promoTicket — isi tiket rail "Promo Hari Ini" (Figma case 5786:3849) ──
+// headline = nama promo, sub = Deskripsi promo (teks merchant di Detail Promo, p.detail;
+// kosong → baris bawah tidak tampil). Syarat & periode hanya di Detail Promo.
+// Panjang: 1 baris; nama maks. 20 karakter, deskripsi maks. 26 —
+// lebih dari itu dipotong jadi N karakter pertama + "…" (tanda baca di ujung dibuang).
+const TICKET_MAX = { headline: 20, sub: 26 };
+const cutText = (s, n) => (s.length > n ? s.slice(0, n).trimEnd().replace(/[.,;:!]+$/, '') + '…' : s);
+function promoTicket(p) {
+  return { headline: cutText(p.title, TICKET_MAX.headline), sub: p.detail ? cutText(p.detail, TICKET_MAX.sub) : '' };
+}
+
 // ── promoTerms — syarat versi kalimat lengkap (blok "Syarat" di Detail) ──
 // Beda dari promoConds (chip singkat di kartu keranjang). p.terms menimpa hasil turunan.
 function promoTerms(p) {
@@ -530,5 +541,5 @@ const paymentById = (id) => PAYMENTS.find((p) => p.id === id);
 Object.assign(window, {
   rupiah, makeTheme, FONT_SETS, BRAND, QR_TABLE,
   CATEGORIES, MENU, itemById, spaGap,
-  PROMOS, PROMO_REQ, promoById, promoReward, promoConds, promoSummary, promoTerms, promoPeriod, isVoucher, txPromoAmount, bestTxPromo, freeItemTargets, PAYMENTS, paymentById,
+  PROMOS, PROMO_REQ, promoById, promoReward, promoConds, promoSummary, promoTicket, promoTerms, promoPeriod, isVoucher, txPromoAmount, bestTxPromo, freeItemTargets, PAYMENTS, paymentById,
 });
