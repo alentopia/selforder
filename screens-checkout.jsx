@@ -1415,15 +1415,14 @@ function SuccessScreen({ params }) {
       {extra}
     </div>;
 
-  // "Download struk" → struk sederhana di tab baru
+  // "Download struk" → placeholder di tab baru. Isi & tata letak struk mengikuti Desain Struk
+  // outlet di APOS (UC-22 BR-02/BR-06); formatnya untuk paket bersarang dll. belum diketahui,
+  // jadi prototipe tidak merinci struk sendiri.
   const downloadReceipt = () => {
-    const row = (a, b) => '<tr><td>' + a + '</td><td style="text-align:right">' + b + '</td></tr>';
-    const items = lines.map((l) => {const pr = app.linePrice(l);return row(l.qty + '× ' + l.name + (l.options && l.options.length ? '<br><small>' + l.options.join(' · ') + '</small>' : ''), (pr.orig !== pr.final ? '<s style="color:#8a9a99">' + rupiah(pr.orig) + '</s> ' : '') + rupiah(pr.final));}).join('');
-    const html = '<!doctype html><meta charset="utf-8"><title>Struk ' + txId + '</title><style>body{font:14px/1.45 Inter,system-ui,sans-serif;max-width:360px;margin:24px auto;padding:0 16px;color:#13201f}h1{font-size:18px;margin:0 0 4px}td{padding:4px 0;vertical-align:top}small{color:#5c6b6a}table{width:100%;border-collapse:collapse}hr{border:0;border-top:1px dashed #ccc;margin:12px 0}</style>' +
-    '<h1>' + BRAND.name + '</h1><div>' + BRAND.location + ' · ' + typeLabel + (app.table ? ' · ' + app.table : '') + '</div><div>' + dateText + ' · ' + txId + '</div><hr><table>' + items + '</table><hr><table>' +
-    row('Subtotal', rupiah(bill.subtotal)) + (bill.discount > 0 ? row('Promo Transaksi' + (txPromo ? ' (' + txPromo.title + ')' : ''), '−' + rupiah(bill.discount)) : '') +
-    (bill.service > 0 ? row('Service', rupiah(bill.service)) : '') + row('Pajak', rupiah(bill.tax)) +
-    (bill.rounding ? row('Pembulatan', rupiah(bill.rounding)) : '') + '<tr><td><b>Total</b></td><td style="text-align:right"><b>' + rupiah(total) + '</b></td></tr></table><hr><div>Metode: ' + pay.label + '</div><p style="color:#5c6b6a">Powered by Accurate POS</p>';
+    const html = '<!doctype html><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Struk ' + txId + '</title>' +
+    '<style>body{margin:0;min-height:100vh;display:flex;align-items:flex-start;justify-content:center;background:#eef2f2;font-family:ui-monospace,Menlo,Consolas,monospace;color:#13201f}' +
+    '.kertas{box-sizing:border-box;width:min(320px,calc(100% - 32px));margin:32px 16px;padding:48px 20px;background:#fff;border-top:1px dashed #9baaa9;border-bottom:1px dashed #9baaa9;box-shadow:0 1px 3px rgba(19,32,31,.08);text-align:center;font-size:15px;font-weight:700;line-height:1.5;letter-spacing:.04em}</style>' +
+    '<div class="kertas">SETTINGAN STRUK<br>MENGIKUTI APOS</div>';
     window.open(URL.createObjectURL(new Blob([html], { type: 'text/html' })), '_blank');
   };
 
