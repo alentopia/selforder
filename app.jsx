@@ -69,7 +69,6 @@ function App() {
   const [payment, setPay] = useS(null);
   const [statusWhite, setStatusWhite] = useS(false);
   const [orderType, setOrderType] = useS('dinein');
-  const [orderNote, setOrderNote] = useS('');
   const [orderRef, setOrderRef] = useS(() => 1000 + Math.floor(Math.random() * 9000));
   const uid = useR(1);
   const orderNum = useR(1);
@@ -98,7 +97,7 @@ function App() {
   const reset = () => {
     setCart([]);setApplied([]);setOrders([]);setPay(null);
     setUnlocked([]);
-    setMode(null);setTable(null);setPhoneNum('');setLoggedIn(false);setOrderType('dinein');setOrderNote('');
+    setMode(null);setTable(null);setPhoneNum('');setLoggedIn(false);setOrderType('dinein');
     setOrderRef(1000 + Math.floor(Math.random() * 9000));
     orderNum.current = 1;
     setStack([{ name: 'entry', params: {} }]);
@@ -106,7 +105,7 @@ function App() {
 
   // All modes go straight to menu — phone/OTP collected at payment time
   const startSession = (m, t) => {
-    setCart([]);setApplied([]);setOrders([]);setPay(null);setPhoneNum('');setLoggedIn(false);setOrderNote('');
+    setCart([]);setApplied([]);setOrders([]);setPay(null);setPhoneNum('');setLoggedIn(false);
     setUnlocked([]);
     setOrderType('dinein');
     setMode(m);setTable(t || null);
@@ -313,7 +312,7 @@ function App() {
   const logout = () => setLoggedIn(false);
 
   const store = {
-    mode, table, menuLayout: tw.menuLayout, menuShell: tw.menuShell, menuHeader: tw.menuHeader, billStrip: tw.billStrip, billStripLayout: tw.billStripLayout, voucherStyle: tw.voucherStyle, offerSeeAll: tw.offerSeeAll, authMethod: tw.authMethod, pickerStyle: tw.pickerStyle, itemDetail: tw.itemDetail, checkoutSummary: tw.checkoutSummary, shareStyle: tw.shareStyle, memberBlock: tw.memberBlock, orderType, setOrderType, orderNote, setOrderNote,
+    mode, table, menuLayout: tw.menuLayout, menuShell: tw.menuShell, menuHeader: tw.menuHeader, billStrip: tw.billStrip, billStripLayout: tw.billStripLayout, voucherStyle: tw.voucherStyle, offerSeeAll: tw.offerSeeAll, authMethod: tw.authMethod, pickerStyle: tw.pickerStyle, itemDetail: tw.itemDetail, checkoutSummary: tw.checkoutSummary, shareStyle: tw.shareStyle, memberBlock: tw.memberBlock, orderType, setOrderType,
     phone, loggedIn, login, logout,
     phoneHint: phone ? phone.slice(0, 3) + ' ' + phone.slice(3, 7) + ' ' + phone.slice(7) : '••• •••• ••••',
     orderRef, refCode: 'REF-' + String(orderRef).padStart(6, '0'), cart, applied, unlocked, orders, payment,

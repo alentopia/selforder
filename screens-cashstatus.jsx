@@ -160,13 +160,6 @@ function CashStatusScreen({ params }) {
               </div>
             )}
           </div>
-
-          {/* catatan — hanya bila ada */}
-          {app.orderNote &&
-          <div style={{ marginTop: 11, paddingTop: 12, borderTop: '1px solid ' + t.line, display: 'flex', alignItems: 'flex-start', gap: 7 }}>
-            <Icon name="edit" size={14} color={t.faint} style={{ flexShrink: 0, marginTop: 1 }} />
-            <span style={{ fontSize: 12.5, color: t.muted, lineHeight: 1.45 }}>{app.orderNote}</span>
-          </div>}
         </div>
 
         {/* ── Ringkasan pesanan ── */}

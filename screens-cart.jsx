@@ -231,32 +231,11 @@ function CartScreen() {
           return card(lines);
         })()}
 
-        {/* Catatan untuk pesanan — field ringkas satu baris */}
-        <div style={{ marginTop: 18 }}>
-          <div style={{ display: 'flex', alignItems: 'baseline', gap: 7, marginBottom: 8 }}>
-            <span style={{ fontWeight: 700, color: t.ink, fontSize: 16 }}>Catatan pesanan</span>
-            <span style={{ fontSize: 12, color: t.faint, fontWeight: 600 }}>Opsional</span>
-          </div>
-          <div style={{
-            display: 'flex', alignItems: 'center', gap: 10,
-            border: '1px solid ' + t.line, borderRadius: t.radiusSm,
-            padding: '0 12px', background: t.surface2, height: 44 }}>
-            <Icon name="edit" size={17} color={t.faint} style={{ flexShrink: 0 }} />
-            <input
-              value={app.orderNote}
-              onChange={(e) => app.setOrderNote(e.target.value)}
-              placeholder="cth. minta sendok lebih…"
-              style={{
-                flex: 1, minWidth: 0, border: 'none', background: 'transparent',
-                fontFamily: t.fontBody, fontSize: 13.5, color: t.ink, outline: 'none' }} />
-          </div>
-        </div>
-
         {/* Promo otomatis (MVP): tidak ada CTA "Voucher & diskon" — Promo Produk ditandai
             di baris item, Diskon Transaksi di baris ringkasan. Figma: Case Diskon Transaksi Otomatis. */}
 
         {/* 3 · Ringkasan harga — promo sudah otomatis diterapkan */}
-        <div style={{ marginTop: 16, background: t.surface, borderRadius: t.radius, border: '1px solid ' + t.line, padding: '14px 16px', boxShadow: t.shadow }}>
+        <div style={{ marginTop: 18, background: t.surface, borderRadius: t.radius, border: '1px solid ' + t.line, padding: '14px 16px', boxShadow: t.shadow }}>
           {isOpenBill ?
           <>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline' }}>
