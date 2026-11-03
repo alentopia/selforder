@@ -143,23 +143,24 @@ function CashStatusScreen({ params }) {
         </div>
 
         {/* ── Info pelanggan + tipe pesanan ── */}
-        <div style={{ ...cardStyle, marginTop: 14, padding: '13px 16px' }}>
-          {/* tipe pesanan — adaptif: 1 baris kalau seragam, 2 baris kalau campur (meja hanya utk dine-in) */}
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 9 }}>
-            {typeRows.map((r) =>
-            <div key={r.type} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 10 }}>
-                <span style={{ display: 'inline-flex', alignItems: 'center', gap: 7, fontSize: 13.5, fontWeight: 700, color: t.ink, minWidth: 0 }}>
+        <div style={{ ...cardStyle, marginTop: 14, padding: '13px 16px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 10 }}>
+          {/* tipe pesanan — selalu 1 baris; campuran = "Dine In & Take Away" (Figma 6644:3206).
+              Pill meja tetap tampil karena QR dipindai dari meja itu. */}
+          <span style={{ display: 'inline-flex', alignItems: 'center', flexWrap: 'wrap', gap: 8, minWidth: 0 }}>
+            {typeRows.map((r, i) =>
+            <React.Fragment key={r.type}>
+                {i > 0 && <span style={{ fontSize: 13.5, fontWeight: 500, color: t.ink }}>&amp;</span>}
+                <span style={{ display: 'inline-flex', alignItems: 'center', gap: mixedType && r.type === 'takeaway' ? 5 : 7, fontSize: 13.5, fontWeight: 700, color: t.ink }}>
                   <Icon name={r.type === 'takeaway' ? 'takeaway' : 'dineIn'} size={16} color={t.primary} style={{ flexShrink: 0 }} />
                   {r.label}
-                  {mixedType && <span style={{ fontSize: 12, color: t.faint, fontWeight: 600 }}>&middot; {r.n} item</span>}
                 </span>
-                {r.table && app.table &&
-                <span style={{ display: 'inline-flex', alignItems: 'center', gap: 5, background: t.primarySoft, color: t.primary, borderRadius: 999, padding: '5px 11px', fontSize: 12.5, fontWeight: 800, flexShrink: 0 }}>
-                  <Icon name="table" size={17} color={t.primary} /> {String(app.table).replace(/^Meja\s*/i, 'Meja ')}
-                </span>}
-              </div>
+              </React.Fragment>
             )}
-          </div>
+          </span>
+          {typeRows.some((r) => r.table) && app.table &&
+          <span style={{ display: 'inline-flex', alignItems: 'center', gap: 5, background: t.primarySoft, color: t.primary, borderRadius: 999, padding: '5px 11px', fontSize: 12.5, fontWeight: 800, flexShrink: 0 }}>
+            <Icon name="table" size={17} color={t.primary} /> {String(app.table).replace(/^Meja\s*/i, 'Meja ')}
+          </span>}
         </div>
 
         {/* ── Ringkasan pesanan ── */}
@@ -168,7 +169,8 @@ function CashStatusScreen({ params }) {
             <span style={{ fontSize: 14, fontWeight: 700, color: t.ink }}>Pesanan ({qtyTotal})</span>
           </div>
           <div style={{ padding: '0 16px' }}>
-            {lines.map((l, i) => (
+            {(() => {
+              const lineRow = (l, i) =>
               <div key={l.uid} style={{ display: 'flex', gap: 11, alignItems: 'flex-start', padding: '12px 0', borderTop: i === 0 ? 'none' : '1px solid ' + t.line }}>
                 <span style={{ minWidth: 24, height: 24, borderRadius: 7, background: l.free ? t.primarySoft : t.surface2, color: l.free ? t.primary : t.muted, display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 800, fontSize: 12, marginTop: 1, flexShrink: 0 }}>{l.qty}</span>
                 <div style={{ flex: 1, minWidth: 0 }}>
@@ -185,14 +187,22 @@ function CashStatusScreen({ params }) {
                   </div>
                   {isPaketLine(l) ? <div style={{ marginTop: 3 }}><PaketDetail line={l} /></div> : l.options && l.options.length > 0 && <div style={{ fontSize: 12, color: t.muted, marginTop: 3 }}>{l.options.join(' · ')}</div>}
                   {l.notes && <div style={{ fontSize: 12, color: t.faint, marginTop: 2 }}>{l.notes}</div>}
-                  {mixedType &&
-                  <div style={{ marginTop: 4, display: 'inline-flex', alignItems: 'center', gap: 4, fontSize: 11, fontWeight: 700, color: t.muted }}>
-                    <Icon name={l.type === 'takeaway' ? 'takeaway' : 'dineIn'} size={12} color={t.muted} stroke={1.8} />
-                    {l.type === 'takeaway' ? 'Take Away' : 'Dine In'}
-                  </div>}
                 </div>
-              </div>
-            ))}
+              </div>;
+              if (!mixedType) return lines.map(lineRow);
+              // campuran: dikelompokkan per tipe dengan OrderGroupLabel (Figma 6644:3272), Dine In
+              // selalu di atas (UC-05c BR-15/BR-16), garis pemisah di atas grup Take Away.
+              return typeRows.map((r, gi) =>
+              <div key={r.type} style={{ borderTop: gi === 0 ? 'none' : '1px solid ' + t.line }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 6, padding: '14px 0 2px' }}>
+                    <Icon name={r.type === 'takeaway' ? 'takeaway' : 'dineIn'} size={14} color={t.primary} style={{ flexShrink: 0 }} />
+                    <span style={{ fontSize: 12.5, fontWeight: 600, color: t.ink }}>{r.label}</span>
+                    <span style={{ fontSize: 11.5, color: t.faint, whiteSpace: 'pre' }}>{'·  ' + r.n + ' item'}</span>
+                  </div>
+                  {lines.filter((l) => (l.type === 'takeaway' ? 'takeaway' : 'dinein') === r.type).map(lineRow)}
+                </div>
+              );
+            })()}
           </div>
           <div style={{ display: 'flex', justifyContent: 'space-between', padding: '12px 16px', borderTop: '1px solid ' + t.line, background: t.surface2 }}>
             <span style={{ fontSize: 13, color: t.muted }}>Subtotal</span>
