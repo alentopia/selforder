@@ -84,6 +84,11 @@ function App() {
     setStack((s) => [...s, { name, params }]);
   };
   const back = () => {setSheet(null);setStack((s) => s.length > 1 ? s.slice(0, -1) : s);};
+  // Setelah Tambah/Simpan di Detail Menu: kalau dibuka dari Search, Search ikut ditutup → kembali ke katalog.
+  const backAfterAdd = () => {setSheet(null);setStack((s) => {
+    const n = s.length > 2 && s[s.length - 2].name === 'search' ? 2 : 1;
+    return s.length > n ? s.slice(0, -n) : s;
+  });};
   const openSheet = (name, params = {}) => setSheet({ name, params });
   const closeSheet = () => setSheet(null);
 
@@ -318,7 +323,7 @@ function App() {
     orderRef, refCode: 'REF-' + String(orderRef).padStart(6, '0'), cart, applied, unlocked, orders, payment,
     renewRef: () => setOrderRef(1000 + Math.floor(Math.random() * 9000)), // kode lama batal setelah back dari layar bayar
     confirm, askConfirm: (opts) => setConfirm(opts), closeConfirm: () => setConfirm(null),
-    go, back, openSheet, closeSheet, openItem, reset, startSession,
+    go, back, backAfterAdd, openSheet, closeSheet, openItem, reset, startSession,
     setPhone: setPhoneNum, addToCart, setLineQty, setLineType, applyOrderTypeAll, removeLine,
     cartSubtotal, productSubtotal, linePrice, promoDiscount, itemDiscount, itemDiscountLines, taxAmount, orderTotal, computeBill, serviceRate: SERVICE_RATE, taxInclusive, roundValue, roundTo: ROUND_TO, TAX_RATE, removePromo, unlockPromo,
     submitOrder, grandTotal, ordersNet, ordersSubtotal, settleBill, cartNet: () => { const b = computeBill(); return Math.max(0, b.paidSubtotal - b.itemDisc); }, setPayment: setPay,

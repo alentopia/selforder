@@ -1295,7 +1295,7 @@ function ItemScreen({ params }) {
     // ditandai lewat `contents` supaya bisa dirender sebagai PaketDetail.
     app.addToCart({ itemId: item.id, name: item.name, unit, qty, options: [...contentLabels, ...optLabels], contents: contentLabels, slots, notes });
     // Promo terkait item (mis. item gratis) dihitung otomatis di keranjang dari barang yang ditambah tamu.
-    app.back();
+    app.backAfterAdd();
   };
 
   // ── tampilan — Figma: Item Detail (529:361) & Burger Combo Deluxe (4461:3140) ──
