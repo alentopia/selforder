@@ -401,6 +401,19 @@ function OrderSummary({ subtotal, tax, total, rounding, itemDiscLines, expanded,
 
   // ===== FIGMA / FLAT — OrderSummaryFlat (radius 18, shadow, no border) =====
   if (variant === 'flat') {
+    // Pesanan campuran (Figma 995:416): item dikelompokkan per tipe dengan OrderGroupLabel
+    // (ikon + "Dine In · n item"), Dine In selalu di atas (UC-05c BR-15/BR-16), sama seperti
+    // Keranjang & Status Pesanan. Urutan item ber-Promo Produk duluan berlaku di dalam grup.
+    // Subtotal/Pajak/Total tetap gabungan.
+    const typeOf = (l) => l.type === 'takeaway' ? 'takeaway' : 'dinein';
+    const flatOrdered = mixedType ? ['dinein', 'takeaway'].flatMap((tp) => ordered.filter((l) => typeOf(l) === tp)) : ordered;
+    const flatItems = expanded ? flatOrdered : flatOrdered.slice(0, 1);
+    const groupLabel = (tp, first) =>
+    <div key={'grp-' + tp} style={{ display: 'flex', alignItems: 'center', gap: 6, marginTop: first ? 0 : -11, marginBottom: 11 }}>
+        <Icon name={tp === 'takeaway' ? 'takeaway' : 'dineIn'} size={14} color={t.primary} style={{ flexShrink: 0 }} />
+        <span style={{ fontSize: 12.5, fontWeight: 600, color: t.ink }}>{tp === 'takeaway' ? 'Take Away' : 'Dine In'}</span>
+        <span style={{ fontSize: 11.5, color: t.faint, whiteSpace: 'pre' }}>{'·  ' + app.cart.filter((l) => typeOf(l) === tp).length + ' item'}</span>
+      </div>;
     return (
       <div style={{ display: 'flex', flexDirection: 'column' }}>
         <div style={{ display: 'flex', alignItems: 'baseline', justifyContent: 'space-between', marginBottom: 8, paddingLeft: 2, paddingRight: 2 }}>
@@ -409,10 +422,13 @@ function OrderSummary({ subtotal, tax, total, rounding, itemDiscLines, expanded,
         </div>
         <div style={{ background: t.surface, borderRadius: 18, boxShadow: '0px 2px 12px 0px rgba(0,0,0,0.06)', padding: 16 }}>
           <div style={{ display: 'flex', flexDirection: 'column' }}>
-            {items.map((l) => {
+            {flatItems.map((l, i) => {
               const price = app.linePrice(l);
+              const newGroup = mixedType && (i === 0 || typeOf(flatItems[i - 1]) !== typeOf(l));
               return (
-              <div key={l.uid} style={{ display: 'flex', gap: 12, alignItems: 'flex-start', paddingBottom: 11, marginBottom: 11 }}>
+              <React.Fragment key={l.uid}>
+              {newGroup && groupLabel(typeOf(l), i === 0)}
+              <div style={{ display: 'flex', gap: 12, alignItems: 'flex-start', paddingBottom: 11, marginBottom: 11 }}>
                 <FoodImg label={l.name.toLowerCase()} h={60} radius={12} style={{ width: 60, flexShrink: 0 }} src={itemById(l.itemId)?.photo} />
                 <div style={{ flex: 1, minWidth: 0, display: 'flex', flexDirection: 'column', gap: 3 }}>
                   <div style={{ display: 'flex', alignItems: 'baseline', justifyContent: 'space-between' }}>
@@ -429,7 +445,8 @@ function OrderSummary({ subtotal, tax, total, rounding, itemDiscLines, expanded,
                     <Money value={price.final} style={{ fontSize: 13.5, fontWeight: 700, color: price.final === 0 ? t.primary : t.ink }} />
                   </div>
                 </div>
-              </div>);
+              </div>
+              </React.Fragment>);
             })}
             {app.cart.length > 1 &&
             <div style={{ textAlign: 'center', marginBottom: 14 }}>
