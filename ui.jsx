@@ -311,10 +311,10 @@ function FoodImg({ label, h = 120, radius, style, src }) {
 // menyembunyikan isi tetap di Keranjang — permintaan user 2026-09-29.)
 // Paket bersarang (Paket Komplit Berdua): isi paket sudah pasti dari master barang, yang dipilih
 // tamu = modifier isi itu + modifier paket. Modifier milik isi (Paha · Pedas · Sambal Matah milik
-// 1x Ayam Goreng Kremes) dikelompokkan di bawah isinya dengan garis teal 3px, seperti sub-grup di
+// Ayam Goreng Kremes) dikelompokkan di bawah isinya dengan garis teal 3px, seperti sub-grup di
 // Detail Menu. (Diputuskan user 2026-10-02: gaya garis, bukan menjorok; Burger Combo ikut tanpa
 // garis paling kiri.) Add-on berbayar "(+RpX)" ditulis Regular muted, sama seperti opsi biasa.
-// Hanya ISI paket (5× Burger Bangor Sapi, 1x Ayam Goreng Kremes) yang tebal; pilihan paket (Nasi
+// Hanya ISI paket (5× Burger Bangor Sapi, Ayam Goreng Kremes) yang tebal; pilihan paket (Nasi
 // Putih, Es Jeruk Peras, Kentang Goreng) adalah modifier → gaya & jarak sama dengan sub-modifier.
 // Antar-baris 2px; pemisah blok (`gap`) hanya di bawah kelompok sub-modifier. (User 2026-10-02.)
 const isPaketLine = (line) => (line.contents || []).length > 0 || !!line.slots;

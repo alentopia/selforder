@@ -267,7 +267,7 @@ function OrderSummary({ subtotal, tax, total, rounding, itemDiscLines, expanded,
   const t = useTheme();
   const app = useApp();
   const variant = app.checkoutSummary || 'flat';
-  const qtyTotal = app.cart.reduce((s, l) => s + l.qty, 0);
+  const itemCount = app.cart.length; // item = baris menu di keranjang, bukan jumlah qty
   // Figma 4444:79902: daftar tertutup menampilkan item ber-Promo Produk sebagai item pertama.
   // Urutan yang sama dipakai saat dibuka, jadi item pertama tidak melompat.
   const ordered = [...app.cart.filter((l) => app.linePrice(l).promo), ...app.cart.filter((l) => !app.linePrice(l).promo)];
@@ -288,7 +288,7 @@ function OrderSummary({ subtotal, tax, total, rounding, itemDiscLines, expanded,
         <div>
           <div style={{ display: 'flex', alignItems: 'baseline', justifyContent: 'space-between', marginBottom: 8, paddingLeft: 2 }}>
             <span style={{ fontSize: 11, fontWeight: 700, letterSpacing: 1, textTransform: 'uppercase', color: t.faint }}>Pesanan</span>
-            <span style={{ fontSize: 11.5, fontWeight: 600, color: t.faint }}>{qtyTotal} item</span>
+            <span style={{ fontSize: 11.5, fontWeight: 600, color: t.faint }}>{itemCount} item</span>
           </div>
           <div style={{ background: t.surface, border: '1px solid ' + t.line, borderRadius: t.radius, boxShadow: t.shadow, overflow: 'hidden' }}>
             <div style={{ padding: '6px 16px' }}>
@@ -344,7 +344,7 @@ function OrderSummary({ subtotal, tax, total, rounding, itemDiscLines, expanded,
       <div>
         <div style={{ display: 'flex', alignItems: 'baseline', justifyContent: 'space-between', marginBottom: 8, paddingLeft: 2 }}>
           <span style={{ fontSize: 11, fontWeight: 700, letterSpacing: 1, textTransform: 'uppercase', color: t.faint }}>Ringkasan Pesanan</span>
-          <span style={{ fontSize: 11.5, color: t.faint, fontWeight: 600 }}>{qtyTotal} item</span>
+          <span style={{ fontSize: 11.5, color: t.faint, fontWeight: 600 }}>{itemCount} item</span>
         </div>
         <div style={{ background: t.surface, borderRadius: t.radius, boxShadow: t.shadow, padding: '18px 18px 20px' }}>
         <div style={{ display: 'flex', flexDirection: 'column', gap: mixedType ? 16 : 12 }}>
@@ -374,7 +374,7 @@ function OrderSummary({ subtotal, tax, total, rounding, itemDiscLines, expanded,
                   <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
                     <Icon name={icon} size={14} color={t.primary} stroke={1.9} />
                     <span style={{ fontSize: 11.5, fontWeight: 800, letterSpacing: 0.4, textTransform: 'uppercase', color: t.muted }}>{label}</span>
-                    <span style={{ fontSize: 11, color: t.faint, fontWeight: 600 }}>· {grp.reduce((s, l) => s + l.qty, 0)} item</span>
+                    <span style={{ fontSize: 11, color: t.faint, fontWeight: 600 }}>· {grp.length} item</span>
                   </div>
                   {grp.map(strukLine)}
                 </div>);
@@ -405,7 +405,7 @@ function OrderSummary({ subtotal, tax, total, rounding, itemDiscLines, expanded,
       <div style={{ display: 'flex', flexDirection: 'column' }}>
         <div style={{ display: 'flex', alignItems: 'baseline', justifyContent: 'space-between', marginBottom: 8, paddingLeft: 2, paddingRight: 2 }}>
           <span style={{ fontSize: 11, fontWeight: 700, letterSpacing: 1, textTransform: 'uppercase', color: t.faint }}>Ringkasan Pesanan</span>
-          <span style={{ fontSize: 11.5, fontWeight: 600, color: t.faint }}>{qtyTotal} item</span>
+          <span style={{ fontSize: 11.5, fontWeight: 600, color: t.faint }}>{itemCount} item</span>
         </div>
         <div style={{ background: t.surface, borderRadius: 18, boxShadow: '0px 2px 12px 0px rgba(0,0,0,0.06)', padding: 16 }}>
           <div style={{ display: 'flex', flexDirection: 'column' }}>
@@ -460,7 +460,7 @@ function OrderSummary({ subtotal, tax, total, rounding, itemDiscLines, expanded,
     <div style={{ background: t.surface, border: '1px solid ' + t.line, borderRadius: t.radius, boxShadow: t.shadow, overflow: 'hidden' }}>
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '13px 16px', borderBottom: '1px solid ' + t.line }}>
         <span style={{ fontSize: 15, fontWeight: 700, color: t.ink }}>Ringkasan Pesanan</span>
-        <span style={{ fontSize: 12.5, color: t.muted, fontWeight: 600 }}>{qtyTotal} item</span>
+        <span style={{ fontSize: 12.5, color: t.muted, fontWeight: 600 }}>{itemCount} item</span>
       </div>
       <div style={{ padding: '0 16px' }}>
         {items.map((l, i) =>
@@ -1097,7 +1097,7 @@ function OrderCard({ o }) {
   const t = useTheme();
   const trig = o.lines.find((l) => !l.free) || o.lines[0] || {};
   const type = trig.type === 'takeaway' ? 'Take Away' : 'Dine In';
-  const itemCount = o.lines.reduce((s, l) => s + (l.qty || 1), 0);
+  const itemCount = o.lines.length;
   return (
     <div style={{ marginBottom: 12, background: t.surface, borderRadius: t.radius, border: '1px solid ' + t.line, boxShadow: t.shadow, overflow: 'hidden' }}>
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', gap: 10, padding: '13px 16px 2px' }}>

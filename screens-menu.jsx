@@ -421,7 +421,7 @@ function BillStrip({ ctx = 'menu' }) {
   const hasCart = app.cart.reduce((s, l) => s + l.qty, 0) > 0;
   const dockGap = hasCart ? 84 : 0; // ruang utk CartDock di layar menu
   const goBill = () => app.go('bill');
-  const cartCount = app.cart.reduce((s, l) => s + l.qty, 0);
+  const cartCount = app.cart.length;
   const cartTotal = rupiah(app.productSubtotal());
   const viewCart = () => app.go('cart');
   const isBottom = layout === 'bawah' || layout === 'pill' || layout === 'dua' || layout === 'struk';
@@ -1200,7 +1200,7 @@ function RiwayatPesanan() {
 function CartDock() {
   const t = useTheme();
   const app = useApp();
-  const count = app.cart.reduce((s, l) => s + l.qty, 0);
+  const count = app.cart.length; // jumlah item (baris), bukan jumlah qty
   const total = app.productSubtotal(); // setelah Promo Produk (beli-N ikut terpotong)
   const isNavbar = app.menuShell === 'klasik' && (app.billStripLayout || 'atas') === 'navbar';
   const bottomOffset = isNavbar ? 'calc(80px + env(safe-area-inset-bottom))' : 'calc(10px + env(safe-area-inset-bottom))';
@@ -1223,6 +1223,9 @@ function CartDock() {
     </div>);
 
 }
+
+// Isi paket: jumlah ditulis hanya kalau > 1 ("5× Burger Bangor Sapi"); jumlah 1 tanpa "1×".
+const isiLabel = (c) => (c.qty > 1 ? c.qty + '× ' : '') + c.name;
 
 // ── Item detail sheet ──────────────────────────────────────
 function ItemScreen({ params }) {
@@ -1277,7 +1280,7 @@ function ItemScreen({ params }) {
   });
 
   const add = () => {
-    const contentLabels = (item.contents || []).map((c) => c.qty + '× ' + c.name);
+    const contentLabels = (item.contents || []).map(isiLabel);
     // sertakan biaya tambahan di label opsi (mis. "Telur Dadar (+Rp7.000)") biar user paham kenapa harganya beda
     const fmt = (o) => o.price > 0 ? o.label + ' (+' + rupiah(o.price) + ')' : o.label;
     const optLabels = mods.flatMap((m) => [...chosen(m), ...subsOf(m).flatMap(chosen)].map(fmt));
@@ -1285,7 +1288,7 @@ function ItemScreen({ params }) {
     // supaya ringkasan bisa menampilkannya di bawah isinya, bukan dalam satu daftar datar.
     const slots = mods.some((m) => subsOf(m).length) ?
     mods.flatMap((m) => chosen(m).map((o) => ({
-      label: (o.subs ? '1x ' : '') + fmt(o),
+      label: fmt(o),
       // isi paket (grup "Isi paket" / opsi ber-sub-grup) ditulis tebal; pilihan lain = modifier
       isi: isFixedGroup(m) || !!o.subs,
       subs: (o.subs || []).flatMap(chosen).map(fmt) }))) :
@@ -1364,14 +1367,14 @@ function ItemScreen({ params }) {
         {(item.contents || []).length > 0 &&
         group('isi', <>
             {groupLabel('Isi paket')}
-            <div>{item.contents.map((c, i) => fixedRow(c.qty + '× ' + c.name, i))}</div>
+            <div>{item.contents.map((c, i) => fixedRow(isiLabel(c), i))}</div>
           </>)
         }
 
         {mods.map((m) => {
-          // Paket Bundling (Figma 1952:53362): opsi ber-sub-grup tampil sebagai "1x <opsi>" + sub-grupnya
-          // (prefiks "1x" langsung tampil, juga selama sub-grup belum terisi).
-          // · grup satu opsi (Paket Komplit Berdua: "Isi paket" → 1x Ayam Goreng Kremes) = isi tetap:
+          // Paket Bundling (Figma 1952:53362): opsi ber-sub-grup tampil sebagai "<opsi>" + sub-grupnya
+          // (jumlah 1 tidak ditulis, tanpa prefiks "1x").
+          // · grup satu opsi (Paket Komplit Berdua: "Isi paket" → Ayam Goreng Kremes) = isi tetap:
           //   judul "Isi paket" tanpa subtitle, baris tidak bisa diketuk.
           // · grup banyak opsi: setelah dipilih, judul & opsi lain disembunyikan; ketuk baris untuk
           //   membuka daftar lagi (ganti pilihan).
@@ -1379,7 +1382,7 @@ function ItemScreen({ params }) {
             const o = chosen(m)[0];
             const fixed = isFixedGroup(m);
             const rowContent = <>
-                <span style={labelStyle(true)}>{'1x ' + o.label}</span>
+                <span style={labelStyle(true)}>{o.label}</span>
                 {priceTag(o)}
                 <span style={{ width: 24, height: 21, flexShrink: 0 }} />
               </>;

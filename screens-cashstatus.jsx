@@ -49,13 +49,13 @@ function CashStatusScreen({ params }) {
   const mixedType = cartTypes.length > 1;
   const isDine = (cartTypes[0] || (app.orderType === 'dinein' ? 'dinein' : 'takeaway')) !== 'takeaway';
   const typeLabel = mixedType ? 'Campuran' : isDine ? 'Dine In' : 'Take Away';
-  const qtyTotal = lines.reduce((s, l) => s + l.qty, 0);
-  const diCount = lines.filter((l) => (l.type === 'takeaway' ? 'takeaway' : 'dinein') === 'dinein').reduce((s, l) => s + l.qty, 0);
-  const taCount = qtyTotal - diCount;
+  const itemCount = lines.length; // item = baris menu, bukan jumlah qty
+  const diCount = lines.filter((l) => (l.type === 'takeaway' ? 'takeaway' : 'dinein') === 'dinein').length;
+  const taCount = itemCount - diCount;
   const typeRows = mixedType ?
   [{ type: 'dinein', label: 'Dine In', n: diCount, table: true },
    { type: 'takeaway', label: 'Take Away', n: taCount, table: false }] :
-  [{ type: isDine ? 'dinein' : 'takeaway', label: isDine ? 'Dine In' : 'Take Away', n: qtyTotal, table: isDine }];
+  [{ type: isDine ? 'dinein' : 'takeaway', label: isDine ? 'Dine In' : 'Take Away', n: itemCount, table: isDine }];
   const bill = app.computeBill();
   const freeLines = lines.filter((l) => l.free);
   const txPromo = app.applied.map((a) => promoById(a.id)).find((p) => p && isVoucher(p));
@@ -166,7 +166,7 @@ function CashStatusScreen({ params }) {
         {/* ── Ringkasan pesanan ── */}
         <div style={{ ...cardStyle, marginTop: 14, overflow: 'hidden' }}>
           <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '12px 16px', borderBottom: '1px solid ' + t.line }}>
-            <span style={{ fontSize: 14, fontWeight: 700, color: t.ink }}>Pesanan ({qtyTotal})</span>
+            <span style={{ fontSize: 14, fontWeight: 700, color: t.ink }}>Pesanan ({itemCount})</span>
           </div>
           <div style={{ padding: '0 16px' }}>
             {(() => {
